@@ -1,9 +1,9 @@
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Trash2, Clock, ArrowRight } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Plus, Calendar, MessageSquare } from "lucide-react";
 import { Project } from "@/pages/Creation";
 import { projectsApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
@@ -13,9 +13,10 @@ interface ProjectsManagerProps {
 }
 
 export const ProjectsManager = ({ onProjectSelect }: ProjectsManagerProps) => {
-  const [searchQuery, setSearchQuery] = useState("");
   const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [newProjectTitle, setNewProjectTitle] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -24,180 +25,153 @@ export const ProjectsManager = ({ onProjectSelect }: ProjectsManagerProps) => {
 
   const loadProjects = async () => {
     try {
-      setLoading(true);
+      console.log('Loading projects...');
       const data = await projectsApi.list();
-      setProjects(data);
+      console.log('Loaded projects:', data);
+      
+      // Convert database projects to frontend Project format
+      const formattedProjects: Project[] = data.map(proj => ({
+        id: proj.id,
+        title: proj.title,
+        createdAt: proj.created_at.split('T')[0], // Convert to date string
+        updatedAt: proj.updated_at.split('T')[0], // Convert to date string
+      }));
+      
+      setProjects(formattedProjects);
     } catch (error) {
       console.error('Failed to load projects:', error);
       toast({
-        title: "加载失败",
+        title: "加载项目失败",
         description: "无法加载项目列表",
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   const handleCreateProject = async () => {
+    if (!newProjectTitle.trim() || isCreating) return;
+
+    setIsCreating(true);
     try {
-      const newProject = await projectsApi.create({
-        title: `新项目 - ${new Date().toLocaleDateString()}`,
-      });
-      setProjects([newProject, ...projects]);
-      onProjectSelect(newProject);
+      console.log('Creating project:', newProjectTitle);
+      const dbProject = await projectsApi.create({ title: newProjectTitle.trim() });
+      console.log('Created project:', dbProject);
+      
+      const newProject: Project = {
+        id: dbProject.id,
+        title: dbProject.title,
+        createdAt: dbProject.created_at.split('T')[0],
+        updatedAt: dbProject.updated_at.split('T')[0],
+      };
+      
+      setProjects(prev => [newProject, ...prev]);
+      setNewProjectTitle("");
+      
       toast({
         title: "项目创建成功",
-        description: `项目 "${newProject.title}" 已创建`,
+        description: `项目"${newProject.title}"已创建`,
       });
-    } catch (error) {
+      
+      // Auto-select the new project
+      onProjectSelect(newProject);
+    } catch (error: any) {
       console.error('Failed to create project:', error);
       toast({
-        title: "创建失败",
-        description: "无法创建新项目",
+        title: "创建项目失败",
+        description: error.message || "无法创建项目，请重试",
         variant: "destructive",
       });
+    } finally {
+      setIsCreating(false);
     }
   };
 
-  const handleDeleteProject = async (projectId: string, event: React.MouseEvent) => {
-    event.stopPropagation();
-    try {
-      await projectsApi.delete(projectId);
-      setProjects(projects.filter(p => p.id !== projectId));
-      toast({
-        title: "项目已删除",
-        description: "项目删除成功",
-      });
-    } catch (error) {
-      console.error('Failed to delete project:', error);
-      toast({
-        title: "删除失败",
-        description: "无法删除项目",
-        variant: "destructive",
-      });
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleCreateProject();
     }
   };
 
-  const filteredProjects = projects.filter(project =>
-    project.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="container mx-auto px-8 py-12">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full" />
-            <span className="ml-3 text-gray-600">加载项目中...</span>
-          </div>
-        </div>
+      <div className="p-8 flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full" />
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-8 py-12">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
-            我的创作项目
-          </h1>
-          <p className="text-gray-600">管理和继续你的小红书创作项目</p>
-        </div>
-
-        {/* Actions Bar */}
-        <div className="flex items-center gap-4 mb-8">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <Input
-              placeholder="搜索项目..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-12 border-purple-200 focus:border-purple-400"
-            />
-          </div>
-          <Button
-            onClick={handleCreateProject}
-            className="h-12 px-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            新建项目
-          </Button>
-        </div>
-
-        {/* Projects Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProjects.map((project) => (
-            <Card 
-              key={project.id}
-              className="group cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-white/70 backdrop-blur-sm border-purple-200"
-              onClick={() => onProjectSelect(project)}
-            >
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <CardTitle className="text-lg group-hover:text-purple-600 transition-colors">
-                    {project.title}
-                  </CardTitle>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => handleDeleteProject(project.id, e)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-700 hover:bg-red-50"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="space-y-3">
-                  <div className="flex items-center text-sm text-gray-500">
-                    <Clock className="w-4 h-4 mr-1" />
-                    最后编辑：{new Date(project.updatedAt).toLocaleDateString()}
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">
-                      创建于 {new Date(project.createdAt).toLocaleDateString()}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="opacity-0 group-hover:opacity-100 transition-opacity text-purple-600 hover:text-purple-700"
-                    >
-                      <span className="mr-1">继续创作</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {filteredProjects.length === 0 && !loading && (
-          <div className="text-center py-12">
-            <div className="text-gray-400 mb-4">
-              <Plus className="w-16 h-16 mx-auto mb-4 opacity-50" />
-            </div>
-            <h3 className="text-xl font-semibold text-gray-600 mb-2">
-              {searchQuery ? "未找到匹配的项目" : "还没有创作项目"}
-            </h3>
-            <p className="text-gray-500 mb-6">
-              {searchQuery ? "尝试调整搜索条件" : "点击「新建项目」开始你的创作之旅"}
-            </p>
-            {!searchQuery && (
-              <Button
-                onClick={handleCreateProject}
-                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-              >
-                <Plus className="w-5 h-5 mr-2" />
-                新建项目
-              </Button>
-            )}
-          </div>
-        )}
+    <div className="p-8 max-w-6xl mx-auto">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-800 mb-2">我的项目</h1>
+        <p className="text-gray-600">管理你的小红书创作项目</p>
       </div>
+
+      {/* Create New Project */}
+      <Card className="mb-8 bg-white/70 backdrop-blur-sm border-purple-200">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-purple-700">
+            <Plus className="w-5 h-5" />
+            创建新项目
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-3">
+            <Input
+              placeholder="输入项目名称..."
+              value={newProjectTitle}
+              onChange={(e) => setNewProjectTitle(e.target.value)}
+              onKeyPress={handleKeyPress}
+              className="flex-1"
+              disabled={isCreating}
+            />
+            <Button
+              onClick={handleCreateProject}
+              disabled={!newProjectTitle.trim() || isCreating}
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              {isCreating ? "创建中..." : "创建项目"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Projects Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {projects.map((project) => (
+          <Card
+            key={project.id}
+            className="cursor-pointer hover:shadow-lg transition-all duration-200 bg-white/60 backdrop-blur-sm border-gray-200 hover:border-purple-300"
+            onClick={() => onProjectSelect(project)}
+          >
+            <CardHeader>
+              <CardTitle className="text-lg text-gray-800">{project.title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 text-sm text-gray-600">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  <span>创建于 {project.createdAt}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4" />
+                  <span>最后更新 {project.updatedAt}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {projects.length === 0 && (
+        <div className="text-center py-12 text-gray-500">
+          <MessageSquare className="w-16 h-16 mx-auto mb-4 opacity-30" />
+          <p>还没有项目</p>
+          <p className="text-sm">创建你的第一个小红书创作项目吧</p>
+        </div>
+      )}
     </div>
   );
 };

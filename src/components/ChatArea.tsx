@@ -49,10 +49,27 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
 
     const loadMessages = async () => {
       try {
+        console.log('Loading messages for project:', projectId);
         const data = await chatApi.getMessages(projectId);
-        setMessages(data);
+        console.log('Loaded messages:', data);
+        
+        // Convert database messages to frontend ChatMessage format
+        const formattedMessages: ChatMessage[] = data.map(msg => ({
+          id: msg.id,
+          role: (msg.role as 'user' | 'assistant' | 'system') || 'user',
+          content: msg.content,
+          llm_raw_output: msg.llm_raw_output,
+          created_at: msg.created_at,
+        }));
+        
+        setMessages(formattedMessages);
       } catch (error) {
         console.error('Failed to load messages:', error);
+        toast({
+          title: "加载消息失败",
+          description: "无法加载历史消息",
+          variant: "destructive",
+        });
       }
     };
 
@@ -63,6 +80,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
       while ((match = newCardRegex.exec(content)) !== null) {
         const title = match[1] || `新卡片 ${Date.now()}`;
         const cardContent = match[2].trim();
+        console.log('Creating new card:', { title, cardContent });
         onCardCreated('temp-' + Date.now(), title, cardContent);
       }
 
@@ -71,6 +89,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
       while ((match = updateCardRegex.exec(content)) !== null) {
         const cardTitle = match[1];
         const cardContent = match[2].trim();
+        console.log('Updating card:', { cardTitle, cardContent });
         onCardUpdated(cardTitle, cardContent);
       }
 
@@ -97,7 +116,9 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
       setMessages(prev => [...prev, tempUserMessage]);
 
       try {
+        console.log('Sending message to project:', projectId, 'Message:', userMessage);
         const response = await chatApi.sendMessage(projectId, userMessage, []);
+        console.log('Chat API response:', response);
         
         if (response?.content) {
           // Parse XML tags and trigger card operations
@@ -112,12 +133,24 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
             created_at: new Date().toISOString(),
           };
           setMessages(prev => [...prev.slice(0, -1), tempUserMessage, assistantMessage]);
+          
+          toast({
+            title: "消息发送成功",
+            description: "AI 已回复您的消息",
+          });
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Failed to send message:', error);
+        console.error('Error details:', {
+          message: error.message,
+          stack: error.stack,
+          projectId,
+          userMessage
+        });
+        
         toast({
           title: "发送失败",
-          description: "无法发送消息，请重试",
+          description: error.message || "无法发送消息，请重试",
           variant: "destructive",
         });
         // Remove the temporary user message on error

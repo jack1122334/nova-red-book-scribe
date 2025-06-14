@@ -8,30 +8,46 @@ type ChatMessage = Database['public']['Tables']['chat_messages']['Row'];
 
 export const projectsApi = {
   async list(): Promise<Project[]> {
+    console.log('API: Fetching projects...');
     const { data, error } = await supabase
       .from('projects')
       .select('*')
       .order('updated_at', { ascending: false });
     
-    if (error) throw error;
+    if (error) {
+      console.error('API: Error fetching projects:', error);
+      throw new Error(`获取项目失败: ${error.message}`);
+    }
+    console.log('API: Projects fetched successfully:', data?.length);
     return data || [];
   },
 
   async create(project: { title: string }): Promise<Project> {
+    console.log('API: Creating project:', project);
+    const user = await supabase.auth.getUser();
+    if (!user.data.user) {
+      throw new Error('用户未登录');
+    }
+
     const { data, error } = await supabase
       .from('projects')
       .insert({
         title: project.title,
-        user_id: (await supabase.auth.getUser()).data.user?.id || '',
+        user_id: user.data.user.id,
       })
       .select()
       .single();
     
-    if (error) throw error;
+    if (error) {
+      console.error('API: Error creating project:', error);
+      throw new Error(`创建项目失败: ${error.message}`);
+    }
+    console.log('API: Project created successfully:', data);
     return data;
   },
 
   async update(id: string, updates: { title?: string }): Promise<Project> {
+    console.log('API: Updating project:', id, updates);
     const { data, error } = await supabase
       .from('projects')
       .update(updates)
@@ -39,41 +55,61 @@ export const projectsApi = {
       .select()
       .single();
     
-    if (error) throw error;
+    if (error) {
+      console.error('API: Error updating project:', error);
+      throw new Error(`更新项目失败: ${error.message}`);
+    }
+    console.log('API: Project updated successfully:', data);
     return data;
   },
 
   async delete(id: string): Promise<void> {
+    console.log('API: Deleting project:', id);
     const { error } = await supabase
       .from('projects')
       .delete()
       .eq('id', id);
     
-    if (error) throw error;
+    if (error) {
+      console.error('API: Error deleting project:', error);
+      throw new Error(`删除项目失败: ${error.message}`);
+    }
+    console.log('API: Project deleted successfully');
   },
 
   async getWithCards(id: string) {
+    console.log('API: Fetching project with cards:', id);
     const { data, error } = await supabase
       .rpc('get_project_with_cards', { project_uuid: id });
     
-    if (error) throw error;
+    if (error) {
+      console.error('API: Error fetching project with cards:', error);
+      throw new Error(`获取项目详情失败: ${error.message}`);
+    }
+    console.log('API: Project with cards fetched successfully:', data?.length);
     return data;
   }
 };
 
 export const cardsApi = {
   async list(projectId: string): Promise<Card[]> {
+    console.log('API: Fetching cards for project:', projectId);
     const { data, error } = await supabase
       .from('cards')
       .select('*')
       .eq('project_id', projectId)
       .order('card_order', { ascending: true });
     
-    if (error) throw error;
+    if (error) {
+      console.error('API: Error fetching cards:', error);
+      throw new Error(`获取卡片失败: ${error.message}`);
+    }
+    console.log('API: Cards fetched successfully:', data?.length);
     return data || [];
   },
 
   async create(card: { project_id: string; title?: string; content?: string; card_order?: number }): Promise<Card> {
+    console.log('API: Creating card:', card);
     const { data, error } = await supabase
       .from('cards')
       .insert({
@@ -85,11 +121,16 @@ export const cardsApi = {
       .select()
       .single();
     
-    if (error) throw error;
+    if (error) {
+      console.error('API: Error creating card:', error);
+      throw new Error(`创建卡片失败: ${error.message}`);
+    }
+    console.log('API: Card created successfully:', data);
     return data;
   },
 
   async update(id: string, updates: { title?: string; content?: string; card_order?: number }): Promise<Card> {
+    console.log('API: Updating card:', id, updates);
     const { data, error } = await supabase
       .from('cards')
       .update(updates)
@@ -97,20 +138,30 @@ export const cardsApi = {
       .select()
       .single();
     
-    if (error) throw error;
+    if (error) {
+      console.error('API: Error updating card:', error);
+      throw new Error(`更新卡片失败: ${error.message}`);
+    }
+    console.log('API: Card updated successfully:', data);
     return data;
   },
 
   async delete(id: string): Promise<void> {
+    console.log('API: Deleting card:', id);
     const { error } = await supabase
       .from('cards')
       .delete()
       .eq('id', id);
     
-    if (error) throw error;
+    if (error) {
+      console.error('API: Error deleting card:', error);
+      throw new Error(`删除卡片失败: ${error.message}`);
+    }
+    console.log('API: Card deleted successfully');
   },
 
   async findByTitle(projectId: string, title: string): Promise<Card | null> {
+    console.log('API: Finding card by title:', projectId, title);
     const { data, error } = await supabase
       .from('cards')
       .select('*')
@@ -118,33 +169,57 @@ export const cardsApi = {
       .eq('title', title)
       .single();
     
-    if (error && error.code !== 'PGRST116') throw error;
+    if (error && error.code !== 'PGRST116') {
+      console.error('API: Error finding card by title:', error);
+      throw new Error(`查找卡片失败: ${error.message}`);
+    }
+    console.log('API: Card found by title:', data);
     return data;
   }
 };
 
 export const chatApi = {
   async sendMessage(projectId: string, coreInstruction: string, references: any[] = []) {
-    const { data, error } = await supabase.functions.invoke('chat-deepseek', {
-      body: {
-        project_id: projectId,
-        core_instruction: coreInstruction,
-        references: references,
-      },
-    });
+    console.log('API: Sending chat message:', { projectId, coreInstruction, references });
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('chat-deepseek', {
+        body: {
+          project_id: projectId,
+          core_instruction: coreInstruction,
+          references: references,
+        },
+      });
 
-    if (error) throw error;
-    return data;
+      if (error) {
+        console.error('API: Error from chat function:', error);
+        throw new Error(`AI 服务错误: ${error.message || '未知错误'}`);
+      }
+
+      console.log('API: Chat response received:', data);
+      return data;
+    } catch (error: any) {
+      console.error('API: Network error sending chat message:', error);
+      if (error.message?.includes('AI 服务错误')) {
+        throw error;
+      }
+      throw new Error(`网络错误: ${error.message || '无法连接到 AI 服务'}`);
+    }
   },
 
   async getMessages(projectId: string): Promise<ChatMessage[]> {
+    console.log('API: Fetching chat messages for project:', projectId);
     const { data, error } = await supabase
       .from('chat_messages')
       .select('*')
       .eq('project_id', projectId)
       .order('created_at', { ascending: true });
     
-    if (error) throw error;
+    if (error) {
+      console.error('API: Error fetching chat messages:', error);
+      throw new Error(`获取聊天记录失败: ${error.message}`);
+    }
+    console.log('API: Chat messages fetched successfully:', data?.length);
     return data || [];
   }
 };
