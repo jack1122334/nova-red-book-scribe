@@ -31,6 +31,12 @@ serve(async (req) => {
       throw new Error('Missing required fields: project_id and core_instruction');
     }
 
+    // Get API keys
+    const deepseekApiKey = Deno.env.get('DEEPSEEK_API_KEY');
+    if (!deepseekApiKey) {
+      throw new Error('DEEPSEEK_API_KEY not configured');
+    }
+
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -53,25 +59,56 @@ serve(async (req) => {
 
     console.log('User authenticated:', user.id);
 
-    // For now, create a simple mock response
-    // In a real implementation, you would call DeepSeek API here
-    const mockResponse = {
-      content: `你好！我是 Nova，你的小红书创作助手。
+    // Call DeepSeek API
+    console.log('Calling DeepSeek API...');
+    const deepseekResponse = await fetch('https://api.deepseek.com/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${deepseekApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {
+            role: 'system',
+            content: `你是 Nova，一个专业的小红书创作助手。你的任务是帮用户创作优质的小红书内容。
 
-我收到了你的消息："${core_instruction}"
+核心指令：
+1. 根据用户需求创作小红书风格的内容
+2. 使用 <new_xhs_card title="标题"> 标签来创建新的卡片内容
+3. 使用 <update_xhs_card card_ref_id="卡片标题"> 标签来更新已有卡片
+4. 内容要符合小红书用户喜好：有趣、实用、易读
+5. 适当使用emoji和小红书常用词汇
+6. 内容要有价值，避免空泛
 
-我可以帮你：
-1. 创作小红书内容
-2. 优化文案
-3. 提供创意建议
+请用中文回复，语气亲切自然。`
+          },
+          {
+            role: 'user',
+            content: core_instruction
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 2000,
+      }),
+    });
 
-<new_xhs_card title="回复示例">
-这是一个示例回复卡片。
+    if (!deepseekResponse.ok) {
+      const errorText = await deepseekResponse.text();
+      console.error('DeepSeek API error:', errorText);
+      throw new Error(`DeepSeek API error: ${deepseekResponse.status} ${errorText}`);
+    }
 
-在实际使用中，我会根据你的需求创建相应的内容卡片。
-</new_xhs_card>
+    const deepseekData = await deepseekResponse.json();
+    console.log('DeepSeek API response:', deepseekData);
 
-你想要我帮你创作什么类型的内容呢？`,
+    if (!deepseekData.choices || !deepseekData.choices[0]) {
+      throw new Error('Invalid response from DeepSeek API');
+    }
+
+    const aiResponse = {
+      content: deepseekData.choices[0].message.content,
       role: 'assistant'
     };
 
@@ -95,8 +132,8 @@ serve(async (req) => {
       .insert({
         project_id,
         role: 'assistant',
-        content: mockResponse.content,
-        llm_raw_output: mockResponse,
+        content: aiResponse.content,
+        llm_raw_output: deepseekData,
         created_at: new Date().toISOString(),
       });
 
@@ -104,9 +141,9 @@ serve(async (req) => {
       console.error('Error saving assistant message:', assistantMsgError);
     }
 
-    console.log('Chat response prepared:', mockResponse);
+    console.log('Chat response prepared:', aiResponse);
 
-    return new Response(JSON.stringify(mockResponse), {
+    return new Response(JSON.stringify(aiResponse), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
