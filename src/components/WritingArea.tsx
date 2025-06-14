@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Plus, Edit3, Trash2, Save, X } from "lucide-react";
+import { Plus, Edit3, Trash2, Save, X, Link } from "lucide-react";
 import { cardsApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 
@@ -13,6 +12,7 @@ interface WritingAreaProps {
   onCardUpdate: (cardId: string, content: string) => void;
   onCardCreate: (cardId: string) => void;
   onTextSelect: (cardId: string, selectedText: string, instruction: string) => void;
+  onAddReference?: (reference: any) => void;
 }
 
 interface Card {
@@ -30,12 +30,14 @@ export interface WritingAreaRef {
 }
 
 export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(
-  ({ projectId, onCardUpdate, onCardCreate, onTextSelect }, ref) => {
+  ({ projectId, onCardUpdate, onCardCreate, onTextSelect, onAddReference }, ref) => {
     const [cards, setCards] = useState<Card[]>([]);
     const [editingCard, setEditingCard] = useState<string | null>(null);
     const [editTitle, setEditTitle] = useState("");
     const [editContent, setEditContent] = useState("");
     const [loading, setLoading] = useState(true);
+    const [selectedText, setSelectedText] = useState("");
+    const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
     const { toast } = useToast();
 
     useImperativeHandle(ref, () => ({
@@ -104,6 +106,35 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(
       } finally {
         setLoading(false);
       }
+    };
+
+    const handleTextSelection = (cardId: string) => {
+      const selection = window.getSelection();
+      if (selection && selection.toString().trim()) {
+        const text = selection.toString().trim();
+        setSelectedText(text);
+        setSelectedCardId(cardId);
+        console.log('Text selected:', { cardId, text });
+      }
+    };
+
+    const handleAddReference = (card: Card, type: 'full_card' | 'text_snippet') => {
+      if (!onAddReference) return;
+
+      const reference = {
+        type,
+        card_id: card.id,
+        card_friendly_title: card.title || `卡片-${card.id.slice(0, 8)}`,
+        user_remark: type === 'full_card' ? '请参考整个卡片的内容' : '请参考选中的文本片段',
+        ...(type === 'text_snippet' && selectedText ? { snippet_content: selectedText } : {})
+      };
+
+      onAddReference(reference);
+      
+      // Clear selection
+      setSelectedText("");
+      setSelectedCardId(null);
+      window.getSelection()?.removeAllRanges();
     };
 
     const handleCreateCard = async () => {
@@ -216,6 +247,34 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(
                       </CardTitle>
                     )}
                     <div className="flex gap-2">
+                      {/* Reference buttons */}
+                      {editingCard !== card.id && onAddReference && (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleAddReference(card, 'full_card')}
+                            className="text-blue-600 hover:text-blue-700"
+                            title="引用整个卡片"
+                          >
+                            <Link className="w-4 h-4" />
+                          </Button>
+                          {selectedText && selectedCardId === card.id && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleAddReference(card, 'text_snippet')}
+                              className="text-green-600 hover:text-green-700"
+                              title="引用选中文本"
+                            >
+                              <Link className="w-4 h-4" />
+                              片段
+                            </Button>
+                          )}
+                        </>
+                      )}
+                      
+                      {/* Edit/Save buttons */}
                       {editingCard === card.id ? (
                         <>
                           <Button
@@ -267,11 +326,28 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(
                       className="min-h-[200px] resize-none"
                     />
                   ) : (
-                    <div className="whitespace-pre-wrap text-gray-700 min-h-[100px]">
+                    <div 
+                      className="whitespace-pre-wrap text-gray-700 min-h-[100px] cursor-text"
+                      onMouseUp={() => handleTextSelection(card.id)}
+                    >
                       {card.content || "暂无内容"}
                     </div>
                   )}
                 </CardContent>
+                
+                {/* Show selected text indicator */}
+                {selectedText && selectedCardId === card.id && (
+                  <div className="px-6 pb-4">
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <p className="text-sm text-blue-700">
+                        已选中文本: "{selectedText.substring(0, 50)}..."
+                      </p>
+                      <p className="text-xs text-blue-600 mt-1">
+                        点击"片段"按钮添加此文本为引用
+                      </p>
+                    </div>
+                  </div>
+                )}
               </Card>
             ))
           )}

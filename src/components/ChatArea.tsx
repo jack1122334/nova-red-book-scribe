@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import { Send, Bot, User } from "lucide-react";
+import { Send, Bot, User, Link } from "lucide-react";
 import { chatApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 
@@ -22,8 +21,17 @@ interface ChatMessage {
   created_at: string;
 }
 
+interface Reference {
+  type: 'full_card' | 'text_snippet';
+  card_id: string;
+  card_friendly_title: string;
+  user_remark: string;
+  snippet_content?: string;
+}
+
 export interface ChatAreaRef {
-  // Add any methods you want to expose
+  addReference: (reference: Reference) => void;
+  clearReferences: () => void;
 }
 
 export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
@@ -32,9 +40,21 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
     const [inputValue, setInputValue] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [hasInitialized, setHasInitialized] = useState(false);
+    const [references, setReferences] = useState<Reference[]>([]);
     const { toast } = useToast();
 
-    useImperativeHandle(ref, () => ({}));
+    useImperativeHandle(ref, () => ({
+      addReference: (reference: Reference) => {
+        setReferences(prev => [...prev, reference]);
+        toast({
+          title: "引用已添加",
+          description: `已添加对卡片"${reference.card_friendly_title}"的引用`,
+        });
+      },
+      clearReferences: () => {
+        setReferences([]);
+      }
+    }));
 
     useEffect(() => {
       loadMessages();
@@ -99,6 +119,10 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
         .replace(/<update_xhs_card\s+card_ref_id="[^"]*">[^]*?<\/update_xhs_card>/g, '[卡片已更新]');
     };
 
+    const removeReference = (index: number) => {
+      setReferences(prev => prev.filter((_, i) => i !== index));
+    };
+
     const handleSendMessage = async () => {
       if (!inputValue.trim() || isLoading) return;
 
@@ -116,8 +140,8 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
       setMessages(prev => [...prev, tempUserMessage]);
 
       try {
-        console.log('Sending message to project:', projectId, 'Message:', userMessage);
-        const response = await chatApi.sendMessage(projectId, userMessage, []);
+        console.log('Sending message with references:', references);
+        const response = await chatApi.sendMessage(projectId, userMessage, references);
         console.log('Chat API response:', response);
         
         if (response?.content) {
@@ -134,6 +158,9 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
           };
           setMessages(prev => [...prev.slice(0, -1), tempUserMessage, assistantMessage]);
           
+          // Clear references after successful message
+          setReferences([]);
+          
           toast({
             title: "消息发送成功",
             description: "AI 已回复您的消息",
@@ -141,13 +168,6 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
         }
       } catch (error: any) {
         console.error('Failed to send message:', error);
-        console.error('Error details:', {
-          message: error.message,
-          stack: error.stack,
-          projectId,
-          userMessage
-        });
-        
         toast({
           title: "发送失败",
           description: error.message || "无法发送消息，请重试",
@@ -173,6 +193,43 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
           <h2 className="text-lg font-semibold text-gray-800">AI 助手</h2>
           <p className="text-sm text-gray-600">Nova 会帮你创作精彩的小红书内容</p>
         </div>
+
+        {/* References Section */}
+        {references.length > 0 && (
+          <div className="p-4 border-b bg-yellow-50/50">
+            <h3 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+              <Link className="w-4 h-4" />
+              引用内容 ({references.length})
+            </h3>
+            <div className="space-y-2">
+              {references.map((ref, index) => (
+                <div key={index} className="bg-white/70 rounded-lg p-3 text-sm">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <span className="font-medium text-purple-700">
+                        {ref.card_friendly_title}
+                      </span>
+                      <span className="text-gray-500 ml-2">
+                        ({ref.type === 'full_card' ? '整个卡片' : '文本片段'})
+                      </span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeReference(index)}
+                      className="text-gray-500 hover:text-red-500"
+                    >
+                      ×
+                    </Button>
+                  </div>
+                  {ref.user_remark && (
+                    <p className="text-gray-600 mt-1">备注：{ref.user_remark}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="flex-1 overflow-auto p-4 space-y-4">
           {messages.length === 0 ? (
@@ -251,6 +308,11 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
               <Send className="w-4 h-4" />
             </Button>
           </div>
+          {references.length > 0 && (
+            <p className="text-xs text-gray-500 mt-2">
+              将发送 {references.length} 个引用内容给 AI
+            </p>
+          )}
         </div>
       </div>
     );

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -46,6 +45,13 @@ export const ProjectWorkbench = ({ project, onBack, initialMessage }: ProjectWor
     console.log('Card created:', { cardId });
   };
 
+  const handleAddReference = (reference: any) => {
+    // 将引用添加到ChatArea
+    if (chatAreaRef.current?.addReference) {
+      chatAreaRef.current.addReference(reference);
+    }
+  };
+
   return (
     <div className="h-screen flex flex-col">
       {/* Header */}
@@ -75,6 +81,7 @@ export const ProjectWorkbench = ({ project, onBack, initialMessage }: ProjectWor
             onCardUpdate={handleCardUpdate}
             onCardCreate={handleCardCreate}
             onTextSelect={handleTextSelection}
+            onAddReference={handleAddReference}
           />
         </div>
 
