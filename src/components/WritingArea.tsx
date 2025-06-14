@@ -210,7 +210,7 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(
     return (
       <div className="h-full flex flex-col bg-white">
         {/* Header */}
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-6 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-semibold text-gray-900">创作卡片</h2>
@@ -228,9 +228,9 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-auto p-6">
+        <div className="flex-1 overflow-hidden">
           {cards.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-gray-500">
+            <div className="flex flex-col items-center justify-center h-full text-gray-500 p-6">
               <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
                 <FileText className="w-8 h-8 text-gray-400" />
               </div>
@@ -247,133 +247,136 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(
               </Button>
             </div>
           ) : (
-            <div className="space-y-4">
-              {cards.map((card) => (
-                <Card key={card.id} className="border border-gray-200 hover:border-gray-300 transition-colors">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      {editingCard === card.id ? (
-                        <Input
-                          value={editTitle}
-                          onChange={(e) => setEditTitle(e.target.value)}
-                          placeholder="卡片标题"
-                          className="text-base font-medium border-0 p-0 h-auto focus:ring-0"
-                        />
-                      ) : (
-                        <CardTitle className="text-base font-medium text-gray-900">
-                          {card.title || "未命名卡片"}
-                        </CardTitle>
-                      )}
-                      
-                      <div className="flex items-center gap-1">
-                        {/* Reference buttons */}
-                        {editingCard !== card.id && onAddReference && (
-                          <>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleAddReference(card, 'full_card')}
-                              className="h-8 w-8 p-0 text-gray-400 hover:text-blue-600 hover:bg-blue-50"
-                              title="引用整个卡片"
-                            >
-                              <Link className="w-4 h-4" />
-                            </Button>
-                            {selectedText && selectedCardId === card.id && (
+            <div className="h-full overflow-x-auto overflow-y-hidden p-6">
+              <div className="flex gap-4 h-full min-w-fit">
+                {cards.map((card) => (
+                  <Card key={card.id} className="w-80 h-full border border-gray-200 hover:border-gray-300 transition-colors flex flex-col">
+                    <CardHeader className="pb-3 flex-shrink-0">
+                      <div className="flex items-start justify-between gap-2">
+                        {editingCard === card.id ? (
+                          <Input
+                            value={editTitle}
+                            onChange={(e) => setEditTitle(e.target.value)}
+                            placeholder="卡片标题"
+                            className="text-sm font-medium border-0 p-0 h-auto focus:ring-0 flex-1"
+                          />
+                        ) : (
+                          <CardTitle className="text-sm font-medium text-gray-900 flex-1 line-clamp-2">
+                            {card.title || "未命名卡片"}
+                          </CardTitle>
+                        )}
+                        
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          {/* Reference buttons */}
+                          {editingCard !== card.id && onAddReference && (
+                            <>
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleAddReference(card, 'text_snippet')}
-                                className="h-8 px-2 text-green-600 hover:text-green-700 hover:bg-green-50 text-xs"
-                                title="引用选中文本"
+                                onClick={() => handleAddReference(card, 'full_card')}
+                                className="h-7 w-7 p-0 text-gray-400 hover:text-blue-600 hover:bg-blue-50"
+                                title="引用整个卡片"
                               >
-                                <Link className="w-3 h-3 mr-1" />
-                                片段
+                                <Link className="w-3 h-3" />
                               </Button>
-                            )}
-                          </>
-                        )}
-                        
-                        {/* Edit/Save buttons */}
-                        {editingCard === card.id ? (
-                          <>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={handleSaveEdit}
-                              className="h-8 w-8 p-0 text-gray-400 hover:text-green-600 hover:bg-green-50"
-                            >
-                              <Save className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setEditingCard(null)}
-                              className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-50"
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
-                          </>
-                        ) : (
-                          <>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEditCard(card)}
-                              className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-50"
-                            >
-                              <Edit3 className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeleteCard(card.id)}
-                              className="h-8 w-8 p-0 text-gray-400 hover:text-red-500 hover:bg-red-50"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </>
-                        )}
+                              {selectedText && selectedCardId === card.id && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleAddReference(card, 'text_snippet')}
+                                  className="h-7 px-1.5 text-green-600 hover:text-green-700 hover:bg-green-50 text-xs"
+                                  title="引用选中文本"
+                                >
+                                  <Link className="w-2.5 h-2.5 mr-0.5" />
+                                  片段
+                                </Button>
+                              )}
+                            </>
+                          )}
+                          
+                          {/* Edit/Save buttons */}
+                          {editingCard === card.id ? (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleSaveEdit}
+                                className="h-7 w-7 p-0 text-gray-400 hover:text-green-600 hover:bg-green-50"
+                              >
+                                <Save className="w-3 h-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setEditingCard(null)}
+                                className="h-7 w-7 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-50"
+                              >
+                                <X className="w-3 h-3" />
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditCard(card)}
+                                className="h-7 w-7 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-50"
+                              >
+                                <Edit3 className="w-3 h-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteCard(card.id)}
+                                className="h-7 w-7 p-0 text-gray-400 hover:text-red-500 hover:bg-red-50"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    {editingCard === card.id ? (
-                      <Textarea
-                        value={editContent}
-                        onChange={(e) => setEditContent(e.target.value)}
-                        placeholder="输入卡片内容..."
-                        className="min-h-[200px] resize-none border-gray-200 focus:border-gray-400 focus:ring-0"
-                      />
-                    ) : (
-                      <div 
-                        className="whitespace-pre-wrap text-gray-700 min-h-[100px] cursor-text leading-relaxed"
-                        onMouseUp={() => handleTextSelection(card.id)}
-                      >
-                        {card.content || (
-                          <span className="text-gray-400 italic">暂无内容，点击编辑按钮开始写作</span>
-                        )}
-                      </div>
-                    )}
-                  </CardContent>
-                  
-                  {/* Show selected text indicator */}
-                  {selectedText && selectedCardId === card.id && (
-                    <div className="px-6 pb-4">
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                        <p className="text-sm text-blue-800 font-medium mb-1">
-                          已选中文本
-                        </p>
-                        <p className="text-sm text-blue-700 mb-2">
-                          "{selectedText.substring(0, 100)}..."
-                        </p>
-                        <p className="text-xs text-blue-600">
-                          点击"片段"按钮将此文本添加为引用
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </Card>
-              ))}
+                    </CardHeader>
+                    
+                    <CardContent className="flex-1 flex flex-col min-h-0">
+                      {editingCard === card.id ? (
+                        <Textarea
+                          value={editContent}
+                          onChange={(e) => setEditContent(e.target.value)}
+                          placeholder="输入卡片内容..."
+                          className="flex-1 resize-none border-gray-200 focus:border-gray-400 focus:ring-0 text-sm"
+                        />
+                      ) : (
+                        <div 
+                          className="flex-1 whitespace-pre-wrap text-gray-700 cursor-text leading-relaxed text-sm overflow-y-auto"
+                          onMouseUp={() => handleTextSelection(card.id)}
+                        >
+                          {card.content || (
+                            <span className="text-gray-400 italic">暂无内容，点击编辑按钮开始写作</span>
+                          )}
+                        </div>
+                      )}
+                      
+                      {/* Show selected text indicator */}
+                      {selectedText && selectedCardId === card.id && (
+                        <div className="mt-3">
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                            <p className="text-xs text-blue-800 font-medium mb-1">
+                              已选中文本
+                            </p>
+                            <p className="text-xs text-blue-700 mb-2">
+                              "{selectedText.substring(0, 80)}..."
+                            </p>
+                            <p className="text-xs text-blue-600">
+                              点击"片段"按钮将此文本添加为引用
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </div>
           )}
         </div>
