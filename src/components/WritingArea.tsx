@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 
 interface WritingAreaProps {
   projectId: string;
-  onCardUpdate: (cardId: string, content: string) => void;
+  onCardUpdate: (cardId: string, content: string, title?: string) => void;
   onCardCreate: (cardId: string) => void;
   onTextSelect: (cardId: string, selectedText: string, instruction: string) => void;
   onAddReference?: (reference: any) => void;
@@ -148,6 +148,10 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(
         });
         setCards(prev => [...prev, newCard]);
         onCardCreate(newCard.id);
+        toast({
+          title: "新卡片已创建",
+          description: "您可以开始编辑新卡片了",
+        });
       } catch (error) {
         console.error('Failed to create card:', error);
         toast({
@@ -173,8 +177,15 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(
           content: editContent,
         });
         setCards(prev => prev.map(c => c.id === editingCard ? updatedCard : c));
-        onCardUpdate(editingCard, editContent);
+        
+        // 通知父组件用户编辑了卡片
+        onCardUpdate(editingCard, editContent, editTitle || undefined);
+        
         setEditingCard(null);
+        toast({
+          title: "卡片已保存",
+          description: "您的编辑已保存并通知给AI",
+        });
       } catch (error) {
         console.error('Failed to update card:', error);
         toast({
@@ -189,6 +200,10 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(
       try {
         await cardsApi.delete(cardId);
         setCards(prev => prev.filter(c => c.id !== cardId));
+        toast({
+          title: "卡片已删除",
+          description: "卡片已从项目中移除",
+        });
       } catch (error) {
         console.error('Failed to delete card:', error);
         toast({
@@ -208,7 +223,7 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(
     }
 
     return (
-      <div className="h-full flex flex-col bg-white">
+      <div className="h-full flex flex-col bg-white border-r border-gray-200">
         {/* Header */}
         <div className="p-6 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center justify-between">

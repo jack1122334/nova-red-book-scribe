@@ -8,157 +8,140 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface Reference {
-  type: 'full_card' | 'text_snippet';
-  card_id: string;
-  card_friendly_title: string;
-  user_remark: string;
-  snippet_content?: string;
-}
-
-interface ChatRequest {
-  project_id: string;
-  core_instruction: string;
-  references?: Reference[];
-}
-
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log('Chat request received');
+    const { project_id, core_instruction, references = [], system_messages = [] } = await req.json();
     
-    // Parse request body
-    const { project_id, core_instruction, references = [] }: ChatRequest = await req.json();
-    console.log('Request data:', { project_id, core_instruction, references });
-
-    if (!project_id || !core_instruction) {
-      throw new Error('Missing required fields: project_id and core_instruction');
-    }
-
-    // Get API keys
-    const deepseekApiKey = Deno.env.get('DEEPSEEK_API_KEY');
-    if (!deepseekApiKey) {
-      throw new Error('DEEPSEEK_API_KEY not configured');
-    }
-
-    // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const deepseekApiKey = Deno.env.get('DEEPSEEK_API_KEY')!;
+    
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get user from request headers
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('No authorization header');
+    // 1. 存储用户消息
+    const { data: userMessage, error: userMessageError } = await supabase
+      .from('chat_messages')
+      .insert({
+        project_id,
+        role: 'user',
+        content: core_instruction,
+        created_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (userMessageError) {
+      console.error('Error storing user message:', userMessageError);
+      throw userMessageError;
     }
 
-    // Verify user authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    );
-
-    if (authError || !user) {
-      throw new Error('Invalid authentication');
-    }
-
-    console.log('User authenticated:', user.id);
-
-    // Build messages array according to specification
-    const messages: any[] = [];
-
-    // 1. System Prompt (首条消息)
-    messages.push({
-      role: 'system',
-      content: 'You are Nova, an AI assistant specialized in helping users create engaging Xiaohongshu (Little Red Book) posts. Your goal is to collaborate with the user to draft, refine, and finalize content. \n\nKey Interaction Protocols:\n1.  **Creating New Cards:** When you need to generate a new Xiaohongshu post, wrap the ENTIRE post content within <new_xhs_card title="[Optional: A concise title for the new card]">...</new_xhs_card> tags. The title attribute is optional but recommended.\n2.  **Updating Existing Cards:** When modifying an existing card, wrap the ENTIRE updated post content within <update_xhs_card card_ref_id="[The friendly title/reference ID of the card being updated]">...</update_xhs_card> tags. You will be provided with the card_ref_id in system messages describing user actions or references.\n3.  **Referring to Cards:** Users may provide references to existing cards (e.g., \'Card "Draft V1"\') or specific text snippets from them, along with instructions on how to use these references. Pay close attention to these references and instructions.\n4.  **General Chat:** For advice, questions, or discussions not directly resulting in a card creation/update, provide your response as plain text without special XML tags.\n5.  **Clarity:** If a user\'s request is unclear, ask for clarification.\n\nRemember to always provide the full content for a card inside the appropriate XML tag.'
-    });
-
-    // 2. Load historical chat messages
-    const { data: chatHistory, error: historyError } = await supabase
+    // 2. 获取历史消息
+    const { data: historyMessages, error: historyError } = await supabase
       .from('chat_messages')
       .select('*')
       .eq('project_id', project_id)
       .order('created_at', { ascending: true });
 
     if (historyError) {
-      console.error('Error loading chat history:', historyError);
-    } else if (chatHistory) {
-      for (const msg of chatHistory) {
-        if (msg.role === 'user') {
+      console.error('Error loading history:', historyError);
+      throw historyError;
+    }
+
+    // 3. 构建消息数组
+    const messages = [];
+    
+    // System prompt
+    messages.push({
+      role: "system",
+      content: `You are Nova, an AI assistant specialized in helping users create engaging Xiaohongshu (Little Red Book) posts. Your goal is to collaborate with the user to draft, refine, and finalize content.
+
+Key Interaction Protocols:
+1. **Creating New Cards:** When you need to generate a new Xiaohongshu post, wrap the ENTIRE post content within <new_xhs_card title="[Optional: A concise title for the new card]">...</new_xhs_card> tags. The title attribute is optional but recommended.
+2. **Updating Existing Cards:** When modifying an existing card, wrap the ENTIRE updated post content within <update_xhs_card card_ref_id="[The friendly title/reference ID of the card being updated]">...</update_xhs_card> tags. You will be provided with the card_ref_id in system messages describing user actions or references.
+3. **Referring to Cards:** Users may provide references to existing cards (e.g., 'Card "Draft V1"') or specific text snippets from them, along with instructions on how to use these references. Pay close attention to these references and instructions.
+4. **General Chat:** For advice, questions, or discussions not directly resulting in a card creation/update, provide your response as plain text without special XML tags.
+5. **Clarity:** If a user's request is unclear, ask for clarification.
+
+Remember to always provide the full content for a card inside the appropriate XML tag.`
+    });
+
+    // 历史消息 (除了刚才存储的用户消息)
+    for (const msg of historyMessages) {
+      if (msg.id !== userMessage.id) {
+        if (msg.role === 'assistant' && msg.llm_raw_output) {
           messages.push({
-            role: 'user',
-            content: msg.content
+            role: msg.role,
+            content: msg.llm_raw_output
           });
-        } else if (msg.role === 'assistant') {
-          // Use llm_raw_output if available, otherwise use content
+        } else {
           messages.push({
-            role: 'assistant',
-            content: msg.llm_raw_output || msg.content
-          });
-        } else if (msg.role === 'system') {
-          messages.push({
-            role: 'system',
+            role: msg.role,
             content: msg.content
           });
         }
       }
     }
 
-    // 3. Process references and create system messages
-    if (references && references.length > 0) {
-      console.log('Processing references:', references);
-      
-      let referenceSystemMessage = '用户为本次创作提供了以下参考信息，请在理解核心指令时充分利用它们：\n\n';
-      
-      for (let i = 0; i < references.length; i++) {
-        const ref = references[i];
-        referenceSystemMessage += `参考项${i + 1}：\n`;
-        referenceSystemMessage += `  来源：卡片"${ref.card_friendly_title}" (内部ID: ${ref.card_id})\n`;
-        referenceSystemMessage += `  类型：${ref.type === 'full_card' ? '整个卡片' : '文本片段'}\n`;
-        referenceSystemMessage += `  用户备注："${ref.user_remark}"\n`;
-        
-        if (ref.type === 'full_card') {
-          // Get full card content
-          const { data: cardData, error: cardError } = await supabase
-            .from('cards')
-            .select('content')
-            .eq('id', ref.card_id)
-            .eq('project_id', project_id)
-            .single();
-          
-          if (cardError) {
-            console.error('Error fetching referenced card:', cardError);
-            referenceSystemMessage += `  内容：[无法获取卡片内容]\n`;
-          } else {
-            referenceSystemMessage += `  内容：\n  ---\n  ${cardData.content}\n  ---\n`;
-          }
-        } else if (ref.type === 'text_snippet') {
-          referenceSystemMessage += `  片段内容：\n  ---\n  ${ref.snippet_content}\n  ---\n`;
-        }
-        
-        referenceSystemMessage += '\n';
-      }
-      
+    // 4. 添加系统消息（用户编辑操作）
+    for (const systemMsg of system_messages) {
       messages.push({
-        role: 'system',
-        content: referenceSystemMessage
+        role: "system",
+        content: systemMsg
       });
     }
 
-    // 4. Current user core instruction
+    // 5. 处理引用
+    if (references.length > 0) {
+      let referencesContent = "用户为本次创作提供了以下参考信息，请在理解核心指令时充分利用它们：\n\n";
+      
+      for (let i = 0; i < references.length; i++) {
+        const ref = references[i];
+        
+        // 获取卡片内容
+        const { data: cardData, error: cardError } = await supabase
+          .from('cards')
+          .select('*')
+          .eq('id', ref.card_id)
+          .eq('project_id', project_id)
+          .single();
+
+        if (cardError) {
+          console.error('Error loading referenced card:', cardError);
+          continue;
+        }
+
+        referencesContent += `参考项${i + 1}：\n`;
+        referencesContent += `  来源：卡片"${ref.card_friendly_title}" (内部ID: ${ref.card_id})\n`;
+        referencesContent += `  类型：${ref.type === 'full_card' ? '整个卡片' : '文本片段'}\n`;
+        referencesContent += `  用户备注："${ref.user_remark}"\n`;
+        
+        if (ref.type === 'full_card') {
+          referencesContent += `  内容：\n  ---\n  ${cardData.content}\n  ---\n\n`;
+        } else if (ref.type === 'text_snippet' && ref.snippet_content) {
+          referencesContent += `  片段内容：\n  ---\n  ${ref.snippet_content}\n  ---\n\n`;
+        }
+      }
+      
+      messages.push({
+        role: "system",
+        content: referencesContent
+      });
+    }
+
+    // 6. 添加当前用户指令
     messages.push({
-      role: 'user',
+      role: "user",
       content: core_instruction
     });
 
-    console.log('Constructed messages array:', messages.length, 'messages');
+    console.log('Sending to DeepSeek:', { messages: messages.length });
 
-    // Call DeepSeek API
-    console.log('Calling DeepSeek API...');
-    const deepseekResponse = await fetch('https://api.deepseek.com/chat/completions', {
+    // 7. 调用 DeepSeek API
+    const response = await fetch('https://api.deepseek.com/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${deepseekApiKey}`,
@@ -167,143 +150,128 @@ serve(async (req) => {
       body: JSON.stringify({
         model: 'deepseek-chat',
         messages: messages,
+        max_tokens: 4000,
         temperature: 0.7,
-        max_tokens: 2000,
       }),
     });
 
-    if (!deepseekResponse.ok) {
-      const errorText = await deepseekResponse.text();
-      console.error('DeepSeek API error:', errorText);
-      throw new Error(`DeepSeek API error: ${deepseekResponse.status} ${errorText}`);
+    if (!response.ok) {
+      throw new Error(`DeepSeek API error: ${response.status}`);
     }
 
-    const deepseekData = await deepseekResponse.json();
-    console.log('DeepSeek API response received');
+    const result = await response.json();
+    const aiContent = result.choices[0].message.content;
 
-    if (!deepseekData.choices || !deepseekData.choices[0]) {
-      throw new Error('Invalid response from DeepSeek API');
-    }
+    console.log('DeepSeek response received:', { length: aiContent.length });
 
-    const llmRawOutput = deepseekData.choices[0].message.content;
-    console.log('LLM raw output:', llmRawOutput);
-
-    // Parse XML tags and perform database operations
-    let associatedCardId = null;
-    
-    // Parse <new_xhs_card> tags
+    // 8. 解析 XML 标签并执行数据库操作
     const newCardRegex = /<new_xhs_card(?:\s+title="([^"]*)")?>([^]*?)<\/new_xhs_card>/g;
-    let newCardMatch;
-    while ((newCardMatch = newCardRegex.exec(llmRawOutput)) !== null) {
-      const title = newCardMatch[1] || `新卡片 ${Date.now()}`;
-      const content = newCardMatch[2].trim();
+    const updateCardRegex = /<update_xhs_card\s+card_ref_id="([^"]*)"([^]*?)<\/update_xhs_card>/g;
+    
+    let associatedCardId = null;
+    let match;
+
+    // 处理新卡片创建
+    while ((match = newCardRegex.exec(aiContent)) !== null) {
+      const title = match[1] || `AI生成卡片 ${new Date().toISOString().slice(0, 10)}`;
+      const content = match[2].trim();
       
-      console.log('Creating new card:', { title, content: content.substring(0, 100) + '...' });
+      console.log('Creating new card:', { title, content: content.substring(0, 100) });
       
       const { data: newCard, error: createError } = await supabase
         .from('cards')
         .insert({
-          project_id: project_id,
-          title: title,
-          content: content,
-          card_order: 0, // You might want to calculate this properly
+          project_id,
+          title,
+          content,
+          card_order: 999, // 临时值，后续可以优化
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         })
         .select()
         .single();
-      
+
       if (createError) {
-        console.error('Error creating new card:', createError);
+        console.error('Error creating card:', createError);
       } else {
-        console.log('New card created with ID:', newCard.id);
         associatedCardId = newCard.id;
+        console.log('Card created successfully:', newCard.id);
       }
     }
 
-    // Parse <update_xhs_card> tags
-    const updateCardRegex = /<update_xhs_card\s+card_ref_id="([^"]*)"([^]*?)<\/update_xhs_card>/g;
-    let updateCardMatch;
-    while ((updateCardMatch = updateCardRegex.exec(llmRawOutput)) !== null) {
-      const cardRefId = updateCardMatch[1];
-      const content = updateCardMatch[2].trim();
+    // 处理卡片更新
+    while ((match = updateCardRegex.exec(aiContent)) !== null) {
+      const cardRefId = match[1];
+      const content = match[2].trim();
       
-      console.log('Updating card:', { cardRefId, content: content.substring(0, 100) + '...' });
+      console.log('Updating card:', { cardRefId, content: content.substring(0, 100) });
       
-      // Find card by title (card_ref_id)
+      // 通过友好标题查找卡片
       const { data: existingCard, error: findError } = await supabase
         .from('cards')
-        .select('id')
+        .select('*')
         .eq('project_id', project_id)
         .eq('title', cardRefId)
         .single();
-      
-      if (findError) {
-        console.error('Error finding card by title:', findError);
+
+      if (findError || !existingCard) {
+        console.error('Card not found for update:', cardRefId);
+        continue;
+      }
+
+      const { error: updateError } = await supabase
+        .from('cards')
+        .update({
+          content,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existingCard.id);
+
+      if (updateError) {
+        console.error('Error updating card:', updateError);
       } else {
-        const { error: updateError } = await supabase
-          .from('cards')
-          .update({ content: content })
-          .eq('id', existingCard.id);
-        
-        if (updateError) {
-          console.error('Error updating card:', updateError);
-        } else {
-          console.log('Card updated successfully:', existingCard.id);
-          associatedCardId = existingCard.id;
-        }
+        associatedCardId = existingCard.id;
+        console.log('Card updated successfully:', existingCard.id);
       }
     }
 
-    // Save user message to database
-    const { error: userMsgError } = await supabase
-      .from('chat_messages')
-      .insert({
-        project_id,
-        role: 'user',
-        content: core_instruction,
-        created_at: new Date().toISOString(),
-      });
-
-    if (userMsgError) {
-      console.error('Error saving user message:', userMsgError);
-    }
-
-    // Save assistant response to database
-    const { error: assistantMsgError } = await supabase
+    // 9. 存储 AI 响应
+    const { error: aiMessageError } = await supabase
       .from('chat_messages')
       .insert({
         project_id,
         role: 'assistant',
-        content: llmRawOutput.replace(/<[^>]*>/g, ''), // Strip XML tags for content field
-        llm_raw_output: llmRawOutput,
+        content: aiContent.replace(/<new_xhs_card[^>]*>[\s\S]*?<\/new_xhs_card>/g, '[新卡片已创建]')
+                          .replace(/<update_xhs_card[^>]*>[\s\S]*?<\/update_xhs_card>/g, '[卡片已更新]'),
+        llm_raw_output: aiContent,
         associated_card_id: associatedCardId,
-        created_at: new Date().toISOString(),
+        created_at: new Date().toISOString()
       });
 
-    if (assistantMsgError) {
-      console.error('Error saving assistant message:', assistantMsgError);
+    if (aiMessageError) {
+      console.error('Error storing AI message:', aiMessageError);
     }
 
-    const aiResponse = {
-      content: llmRawOutput, // Send raw output with XML tags to frontend
-      role: 'assistant'
-    };
-
-    console.log('Chat response prepared');
-
-    return new Response(JSON.stringify(aiResponse), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-
-  } catch (error: any) {
-    console.error('Error in chat function:', error);
     return new Response(
-      JSON.stringify({ 
-        error: error.message || 'Internal server error',
-        details: error.toString()
-      }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      JSON.stringify({ content: aiContent }),
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        } 
+      }
+    );
+
+  } catch (error) {
+    console.error('Error in chat-deepseek function:', error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { 
+        status: 500, 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        } 
       }
     );
   }

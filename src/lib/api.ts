@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
 
@@ -179,47 +178,28 @@ export const cardsApi = {
 };
 
 export const chatApi = {
-  async sendMessage(projectId: string, coreInstruction: string, references: any[] = []) {
-    console.log('API: Sending chat message:', { projectId, coreInstruction, references });
-    
-    try {
-      const { data, error } = await supabase.functions.invoke('chat-deepseek', {
-        body: {
-          project_id: projectId,
-          core_instruction: coreInstruction,
-          references: references,
-        },
-      });
-
-      if (error) {
-        console.error('API: Error from chat function:', error);
-        throw new Error(`AI 服务错误: ${error.message || '未知错误'}`);
-      }
-
-      console.log('API: Chat response received:', data);
-      return data;
-    } catch (error: any) {
-      console.error('API: Network error sending chat message:', error);
-      if (error.message?.includes('AI 服务错误')) {
-        throw error;
-      }
-      throw new Error(`网络错误: ${error.message || '无法连接到 AI 服务'}`);
-    }
-  },
-
-  async getMessages(projectId: string): Promise<ChatMessage[]> {
-    console.log('API: Fetching chat messages for project:', projectId);
+  getMessages: async (projectId: string) => {
     const { data, error } = await supabase
       .from('chat_messages')
       .select('*')
       .eq('project_id', projectId)
       .order('created_at', { ascending: true });
-    
-    if (error) {
-      console.error('API: Error fetching chat messages:', error);
-      throw new Error(`获取聊天记录失败: ${error.message}`);
-    }
-    console.log('API: Chat messages fetched successfully:', data?.length);
+
+    if (error) throw error;
     return data || [];
+  },
+
+  sendMessage: async (projectId: string, content: string, references: any[] = [], systemMessages: string[] = []) => {
+    const { data, error } = await supabase.functions.invoke('chat-deepseek', {
+      body: {
+        project_id: projectId,
+        core_instruction: content,
+        references: references,
+        system_messages: systemMessages
+      }
+    });
+
+    if (error) throw error;
+    return data;
   }
 };

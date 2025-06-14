@@ -34,6 +34,8 @@ interface Reference {
 export interface ChatAreaRef {
   addReference: (reference: Reference) => void;
   clearReferences: () => void;
+  notifyCardUpdate: (cardId: string, content: string, title?: string) => void;
+  notifyCardCreate: (cardId: string) => void;
 }
 
 export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
@@ -45,6 +47,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
     const [references, setReferences] = useState<Reference[]>([]);
     const [editingRemark, setEditingRemark] = useState<number | null>(null);
     const [editRemarkText, setEditRemarkText] = useState("");
+    const [pendingSystemMessages, setPendingSystemMessages] = useState<string[]>([]);
     const { toast } = useToast();
 
     useImperativeHandle(ref, () => ({
@@ -57,6 +60,18 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
       },
       clearReferences: () => {
         setReferences([]);
+      },
+      notifyCardUpdate: (cardId: string, content: string, title?: string) => {
+        // 添加系统消息到待发送队列
+        const systemMessage = `用户刚刚完成了对卡片"${title || cardId.slice(0, 8)}"(内部ID: ${cardId})的编辑。卡片的最新内容如下：\n---\n${content}\n---`;
+        setPendingSystemMessages(prev => [...prev, systemMessage]);
+        console.log('Card update notification added:', { cardId, title, content });
+      },
+      notifyCardCreate: (cardId: string) => {
+        // 添加系统消息到待发送队列
+        const systemMessage = `用户创建了一个新的空白卡片(内部ID: ${cardId})。`;
+        setPendingSystemMessages(prev => [...prev, systemMessage]);
+        console.log('Card create notification added:', { cardId });
       }
     }));
 
@@ -163,7 +178,10 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
 
       try {
         console.log('Sending message with references:', references);
-        const response = await chatApi.sendMessage(projectId, userMessage, references);
+        console.log('Pending system messages:', pendingSystemMessages);
+        
+        // 将待发送的系统消息包含在请求中
+        const response = await chatApi.sendMessage(projectId, userMessage, references, pendingSystemMessages);
         console.log('Chat API response:', response);
         
         if (response?.content) {
@@ -180,8 +198,9 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
           };
           setMessages(prev => [...prev.slice(0, -1), tempUserMessage, assistantMessage]);
           
-          // Clear references after successful message
+          // Clear references and pending system messages after successful message
           setReferences([]);
+          setPendingSystemMessages([]);
           
           toast({
             title: "消息发送成功",
@@ -216,6 +235,15 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
           <h2 className="text-lg font-semibold text-gray-900">Nova</h2>
           <p className="text-sm text-gray-600">小红书内容创作助手</p>
         </div>
+
+        {/* System Messages Indicator */}
+        {pendingSystemMessages.length > 0 && (
+          <div className="px-4 py-2 bg-blue-50 border-b border-blue-200">
+            <p className="text-xs text-blue-700">
+              有 {pendingSystemMessages.length} 个编辑操作等待发送给AI
+            </p>
+          </div>
+        )}
 
         {/* References Section */}
         {references.length > 0 && (
@@ -382,9 +410,9 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
                 className="min-h-[44px] max-h-[200px] resize-none border-gray-300 focus:border-gray-400 focus:ring-0"
                 disabled={isLoading}
               />
-              {references.length > 0 && (
+              {(references.length > 0 || pendingSystemMessages.length > 0) && (
                 <p className="text-xs text-gray-500 mt-2">
-                  将发送 {references.length} 个引用内容给 AI
+                  将发送 {references.length} 个引用{pendingSystemMessages.length > 0 && ` 和 ${pendingSystemMessages.length} 个编辑通知`} 给 AI
                 </p>
               )}
             </div>

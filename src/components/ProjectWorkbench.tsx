@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { Project } from "@/pages/Creation";
 import { WritingArea } from "@/components/WritingArea";
 import { ChatArea } from "@/components/ChatArea";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 
 interface ProjectWorkbenchProps {
   project: Project | null;
@@ -38,12 +39,20 @@ export const ProjectWorkbench = ({ project, onBack, initialMessage }: ProjectWor
     // TODO: 实现文本选择处理逻辑
   };
 
-  const handleCardUpdate = (cardId: string, content: string) => {
-    console.log('Card updated:', { cardId, content });
+  const handleCardUpdate = (cardId: string, content: string, title?: string) => {
+    console.log('Card updated:', { cardId, content, title });
+    // 通知ChatArea用户编辑了卡片
+    if (chatAreaRef.current?.notifyCardUpdate) {
+      chatAreaRef.current.notifyCardUpdate(cardId, content, title);
+    }
   };
 
   const handleCardCreate = (cardId: string) => {
     console.log('Card created:', { cardId });
+    // 通知ChatArea用户创建了新卡片
+    if (chatAreaRef.current?.notifyCardCreate) {
+      chatAreaRef.current.notifyCardCreate(cardId);
+    }
   };
 
   const handleAddReference = (reference: any) => {
@@ -72,30 +81,34 @@ export const ProjectWorkbench = ({ project, onBack, initialMessage }: ProjectWor
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex min-h-0">
-        {/* Writing Area - Left Side */}
-        <div className="flex-1 border-r border-gray-200">
-          <WritingArea 
-            ref={writingAreaRef}
-            projectId={project.id} 
-            onCardUpdate={handleCardUpdate}
-            onCardCreate={handleCardCreate}
-            onTextSelect={handleTextSelection}
-            onAddReference={handleAddReference}
-          />
-        </div>
-
-        {/* Chat Area - Right Side */}
-        <div className="w-96">
-          <ChatArea 
-            ref={chatAreaRef}
-            projectId={project.id} 
-            initialMessage={initialMessage}
-            onCardCreated={handleCardCreated}
-            onCardUpdated={handleCardUpdated}
-          />
-        </div>
+      {/* Main Content with Resizable Panels */}
+      <div className="flex-1 min-h-0">
+        <ResizablePanelGroup direction="horizontal" className="h-full">
+          {/* Writing Area - Left Side */}
+          <ResizablePanel defaultSize={65} minSize={40}>
+            <WritingArea 
+              ref={writingAreaRef}
+              projectId={project.id} 
+              onCardUpdate={handleCardUpdate}
+              onCardCreate={handleCardCreate}
+              onTextSelect={handleTextSelection}
+              onAddReference={handleAddReference}
+            />
+          </ResizablePanel>
+          
+          <ResizableHandle withHandle />
+          
+          {/* Chat Area - Right Side */}
+          <ResizablePanel defaultSize={35} minSize={25} maxSize={60}>
+            <ChatArea 
+              ref={chatAreaRef}
+              projectId={project.id} 
+              initialMessage={initialMessage}
+              onCardCreated={handleCardCreated}
+              onCardUpdated={handleCardUpdated}
+            />
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </div>
     </div>
   );
