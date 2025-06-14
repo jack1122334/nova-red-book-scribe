@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +21,7 @@ export const ChatArea = ({ projectId }: ChatAreaProps) => {
       id: "1",
       role: "assistant",
       content: "你好！我是 Nova，专门帮助你创作小红书内容的 AI 助手。你可以告诉我你想要创作什么样的内容，我会为你生成草稿或者帮你优化现有的内容。",
-      timestamp: new Date().toI SOString(),
+      timestamp: new Date().toISOString(),
     },
   ]);
   
