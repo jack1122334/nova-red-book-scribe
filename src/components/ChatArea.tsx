@@ -4,22 +4,26 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send, Bot, User, Lightbulb, Brain } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { chatApi } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 
 interface Message {
   id: string;
   role: "user" | "assistant" | "system";
   content: string;
   timestamp: string;
-  rawOutput?: string; // 存储Agent的原始输出（含XML标签）
+  rawOutput?: string;
   messageType?: "normal" | "thinking" | "system";
 }
 
 interface ChatAreaProps {
   projectId: string;
   initialMessage?: string;
+  onCardCreated?: (cardId: string, title: string, content: string) => void;
+  onCardUpdated?: (cardTitle: string, content: string) => void;
 }
 
-export const ChatArea = ({ projectId, initialMessage }: ChatAreaProps) => {
+export const ChatArea = ({ projectId, initialMessage, onCardCreated, onCardUpdated }: ChatAreaProps) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -32,6 +36,7 @@ export const ChatArea = ({ projectId, initialMessage }: ChatAreaProps) => {
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -41,7 +46,6 @@ export const ChatArea = ({ projectId, initialMessage }: ChatAreaProps) => {
     scrollToBottom();
   }, [messages]);
 
-  // 处理来自首页的初始消息
   useEffect(() => {
     if (initialMessage) {
       const userMessage: Message = {
@@ -52,162 +56,134 @@ export const ChatArea = ({ projectId, initialMessage }: ChatAreaProps) => {
       };
       setMessages(prev => [...prev, userMessage]);
       
-      // 自动发送初始消息给Agent
       setTimeout(() => {
-        handleAgentResponse(initialMessage);
+        handleSendMessage(initialMessage);
       }, 500);
     }
   }, [initialMessage]);
 
-  // 解析Agent的XML标签输出
   const parseAgentOutput = (rawOutput: string) => {
     const results = {
-      artifacts: [] as Array<{cardId?: string, content: string}>,
-      thoughts: [] as string[],
+      newCards: [] as Array<{title?: string, content: string}>,
+      updatedCards: [] as Array<{cardTitle: string, content: string}>,
       messages: [] as string[],
       plainText: rawOutput
     };
 
-    // 解析 <artifact> 标签
-    const artifactRegex = /<artifact(?:\s+card_id="([^"]*)")?>([\s\S]*?)<\/artifact>/g;
+    // 解析 <new_xhs_card> 标签
+    const newCardRegex = /<new_xhs_card(?:\s+title="([^"]*)")?>([\s\S]*?)<\/new_xhs_card>/g;
     let match;
-    while ((match = artifactRegex.exec(rawOutput)) !== null) {
-      results.artifacts.push({
-        cardId: match[1] || undefined,
+    while ((match = newCardRegex.exec(rawOutput)) !== null) {
+      results.newCards.push({
+        title: match[1] || undefined,
         content: match[2].trim()
       });
     }
 
-    // 解析 <think> 标签
-    const thinkRegex = /<think>([\s\S]*?)<\/think>/g;
-    while ((match = thinkRegex.exec(rawOutput)) !== null) {
-      results.thoughts.push(match[1].trim());
-    }
-
-    // 解析 <message> 标签
-    const messageRegex = /<message>([\s\S]*?)<\/message>/g;
-    while ((match = messageRegex.exec(rawOutput)) !== null) {
-      results.messages.push(match[1].trim());
+    // 解析 <update_xhs_card> 标签
+    const updateCardRegex = /<update_xhs_card\s+card_ref_id="([^"]*)">([\s\S]*?)<\/update_xhs_card>/g;
+    while ((match = updateCardRegex.exec(rawOutput)) !== null) {
+      results.updatedCards.push({
+        cardTitle: match[1],
+        content: match[2].trim()
+      });
     }
 
     // 移除所有XML标签，得到纯文本
     results.plainText = rawOutput
-      .replace(/<artifact(?:\s+card_id="[^"]*")?>([\s\S]*?)<\/artifact>/g, '')
-      .replace(/<think>([\s\S]*?)<\/think>/g, '')
-      .replace(/<message>([\s\S]*?)<\/message>/g, '')
+      .replace(/<new_xhs_card(?:\s+title="[^"]*")?>([\s\S]*?)<\/new_xhs_card>/g, '')
+      .replace(/<update_xhs_card\s+card_ref_id="[^"]*">([\s\S]*?)<\/update_xhs_card>/g, '')
       .trim();
 
     return results;
   };
 
-  // 处理Agent响应
-  const handleAgentResponse = async (userInput: string) => {
-    setIsLoading(true);
-
-    // 模拟Agent的响应（包含XML标签）
-    const mockAgentResponse = `<think>
-    用户想要创作关于春季护肤的小红书内容。我需要创建一个新的卡片，内容要活泼有趣，符合小红书的风格。
-    </think>
-
-    <message>
-    我来为你创作一篇关于春季护肤的小红书内容！让我生成一个新的草稿。
-    </message>
-
-    <artifact>
-    🌸春季护肤必备清单🌸
-
-    小仙女们！春天来了，肌肤换季也要跟上节奏哦～
-
-    ✨ 温和清洁是关键
-    换季时肌肤特别敏感，选择温和的氨基酸洁面，告别紧绷感！
-
-    💧 补水保湿加倍
-    春季风大干燥，保湿精华+乳液双重保障，水润一整天！
-
-    🌿 防晒永远不能少
-    春季紫外线已经很强了，SPF30+防晒霜必须安排上！
-
-    🌱 适度去角质
-    一周1-2次温和去角质，让后续护肤品更好吸收～
-
-    记住：护肤路上没有捷径，坚持才是王道！✨
-
-    #春季护肤 #护肤心得 #美妆分享 #护肤日记
-    </artifact>`;
-
-    // 模拟API延迟
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    // 解析Agent输出
-    const parsed = parseAgentOutput(mockAgentResponse);
-
-    // 添加思考过程消息
-    if (parsed.thoughts.length > 0) {
-      parsed.thoughts.forEach(thought => {
-        const thinkMessage: Message = {
-          id: Date.now().toString() + Math.random(),
-          role: "assistant",
-          content: thought,
-          timestamp: new Date().toISOString(),
-          messageType: "thinking"
-        };
-        setMessages(prev => [...prev, thinkMessage]);
-      });
-    }
-
-    // 添加Agent的回复消息
-    if (parsed.messages.length > 0) {
-      parsed.messages.forEach(msg => {
-        const agentMessage: Message = {
-          id: Date.now().toString() + Math.random(),
-          role: "assistant",
-          content: msg,
-          timestamp: new Date().toISOString(),
-          rawOutput: mockAgentResponse
-        };
-        setMessages(prev => [...prev, agentMessage]);
-      });
-    }
-
-    // 处理artifacts - 创建或更新卡片
-    if (parsed.artifacts.length > 0) {
-      parsed.artifacts.forEach(artifact => {
-        // 这里应该调用WritingArea的方法来创建或更新卡片
-        // 由于组件间通信的限制，这里先用console.log模拟
-        console.log('Creating/updating card:', artifact);
-        
-        // 添加系统消息到聊天记录
-        const systemMessage: Message = {
-          id: Date.now().toString() + Math.random(),
-          role: "system",
-          content: artifact.cardId 
-            ? `Agent 更新了卡片 ${artifact.cardId}` 
-            : `Agent 创建了新卡片`,
-          timestamp: new Date().toISOString(),
-          messageType: "system"
-        };
-        setMessages(prev => [...prev, systemMessage]);
-      });
-    }
-
-    setIsLoading(false);
-  };
-
-  const handleSendMessage = async () => {
-    if (!inputValue.trim() || isLoading) return;
+  const handleSendMessage = async (messageContent?: string) => {
+    const content = messageContent || inputValue;
+    if (!content.trim() || isLoading) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
-      content: inputValue,
+      content,
       timestamp: new Date().toISOString(),
     };
 
     setMessages(prev => [...prev, userMessage]);
-    const currentInput = inputValue;
-    setInputValue("");
+    if (!messageContent) {
+      setInputValue("");
+    }
+    setIsLoading(true);
 
-    await handleAgentResponse(currentInput);
+    try {
+      const response = await chatApi.sendMessage(projectId, {
+        core_instruction: content,
+        references: [], // TODO: 将来从引用篮构建
+      });
+
+      // 解析AI响应
+      const parsed = parseAgentOutput(response.content);
+
+      // 处理新卡片创建
+      for (const newCard of parsed.newCards) {
+        const title = newCard.title || `AI草稿 ${Date.now()}`;
+        onCardCreated?.(Date.now().toString(), title, newCard.content);
+        
+        const systemMessage: Message = {
+          id: Date.now().toString() + Math.random(),
+          role: "system",
+          content: `AI 创建了新卡片："${title}"`,
+          timestamp: new Date().toISOString(),
+          messageType: "system"
+        };
+        setMessages(prev => [...prev, systemMessage]);
+      }
+
+      // 处理卡片更新
+      for (const updatedCard of parsed.updatedCards) {
+        onCardUpdated?.(updatedCard.cardTitle, updatedCard.content);
+        
+        const systemMessage: Message = {
+          id: Date.now().toString() + Math.random(),
+          role: "system",
+          content: `AI 更新了卡片："${updatedCard.cardTitle}"`,
+          timestamp: new Date().toISOString(),
+          messageType: "system"
+        };
+        setMessages(prev => [...prev, systemMessage]);
+      }
+
+      // 添加AI的回复消息
+      if (parsed.plainText) {
+        const agentMessage: Message = {
+          id: Date.now().toString(),
+          role: "assistant",
+          content: parsed.plainText,
+          timestamp: new Date().toISOString(),
+          rawOutput: response.content
+        };
+        setMessages(prev => [...prev, agentMessage]);
+      }
+
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      toast({
+        title: "发送失败",
+        description: "无法发送消息，请重试",
+        variant: "destructive",
+      });
+      
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        role: "system",
+        content: "抱歉，消息发送失败，请重试。",
+        timestamp: new Date().toISOString(),
+        messageType: "system"
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -216,21 +192,6 @@ export const ChatArea = ({ projectId, initialMessage }: ChatAreaProps) => {
       handleSendMessage();
     }
   };
-
-  // 添加系统消息的方法（供WritingArea调用）
-  const addSystemMessage = (content: string) => {
-    const systemMessage: Message = {
-      id: Date.now().toString(),
-      role: "system",
-      content,
-      timestamp: new Date().toISOString(),
-      messageType: "system"
-    };
-    setMessages(prev => [...prev, systemMessage]);
-  };
-
-  // 暴露方法给父组件
-  (ChatArea as any).addSystemMessage = addSystemMessage;
 
   const getMessageIcon = (message: Message) => {
     if (message.messageType === "thinking") {
@@ -331,7 +292,7 @@ export const ChatArea = ({ projectId, initialMessage }: ChatAreaProps) => {
             disabled={isLoading}
           />
           <Button
-            onClick={handleSendMessage}
+            onClick={() => handleSendMessage()}
             disabled={!inputValue.trim() || isLoading}
             className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
           >

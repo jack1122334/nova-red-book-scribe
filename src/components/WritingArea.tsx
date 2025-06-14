@@ -1,16 +1,19 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Edit3, Check, X } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { cardsApi } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 
 export interface CardData {
   id: string;
   title: string;
   content: string;
+  card_order: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -19,20 +22,12 @@ interface WritingAreaProps {
   projectId: string;
   onCardUpdate?: (cardId: string, content: string) => void;
   onCardCreate?: (cardId: string) => void;
-  onTextSelect?: (cardId: string, selectedText: string) => void;
+  onTextSelect?: (cardId: string, selectedText: string, instruction: string) => void;
 }
 
 export const WritingArea = ({ projectId, onCardUpdate, onCardCreate, onTextSelect }: WritingAreaProps) => {
-  const [cards, setCards] = useState<CardData[]>([
-    {
-      id: "1",
-      title: "草稿 V1",
-      content: "🌸春季护肤小贴士🌸\n\n姐妹们！春天来了，换季护肤一定要注意这几点：\n\n✨ 温和清洁很重要，别用太刺激的洁面\n💧 补水保湿不能少，多喝水多敷面膜\n🌿 防晒更要做好，紫外线开始强了\n\n你们还有什么春季护肤心得吗？评论区聊聊～\n\n#春季护肤 #护肤心得 #美妆分享",
-      createdAt: "2024-01-15",
-      updatedAt: "2024-01-15",
-    },
-  ]);
-  
+  const [cards, setCards] = useState<CardData[]>([]);
+  const [loading, setLoading] = useState(true);
   const [editingCard, setEditingCard] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
   const [editingContent, setEditingContent] = useState("");
@@ -40,23 +35,72 @@ export const WritingArea = ({ projectId, onCardUpdate, onCardCreate, onTextSelec
   const [selectedCardId, setSelectedCardId] = useState("");
   const [isModifyDialogOpen, setIsModifyDialogOpen] = useState(false);
   const [modifyInstruction, setModifyInstruction] = useState("");
+  const { toast } = useToast();
 
-  const handleCreateCard = () => {
-    const newCardId = Date.now().toString();
-    const newCard: CardData = {
-      id: newCardId,
-      title: `新草稿`,
-      content: "",
-      createdAt: new Date().toISOString().split('T')[0],
-      updatedAt: new Date().toISOString().split('T')[0],
-    };
-    setCards([...cards, newCard]);
-    setEditingCard(newCard.id);
-    setEditingTitle(newCard.title);
-    setEditingContent(newCard.content);
-    
-    // 通知聊天区有新卡片创建
-    onCardCreate?.(newCardId);
+  useEffect(() => {
+    loadCards();
+  }, [projectId]);
+
+  const loadCards = async () => {
+    try {
+      setLoading(true);
+      const data = await cardsApi.list(projectId);
+      setCards(data.map(card => ({
+        id: card.id,
+        title: card.title || `卡片 ${card.card_order + 1}`,
+        content: card.content,
+        card_order: card.card_order,
+        createdAt: card.created_at,
+        updatedAt: card.updated_at,
+      })));
+    } catch (error) {
+      console.error('Failed to load cards:', error);
+      toast({
+        title: "加载失败",
+        description: "无法加载卡片",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateCard = async () => {
+    try {
+      const newCard = await cardsApi.create(projectId, {
+        title: `新草稿`,
+        content: "",
+        card_order: cards.length,
+      });
+      
+      const cardData: CardData = {
+        id: newCard.id,
+        title: newCard.title || `新草稿`,
+        content: newCard.content,
+        card_order: newCard.card_order,
+        createdAt: newCard.created_at,
+        updatedAt: newCard.updated_at,
+      };
+      
+      setCards([...cards, cardData]);
+      setEditingCard(newCard.id);
+      setEditingTitle(cardData.title);
+      setEditingContent(cardData.content);
+      
+      onCardCreate?.(newCard.id);
+      
+      toast({
+        title: "卡片创建成功",
+        description: "新卡片已创建，开始编辑吧！",
+      });
+    } catch (error) {
+      console.error('Failed to create card:', error);
+      toast({
+        title: "创建失败",
+        description: "无法创建新卡片",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleEditCard = (card: CardData) => {
@@ -65,25 +109,43 @@ export const WritingArea = ({ projectId, onCardUpdate, onCardCreate, onTextSelec
     setEditingContent(card.content);
   };
 
-  const handleSaveCard = () => {
+  const handleSaveCard = async () => {
     if (editingCard) {
-      setCards(cards.map(card => 
-        card.id === editingCard 
-          ? { 
-              ...card, 
-              title: editingTitle, 
-              content: editingContent,
-              updatedAt: new Date().toISOString().split('T')[0]
-            }
-          : card
-      ));
-      
-      // 通知聊天区卡片已更新
-      onCardUpdate?.(editingCard, editingContent);
-      
-      setEditingCard(null);
-      setEditingTitle("");
-      setEditingContent("");
+      try {
+        const updatedCard = await cardsApi.update(editingCard, {
+          title: editingTitle,
+          content: editingContent,
+        });
+        
+        setCards(cards.map(card => 
+          card.id === editingCard 
+            ? { 
+                ...card, 
+                title: editingTitle, 
+                content: editingContent,
+                updatedAt: updatedCard.updated_at
+              }
+            : card
+        ));
+        
+        onCardUpdate?.(editingCard, editingContent);
+        
+        setEditingCard(null);
+        setEditingTitle("");
+        setEditingContent("");
+        
+        toast({
+          title: "保存成功",
+          description: "卡片内容已保存",
+        });
+      } catch (error) {
+        console.error('Failed to save card:', error);
+        toast({
+          title: "保存失败",
+          description: "无法保存卡片内容",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -105,7 +167,7 @@ export const WritingArea = ({ projectId, onCardUpdate, onCardCreate, onTextSelec
 
   const handleModifyText = () => {
     if (modifyInstruction.trim() && selectedText && selectedCardId) {
-      onTextSelect?.(selectedCardId, selectedText);
+      onTextSelect?.(selectedCardId, selectedText, modifyInstruction);
       setIsModifyDialogOpen(false);
       setModifyInstruction("");
       setSelectedText("");
@@ -113,35 +175,85 @@ export const WritingArea = ({ projectId, onCardUpdate, onCardCreate, onTextSelec
     }
   };
 
-  // 从Agent接收的新卡片或更新的卡片
-  const handleReceiveCard = (cardId: string | null, content: string, title?: string) => {
-    if (cardId) {
-      // 更新现有卡片
-      setCards(cards.map(card =>
-        card.id === cardId
-          ? {
-              ...card,
+  // 用于接收从Agent生成的新卡片
+  const addCardFromAgent = async (title: string, content: string) => {
+    try {
+      const newCard = await cardsApi.create(projectId, {
+        title,
+        content,
+        card_order: cards.length,
+      });
+      
+      const cardData: CardData = {
+        id: newCard.id,
+        title: newCard.title || title,
+        content: newCard.content,
+        card_order: newCard.card_order,
+        createdAt: newCard.created_at,
+        updatedAt: newCard.updated_at,
+      };
+      
+      setCards(prev => [...prev, cardData]);
+      return newCard.id;
+    } catch (error) {
+      console.error('Failed to create card from agent:', error);
+      toast({
+        title: "AI创建卡片失败",
+        description: "无法保存AI生成的卡片",
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
+
+  // 用于更新现有卡片
+  const updateCardFromAgent = async (cardTitle: string, content: string) => {
+    try {
+      // 根据title查找卡片
+      const targetCard = cards.find(card => card.title === cardTitle);
+      if (!targetCard) {
+        console.error('Card not found:', cardTitle);
+        return false;
+      }
+
+      const updatedCard = await cardsApi.update(targetCard.id, {
+        content,
+      });
+      
+      setCards(prev => prev.map(card => 
+        card.id === targetCard.id 
+          ? { 
+              ...card, 
               content,
-              title: title || card.title,
-              updatedAt: new Date().toISOString().split('T')[0]
+              updatedAt: updatedCard.updated_at
             }
           : card
       ));
-    } else {
-      // 创建新卡片
-      const newCard: CardData = {
-        id: Date.now().toString(),
-        title: title || `AI草稿 ${Date.now()}`,
-        content,
-        createdAt: new Date().toISOString().split('T')[0],
-        updatedAt: new Date().toISOString().split('T')[0],
-      };
-      setCards([...cards, newCard]);
+      
+      return true;
+    } catch (error) {
+      console.error('Failed to update card from agent:', error);
+      toast({
+        title: "AI更新卡片失败",
+        description: "无法保存AI更新的卡片",
+        variant: "destructive",
+      });
+      return false;
     }
   };
 
   // 暴露方法给父组件
-  (WritingArea as any).handleReceiveCard = handleReceiveCard;
+  (WritingArea as any).addCardFromAgent = addCardFromAgent;
+  (WritingArea as any).updateCardFromAgent = updateCardFromAgent;
+
+  if (loading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full" />
+        <span className="ml-3 text-gray-600">加载卡片中...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full flex flex-col">
@@ -211,7 +323,7 @@ export const WritingArea = ({ projectId, onCardUpdate, onCardCreate, onTextSelec
                   )}
                 </div>
                 <p className="text-sm text-gray-500">
-                  更新于 {card.updatedAt}
+                  更新于 {new Date(card.updatedAt).toLocaleDateString()}
                 </p>
               </CardHeader>
               

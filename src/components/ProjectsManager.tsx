@@ -1,10 +1,12 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Plus, Search, Trash2, Clock, ArrowRight } from "lucide-react";
 import { Project } from "@/pages/Creation";
+import { projectsApi } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProjectsManagerProps {
   onProjectSelect: (project: Project) => void;
@@ -12,45 +14,87 @@ interface ProjectsManagerProps {
 
 export const ProjectsManager = ({ onProjectSelect }: ProjectsManagerProps) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [projects, setProjects] = useState<Project[]>([
-    {
-      id: "1",
-      title: "春季护肤小红书",
-      createdAt: "2024-01-15",
-      updatedAt: "2024-01-16",
-    },
-    {
-      id: "2", 
-      title: "减脂餐搭配攻略",
-      createdAt: "2024-01-14",
-      updatedAt: "2024-01-15",
-    },
-    {
-      id: "3",
-      title: "穿搭显瘦技巧",
-      createdAt: "2024-01-13",
-      updatedAt: "2024-01-14",
-    },
-  ]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
-  const handleCreateProject = () => {
-    const newProject: Project = {
-      id: Date.now().toString(),
-      title: `新项目 - ${new Date().toLocaleDateString()}`,
-      createdAt: new Date().toISOString().split('T')[0],
-      updatedAt: new Date().toISOString().split('T')[0],
-    };
-    setProjects([newProject, ...projects]);
-    onProjectSelect(newProject);
+  useEffect(() => {
+    loadProjects();
+  }, []);
+
+  const loadProjects = async () => {
+    try {
+      setLoading(true);
+      const data = await projectsApi.list();
+      setProjects(data);
+    } catch (error) {
+      console.error('Failed to load projects:', error);
+      toast({
+        title: "加载失败",
+        description: "无法加载项目列表",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDeleteProject = (projectId: string) => {
-    setProjects(projects.filter(p => p.id !== projectId));
+  const handleCreateProject = async () => {
+    try {
+      const newProject = await projectsApi.create({
+        title: `新项目 - ${new Date().toLocaleDateString()}`,
+      });
+      setProjects([newProject, ...projects]);
+      onProjectSelect(newProject);
+      toast({
+        title: "项目创建成功",
+        description: `项目 "${newProject.title}" 已创建`,
+      });
+    } catch (error) {
+      console.error('Failed to create project:', error);
+      toast({
+        title: "创建失败",
+        description: "无法创建新项目",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteProject = async (projectId: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    try {
+      await projectsApi.delete(projectId);
+      setProjects(projects.filter(p => p.id !== projectId));
+      toast({
+        title: "项目已删除",
+        description: "项目删除成功",
+      });
+    } catch (error) {
+      console.error('Failed to delete project:', error);
+      toast({
+        title: "删除失败",
+        description: "无法删除项目",
+        variant: "destructive",
+      });
+    }
   };
 
   const filteredProjects = projects.filter(project =>
     project.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-8 py-12">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full" />
+            <span className="ml-3 text-gray-600">加载项目中...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-8 py-12">
@@ -89,6 +133,7 @@ export const ProjectsManager = ({ onProjectSelect }: ProjectsManagerProps) => {
             <Card 
               key={project.id}
               className="group cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-white/70 backdrop-blur-sm border-purple-200"
+              onClick={() => onProjectSelect(project)}
             >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
@@ -98,28 +143,22 @@ export const ProjectsManager = ({ onProjectSelect }: ProjectsManagerProps) => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteProject(project.id);
-                    }}
+                    onClick={(e) => handleDeleteProject(project.id, e)}
                     className="opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-700 hover:bg-red-50"
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
               </CardHeader>
-              <CardContent 
-                className="pt-0"
-                onClick={() => onProjectSelect(project)}
-              >
+              <CardContent className="pt-0">
                 <div className="space-y-3">
                   <div className="flex items-center text-sm text-gray-500">
                     <Clock className="w-4 h-4 mr-1" />
-                    最后编辑：{project.updatedAt}
+                    最后编辑：{new Date(project.updatedAt).toLocaleDateString()}
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">
-                      创建于 {project.createdAt}
+                      创建于 {new Date(project.createdAt).toLocaleDateString()}
                     </span>
                     <Button
                       variant="ghost"
@@ -136,7 +175,7 @@ export const ProjectsManager = ({ onProjectSelect }: ProjectsManagerProps) => {
           ))}
         </div>
 
-        {filteredProjects.length === 0 && (
+        {filteredProjects.length === 0 && !loading && (
           <div className="text-center py-12">
             <div className="text-gray-400 mb-4">
               <Plus className="w-16 h-16 mx-auto mb-4 opacity-50" />

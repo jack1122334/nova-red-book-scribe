@@ -1,42 +1,67 @@
 
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { GoodcaseGallery } from "@/components/GoodcaseGallery";
 import { FloatingSidebar } from "@/components/FloatingSidebar";
+import { AuthContext } from "@/components/AuthProvider";
+import { projectsApi } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const [inputValue, setInputValue] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const navigate = useNavigate();
+  const { user, signOut } = useContext(AuthContext);
+  const { toast } = useToast();
 
   const handleCreateProject = async () => {
     if (!inputValue.trim() || isCreating) return;
     
     setIsCreating(true);
     
-    // 模拟创建项目的API调用
-    // TODO: 替换为实际的API调用
-    const newProject = {
-      id: Date.now().toString(),
-      title: `基于'${inputValue.slice(0, 20)}'的项目`,
-      createdAt: new Date().toISOString().split('T')[0],
-      updatedAt: new Date().toISOString().split('T')[0],
-      initialMessage: inputValue
-    };
-    
-    // 模拟API延迟
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // 导航到项目工作台，传递初始消息
-    navigate(`/creation/workbench/${newProject.id}`, { 
-      state: { 
-        project: newProject,
-        initialMessage: inputValue 
-      }
-    });
+    try {
+      // 创建新项目
+      const newProject = await projectsApi.create({
+        title: `基于'${inputValue.slice(0, 20)}'的项目`,
+      });
+      
+      // 导航到项目工作台，传递初始消息
+      navigate(`/creation/workbench/${newProject.id}`, { 
+        state: { 
+          project: newProject,
+          initialMessage: inputValue 
+        }
+      });
+    } catch (error) {
+      console.error('Failed to create project:', error);
+      toast({
+        title: "创建失败",
+        description: "无法创建新项目，请重试",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "已退出登录",
+        description: "您已成功退出登录",
+      });
+    } catch (error) {
+      console.error('Sign out error:', error);
+      toast({
+        title: "退出失败",
+        description: "退出登录时发生错误",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -49,6 +74,23 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
       <FloatingSidebar currentPage="home" />
+      
+      {/* 用户信息和退出按钮 */}
+      <div className="absolute top-4 right-4">
+        <div className="flex items-center gap-4 bg-white/70 backdrop-blur-sm rounded-full px-4 py-2">
+          <span className="text-sm text-gray-600">
+            欢迎，{user?.email}
+          </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleSignOut}
+            className="text-gray-600 hover:text-gray-800"
+          >
+            <LogOut className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
       
       <div className="container mx-auto px-8 py-12">
         <div className="max-w-4xl mx-auto">

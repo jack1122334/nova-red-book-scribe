@@ -9,13 +9,133 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      cards: {
+        Row: {
+          card_order: number
+          content: string
+          created_at: string
+          id: string
+          project_id: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          card_order?: number
+          content?: string
+          created_at?: string
+          id?: string
+          project_id: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          card_order?: number
+          content?: string
+          created_at?: string
+          id?: string
+          project_id?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cards_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_messages: {
+        Row: {
+          associated_card_id: string | null
+          content: string
+          created_at: string
+          id: string
+          llm_raw_output: Json | null
+          project_id: string
+          role: string
+        }
+        Insert: {
+          associated_card_id?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          llm_raw_output?: Json | null
+          project_id: string
+          role: string
+        }
+        Update: {
+          associated_card_id?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          llm_raw_output?: Json | null
+          project_id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_associated_card_id_fkey"
+            columns: ["associated_card_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          created_at: string
+          id: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_project_with_cards: {
+        Args: { project_uuid: string }
+        Returns: {
+          project_id: string
+          project_title: string
+          project_created_at: string
+          project_updated_at: string
+          card_id: string
+          card_title: string
+          card_content: string
+          card_order: number
+          card_created_at: string
+          card_updated_at: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
