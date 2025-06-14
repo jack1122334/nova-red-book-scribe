@@ -1,1 +1,40 @@
+
 project_id = "evpczvwygelrvxzfdcgv"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[auth]
+enabled = true
+port = 54322
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://localhost:3000"]
+jwt_expiry = 3600
+enable_signup = true
+enable_email_confirmations = false
+enable_email_autoconfirm = false
+enable_phone_confirmations = false
+enable_phone_autoconfirm = false
+
+[db]
+enabled = true
+port = 54323
+shadow_port = 54324
+major_version = 15
+
+[functions.chat-deepseek]
+verify_jwt = true
+
+[realtime]
+enabled = true
+port = 54325
+ip_version = "ipv4"
+
+[storage]
+enabled = true
+port = 54326
+file_size_limit = "50MiB"
