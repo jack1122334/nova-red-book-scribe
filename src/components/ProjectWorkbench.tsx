@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -53,28 +54,28 @@ export const ProjectWorkbench = ({ project, onBack, initialMessage }: ProjectWor
   };
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-screen flex flex-col bg-gray-50">
       {/* Header */}
-      <div className="border-b bg-white/70 backdrop-blur-sm px-6 py-4">
+      <div className="border-b border-gray-200 bg-white px-6 py-4">
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
             size="sm"
             onClick={onBack}
-            className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+            className="text-gray-600 hover:text-gray-900 hover:bg-gray-100"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             返回项目列表
           </Button>
           <div className="h-6 w-px bg-gray-300" />
-          <h1 className="text-xl font-semibold text-gray-800">{project.title}</h1>
+          <h1 className="text-xl font-semibold text-gray-900">{project.title}</h1>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="flex-1 flex min-h-0">
         {/* Writing Area - Left Side */}
-        <div className="flex-1 border-r bg-white/30">
+        <div className="flex-1 border-r border-gray-200">
           <WritingArea 
             ref={writingAreaRef}
             projectId={project.id} 
@@ -86,7 +87,7 @@ export const ProjectWorkbench = ({ project, onBack, initialMessage }: ProjectWor
         </div>
 
         {/* Chat Area - Right Side */}
-        <div className="w-96 bg-white/50">
+        <div className="w-96">
           <ChatArea 
             ref={chatAreaRef}
             projectId={project.id} 

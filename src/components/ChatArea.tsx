@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import { Send, Bot, User, Link } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Send, Bot, User, Link, Edit3, Check, X } from "lucide-react";
 import { chatApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 
@@ -41,6 +43,8 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
     const [isLoading, setIsLoading] = useState(false);
     const [hasInitialized, setHasInitialized] = useState(false);
     const [references, setReferences] = useState<Reference[]>([]);
+    const [editingRemark, setEditingRemark] = useState<number | null>(null);
+    const [editRemarkText, setEditRemarkText] = useState("");
     const { toast } = useToast();
 
     useImperativeHandle(ref, () => ({
@@ -123,6 +127,24 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
       setReferences(prev => prev.filter((_, i) => i !== index));
     };
 
+    const startEditingRemark = (index: number, currentRemark: string) => {
+      setEditingRemark(index);
+      setEditRemarkText(currentRemark);
+    };
+
+    const saveRemark = (index: number) => {
+      setReferences(prev => prev.map((ref, i) => 
+        i === index ? { ...ref, user_remark: editRemarkText } : ref
+      ));
+      setEditingRemark(null);
+      setEditRemarkText("");
+    };
+
+    const cancelEditRemark = () => {
+      setEditingRemark(null);
+      setEditRemarkText("");
+    };
+
     const handleSendMessage = async () => {
       if (!inputValue.trim() || isLoading) return;
 
@@ -188,131 +210,192 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
     };
 
     return (
-      <div className="h-full flex flex-col">
-        <div className="p-6 border-b bg-white/50">
-          <h2 className="text-lg font-semibold text-gray-800">AI 助手</h2>
-          <p className="text-sm text-gray-600">Nova 会帮你创作精彩的小红书内容</p>
+      <div className="h-full flex flex-col bg-white">
+        {/* Header */}
+        <div className="p-4 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900">Nova</h2>
+          <p className="text-sm text-gray-600">小红书内容创作助手</p>
         </div>
 
         {/* References Section */}
         {references.length > 0 && (
-          <div className="p-4 border-b bg-yellow-50/50">
-            <h3 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+          <div className="p-4 border-b border-gray-200 bg-gray-50">
+            <h3 className="text-sm font-medium text-gray-800 mb-3 flex items-center gap-2">
               <Link className="w-4 h-4" />
               引用内容 ({references.length})
             </h3>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {references.map((ref, index) => (
-                <div key={index} className="bg-white/70 rounded-lg p-3 text-sm">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <span className="font-medium text-purple-700">
-                        {ref.card_friendly_title}
-                      </span>
-                      <span className="text-gray-500 ml-2">
-                        ({ref.type === 'full_card' ? '整个卡片' : '文本片段'})
-                      </span>
+                <div key={index} className="bg-white rounded-lg border border-gray-200 p-3 text-sm">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="font-medium text-gray-900 truncate">
+                          {ref.card_friendly_title}
+                        </span>
+                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                          {ref.type === 'full_card' ? '整个卡片' : '文本片段'}
+                        </span>
+                      </div>
+                      
+                      {editingRemark === index ? (
+                        <div className="space-y-2">
+                          <Input
+                            value={editRemarkText}
+                            onChange={(e) => setEditRemarkText(e.target.value)}
+                            placeholder="添加备注说明..."
+                            className="text-sm"
+                            autoFocus
+                          />
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              onClick={() => saveRemark(index)}
+                              className="h-7 text-xs"
+                            >
+                              <Check className="w-3 h-3 mr-1" />
+                              保存
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={cancelEditRemark}
+                              className="h-7 text-xs"
+                            >
+                              <X className="w-3 h-3 mr-1" />
+                              取消
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-gray-600 text-xs flex-1">
+                            {ref.user_remark || "暂无备注"}
+                          </p>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => startEditingRemark(index, ref.user_remark)}
+                            className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
+                          >
+                            <Edit3 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      )}
+                      
+                      {ref.snippet_content && (
+                        <div className="mt-2 p-2 bg-gray-50 rounded text-xs text-gray-600 border-l-2 border-blue-200">
+                          "{ref.snippet_content.substring(0, 100)}..."
+                        </div>
+                      )}
                     </div>
+                    
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => removeReference(index)}
-                      className="text-gray-500 hover:text-red-500"
+                      className="h-6 w-6 p-0 text-gray-400 hover:text-red-500 flex-shrink-0"
                     >
-                      ×
+                      <X className="w-3 h-3" />
                     </Button>
                   </div>
-                  {ref.user_remark && (
-                    <p className="text-gray-600 mt-1">备注：{ref.user_remark}</p>
-                  )}
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        <div className="flex-1 overflow-auto p-4 space-y-4">
+        {/* Messages */}
+        <div className="flex-1 overflow-auto">
           {messages.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              <Bot className="w-16 h-16 mx-auto mb-4 opacity-30" />
-              <p>开始与 Nova 对话</p>
-              <p className="text-sm">告诉我你想要创作什么内容</p>
+            <div className="flex flex-col items-center justify-center h-full text-gray-500 p-8">
+              <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                <Bot className="w-8 h-8 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">开始与 Nova 对话</h3>
+              <p className="text-sm text-center max-w-md">
+                我是您的小红书内容创作助手，可以帮您撰写、优化和完善各种类型的小红书笔记内容。
+              </p>
             </div>
           ) : (
-            messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex gap-3 ${
-                  message.role === 'user' ? 'justify-end' : 'justify-start'
-                }`}
-              >
-                {message.role === 'assistant' && (
-                  <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
-                    <Bot className="w-4 h-4 text-purple-600" />
+            <div className="p-4 space-y-6">
+              {messages.map((message) => (
+                <div key={message.id} className="flex gap-4">
+                  {message.role === 'assistant' ? (
+                    <>
+                      <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center flex-shrink-0">
+                        <Bot className="w-4 h-4 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="prose prose-sm max-w-none">
+                          <div className="whitespace-pre-wrap text-gray-800 leading-relaxed">
+                            {message.content}
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
+                        <User className="w-4 h-4 text-gray-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="whitespace-pre-wrap text-gray-800 leading-relaxed">
+                          {message.content}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
+
+              {isLoading && (
+                <div className="flex gap-4">
+                  <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center flex-shrink-0">
+                    <Bot className="w-4 h-4 text-white" />
                   </div>
-                )}
-                
-                <Card className={`max-w-[80%] ${
-                  message.role === 'user' 
-                    ? 'bg-purple-600 text-white' 
-                    : 'bg-white/70 backdrop-blur-sm'
-                }`}>
-                  <CardContent className="p-3">
-                    <div className="whitespace-pre-wrap text-sm">
-                      {message.content}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 text-gray-500">
+                      <div className="flex gap-1">
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                      </div>
+                      <span className="text-sm">Nova 正在思考...</span>
                     </div>
-                  </CardContent>
-                </Card>
-
-                {message.role === 'user' && (
-                  <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                    <User className="w-4 h-4 text-gray-600" />
                   </div>
-                )}
-              </div>
-            ))
-          )}
-
-          {isLoading && (
-            <div className="flex gap-3 justify-start">
-              <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
-                <Bot className="w-4 h-4 text-purple-600" />
-              </div>
-              <Card className="bg-white/70 backdrop-blur-sm">
-                <CardContent className="p-3">
-                  <div className="flex items-center gap-2">
-                    <div className="animate-spin w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full" />
-                    <span className="text-sm text-gray-600">Nova 正在思考...</span>
-                  </div>
-                </CardContent>
-              </Card>
+                </div>
+              )}
             </div>
           )}
         </div>
 
-        <div className="p-4 border-t bg-white/50">
-          <div className="flex gap-2">
-            <Textarea
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="告诉 Nova 你想要创作什么内容..."
-              className="flex-1 min-h-[60px] max-h-[120px] resize-none"
-              disabled={isLoading}
-            />
+        {/* Input Area */}
+        <div className="border-t border-gray-200 p-4">
+          <div className="flex gap-3 items-end">
+            <div className="flex-1">
+              <Textarea
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleKeyPress}
+                placeholder="输入消息..."
+                className="min-h-[44px] max-h-[200px] resize-none border-gray-300 focus:border-gray-400 focus:ring-0"
+                disabled={isLoading}
+              />
+              {references.length > 0 && (
+                <p className="text-xs text-gray-500 mt-2">
+                  将发送 {references.length} 个引用内容给 AI
+                </p>
+              )}
+            </div>
             <Button
               onClick={handleSendMessage}
               disabled={!inputValue.trim() || isLoading}
-              className="bg-purple-600 hover:bg-purple-700 self-end"
+              className="h-11 w-11 p-0 bg-black hover:bg-gray-800 disabled:bg-gray-300"
             >
               <Send className="w-4 h-4" />
             </Button>
           </div>
-          {references.length > 0 && (
-            <p className="text-xs text-gray-500 mt-2">
-              将发送 {references.length} 个引用内容给 AI
-            </p>
-          )}
         </div>
       </div>
     );
