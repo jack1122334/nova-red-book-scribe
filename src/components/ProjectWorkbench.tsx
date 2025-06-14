@@ -9,9 +9,10 @@ import { ChatArea } from "@/components/ChatArea";
 interface ProjectWorkbenchProps {
   project: Project | null;
   onBack: () => void;
+  initialMessage?: string;
 }
 
-export const ProjectWorkbench = ({ project, onBack }: ProjectWorkbenchProps) => {
+export const ProjectWorkbench = ({ project, onBack, initialMessage }: ProjectWorkbenchProps) => {
   if (!project) return null;
 
   return (
@@ -42,7 +43,7 @@ export const ProjectWorkbench = ({ project, onBack }: ProjectWorkbenchProps) => 
 
         {/* Chat Area - Right Side */}
         <div className="w-96 bg-white/50">
-          <ChatArea projectId={project.id} />
+          <ChatArea projectId={project.id} initialMessage={initialMessage} />
         </div>
       </div>
     </div>
