@@ -1,4 +1,5 @@
 
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -138,9 +139,9 @@ Remember to always provide the full content for a card inside the appropriate XM
       content: core_instruction
     });
 
-    console.log('Sending to DeepSeek:', { messages: messages.length });
+    console.log('Sending to DeepSeek:', { messages: messages.length, apiKey: deepseekApiKey ? 'present' : 'missing' });
 
-    // 7. 调用 DeepSeek API
+    // 7. 调用 DeepSeek API - 修复 API 端点和参数
     const response = await fetch('https://api.deepseek.com/chat/completions', {
       method: 'POST',
       headers: {
@@ -151,15 +152,26 @@ Remember to always provide the full content for a card inside the appropriate XM
         model: 'deepseek-chat',
         messages: messages,
         max_tokens: 4000,
-        temperature: 0.7,
+        // 移除 DeepSeek 不支持的参数
+        // temperature: 0.7, // DeepSeek 文档说明此参数不生效，移除以避免混淆
       }),
     });
 
+    console.log('DeepSeek API response status:', response.status);
+    
     if (!response.ok) {
-      throw new Error(`DeepSeek API error: ${response.status}`);
+      const errorText = await response.text();
+      console.error('DeepSeek API error details:', errorText);
+      throw new Error(`DeepSeek API error: ${response.status} - ${errorText}`);
     }
 
     const result = await response.json();
+    console.log('DeepSeek API response:', { hasChoices: !!result.choices, choicesLength: result.choices?.length });
+    
+    if (!result.choices || result.choices.length === 0) {
+      throw new Error('DeepSeek API returned no choices');
+    }
+
     const aiContent = result.choices[0].message.content;
 
     console.log('DeepSeek response received:', { length: aiContent.length });
@@ -276,3 +288,4 @@ Remember to always provide the full content for a card inside the appropriate XM
     );
   }
 });
+
