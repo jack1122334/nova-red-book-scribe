@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Feather } from "lucide-react";
 import { Project } from "@/pages/Creation";
 import { WritingArea } from "@/components/WritingArea";
 import { ChatArea } from "@/components/ChatArea";
@@ -65,27 +65,42 @@ export const ProjectWorkbench = ({ project, onBack, initialMessage }: ProjectWor
   return (
     <div className="h-screen flex flex-col bg-gray-50">
       {/* Header */}
-      <div className="border-b border-gray-200 bg-white px-6 py-4">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onBack}
-            className="text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            返回项目列表
-          </Button>
-          <div className="h-6 w-px bg-gray-300" />
-          <h1 className="text-xl font-semibold text-gray-900">{project.title}</h1>
+      <header className="border-b border-gray-200 bg-white">
+        <div className="px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-6">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onBack}
+                className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 font-sans"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                返回项目
+              </Button>
+              
+              <div className="h-6 w-px bg-gray-300" />
+              
+              <div className="flex items-center space-x-3">
+                <Feather className="w-5 h-5 text-gray-700" />
+                <h1 className="text-xl font-sans font-medium text-gray-900 tracking-tight">
+                  {project.title}
+                </h1>
+              </div>
+            </div>
+            
+            <div className="text-sm text-gray-500 font-sans">
+              创作工作台
+            </div>
+          </div>
         </div>
-      </div>
+      </header>
 
-      {/* Main Content with Resizable Panels */}
+      {/* Main Content */}
       <div className="flex-1 min-h-0">
         <ResizablePanelGroup direction="horizontal" className="h-full">
-          {/* Writing Area - Left Side */}
-          <ResizablePanel defaultSize={65} minSize={40}>
+          {/* Writing Area */}
+          <ResizablePanel defaultSize={60} minSize={40}>
             <WritingArea 
               ref={writingAreaRef}
               projectId={project.id} 
@@ -96,10 +111,10 @@ export const ProjectWorkbench = ({ project, onBack, initialMessage }: ProjectWor
             />
           </ResizablePanel>
           
-          <ResizableHandle withHandle />
+          <ResizableHandle withHandle className="bg-gray-200 hover:bg-gray-300 transition-colors" />
           
-          {/* Chat Area - Right Side */}
-          <ResizablePanel defaultSize={35} minSize={25} maxSize={60}>
+          {/* Chat Area */}
+          <ResizablePanel defaultSize={40} minSize={30} maxSize={60}>
             <ChatArea 
               ref={chatAreaRef}
               projectId={project.id} 

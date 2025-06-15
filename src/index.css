@@ -1,94 +1,90 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. */
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap');
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* New Yorker inspired color palette */
+    --background: 252 252 252;
+    --foreground: 38 38 38;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 255 255 255;
+    --card-foreground: 38 38 38;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 255 255 255;
+    --popover-foreground: 38 38 38;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 38 38 38;
+    --primary-foreground: 252 252 252;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 248 248 248;
+    --secondary-foreground: 82 82 82;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 248 248 248;
+    --muted-foreground: 115 115 115;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 245 245 245;
+    --accent-foreground: 38 38 38;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 239 68 68;
+    --destructive-foreground: 252 252 252;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 229 229 229;
+    --input: 229 229 229;
+    --ring: 38 38 38;
 
-    --radius: 0.5rem;
+    --radius: 0.125rem;
 
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 252 252 252;
+    --sidebar-foreground: 82 82 82;
+    --sidebar-primary: 38 38 38;
+    --sidebar-primary-foreground: 252 252 252;
+    --sidebar-accent: 248 248 248;
+    --sidebar-accent-foreground: 38 38 38;
+    --sidebar-border: 229 229 229;
+    --sidebar-ring: 38 38 38;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 25 25 25;
+    --foreground: 252 252 252;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 38 38 38;
+    --card-foreground: 252 252 252;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 38 38 38;
+    --popover-foreground: 252 252 252;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 252 252 252;
+    --primary-foreground: 38 38 38;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 51 51 51;
+    --secondary-foreground: 212 212 212;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 51 51 51;
+    --muted-foreground: 163 163 163;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 51 51 51;
+    --accent-foreground: 252 252 252;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 239 68 68;
+    --destructive-foreground: 252 252 252;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 64 64 64;
+    --input: 64 64 64;
+    --ring: 212 212 212;
+    
+    --sidebar-background: 25 25 25;
+    --sidebar-foreground: 212 212 212;
+    --sidebar-primary: 252 252 252;
+    --sidebar-primary-foreground: 25 25 25;
+    --sidebar-accent: 51 51 51;
+    --sidebar-accent-foreground: 252 252 252;
+    --sidebar-border: 64 64 64;
+    --sidebar-ring: 212 212 212;
   }
 }
 
@@ -98,6 +94,69 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-serif;
+    font-family: 'Crimson Text', serif;
+    line-height: 1.6;
+    letter-spacing: 0.01em;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+
+  .font-sans {
+    font-family: 'Inter', sans-serif;
+  }
+
+  .font-serif {
+    font-family: 'Crimson Text', serif;
+  }
+}
+
+@layer components {
+  .newyorker-card {
+    @apply bg-white border border-gray-200 rounded-sm shadow-sm hover:shadow-md transition-shadow duration-300;
+  }
+
+  .newyorker-button {
+    @apply font-sans font-medium tracking-wide transition-all duration-200 border-2 border-transparent;
+  }
+
+  .newyorker-button-primary {
+    @apply newyorker-button bg-gray-900 text-white hover:bg-gray-800 focus:ring-2 focus:ring-gray-400 focus:ring-offset-2;
+  }
+
+  .newyorker-button-secondary {
+    @apply newyorker-button bg-white text-gray-900 border-gray-300 hover:bg-gray-50 focus:ring-2 focus:ring-gray-400 focus:ring-offset-2;
+  }
+
+  .newyorker-input {
+    @apply font-serif border-gray-300 rounded-sm focus:border-gray-500 focus:ring-1 focus:ring-gray-500 transition-colors duration-200;
+  }
+
+  .elegant-prose {
+    @apply text-gray-800 leading-relaxed;
+  }
+
+  .elegant-prose h1 {
+    @apply text-3xl font-medium text-gray-900 mb-6 tracking-tight;
+  }
+
+  .elegant-prose h2 {
+    @apply text-2xl font-medium text-gray-900 mb-4 tracking-tight;
+  }
+
+  .elegant-prose h3 {
+    @apply text-xl font-medium text-gray-900 mb-3 tracking-tight;
+  }
+
+  .elegant-prose p {
+    @apply mb-4 text-gray-700;
+  }
+
+  .elegant-prose blockquote {
+    @apply border-l-4 border-gray-300 pl-6 italic text-gray-600 my-6;
   }
 }

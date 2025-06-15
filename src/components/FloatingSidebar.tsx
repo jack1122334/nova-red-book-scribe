@@ -29,11 +29,11 @@ export const FloatingSidebar = ({ currentPage }: FloatingSidebarProps) => {
   ];
 
   return (
-    <div className="fixed left-6 top-1/2 transform -translate-y-1/2 z-50">
+    <div className="fixed left-8 top-1/2 transform -translate-y-1/2 z-50">
       <div
         className={cn(
-          "bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl border border-white/20 transition-all duration-300",
-          isExpanded ? "w-48 p-4" : "w-14 p-2"
+          "bg-white border border-gray-200 rounded-sm shadow-lg transition-all duration-300",
+          isExpanded ? "w-48 p-4" : "w-12 p-2"
         )}
       >
         {/* Toggle Button */}
@@ -41,13 +41,13 @@ export const FloatingSidebar = ({ currentPage }: FloatingSidebarProps) => {
           variant="ghost"
           size="sm"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full mb-2"
+          className="w-full mb-2 hover:bg-gray-100 transition-colors"
         >
-          {isExpanded ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          {isExpanded ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
         </Button>
 
         {/* Menu Items */}
-        <div className="space-y-2">
+        <div className="space-y-1">
           {menuItems.map((item) => (
             <Button
               key={item.id}
@@ -55,10 +55,10 @@ export const FloatingSidebar = ({ currentPage }: FloatingSidebarProps) => {
               size="sm"
               onClick={() => navigate(item.path)}
               className={cn(
-                "w-full justify-start transition-all duration-200",
+                "w-full justify-start transition-all duration-200 font-sans text-sm",
                 currentPage === item.id
-                  ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white"
-                  : "hover:bg-purple-50",
+                  ? "bg-gray-900 text-white hover:bg-gray-800"
+                  : "hover:bg-gray-100 text-gray-700",
                 !isExpanded && "px-2"
               )}
             >
