@@ -318,7 +318,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="prose prose-sm max-w-none cursor-pointer group relative" onClick={() => handleMessageClick(message)}>
-                          <div className="whitespace-pre-wrap text-black leading-relaxed p-3 rounded-xl hover:bg-black/5 transition-colors border border-transparent hover:border-black/20">
+                          <div className="whitespace-pre-wrap text-black leading-relaxed p-3 rounded-xl transition-colors border border-transparent hover:border-black/20 bg-stone-400">
                             {message.content}
                             <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                               <Info className="w-4 h-4 text-black/40" />
@@ -331,7 +331,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
                         <User className="w-4 h-4 text-black/60" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="whitespace-pre-wrap text-black leading-relaxed p-3 rounded-xl hover:bg-black/5 transition-colors border border-transparent hover:border-black/20 cursor-pointer group relative" onClick={() => handleMessageClick(message)}>
+                        <div onClick={() => handleMessageClick(message)} className="whitespace-pre-wrap text-black leading-relaxed p-3 rounded-xl transition-colors border border-transparent hover:border-black/20 cursor-pointer group relative bg-amber-200">
                           {message.content}
                           <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                             <Info className="w-4 h-4 text-black/40" />
@@ -369,12 +369,12 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
         <div className="border-t border-black/20 p-4 bg-amber-400">
           <div className="flex gap-3 items-end">
             <div className="flex-1">
-              <Textarea value={inputValue} onChange={e => setInputValue(e.target.value)} onKeyDown={handleKeyPress} placeholder="输入消息..." className="min-h-[44px] max-h-[200px] resize-none" disabled={isLoading} />
+              <Textarea value={inputValue} onChange={e => setInputValue(e.target.value)} onKeyDown={handleKeyPress} placeholder="输入消息..." disabled={isLoading} className="min-h-[44px] max-h-[200px] resize-none bg-amber-100 py-[36px] rounded-2xl my-0" />
               {(references.length > 0 || pendingSystemMessages.length > 0) && <p className="text-xs text-black/50 mt-2">
                   将发送 {references.length} 个引用{pendingSystemMessages.length > 0 && ` 和 ${pendingSystemMessages.length} 个编辑通知`} 给 AI
                 </p>}
             </div>
-            <Button onClick={handleSendMessage} disabled={!inputValue.trim() || isLoading} className="h-11 w-11 p-0 bg-black hover:bg-black/80 disabled:bg-black/30">
+            <Button onClick={handleSendMessage} disabled={!inputValue.trim() || isLoading} className="h-11 w-11 p-0 bg-black hover:bg-black/80 disabled:bg-black/30 rounded-xl text-left text-amber-100 font-normal text-base px-[3px] py-[3px] my-0">
               <Send className="w-4 h-4" />
             </Button>
           </div>

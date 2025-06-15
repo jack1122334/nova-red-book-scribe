@@ -219,8 +219,8 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(({
         <div className="p-6 bg-amber-400">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-white font-serif">创作卡片</h2>
-              <p className="text-sm text-white/80 mt-1 font-serif">管理您的内容草稿和创作素材</p>
+              <h2 className="text-lg font-semibold font-serif text-slate-950">创作卡片</h2>
+              
             </div>
             <Button onClick={handleCreateCard} size="sm" className="bg-black text-white hover:bg-white hover:text-black">
               <Plus className="w-4 h-4 mr-2" />
@@ -245,8 +245,8 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(({
               </Button>
             </div> : <div className="h-full overflow-x-auto overflow-y-hidden p-6 bg-amber-400">
               <div className="flex gap-4 h-full min-w-fit">
-                {cards.map(card => <Card key={card.id} className="w-80 h-full flex flex-col bg-white">
-                    <CardHeader className="pb-3 flex-shrink-0 bg-stone-400">
+                {cards.map(card => <Card key={card.id} className="w-80 h-full flex flex-col rounded-2xl bg-amber-400">
+                    <CardHeader className="pb-3 flex-shrink-0 bg-stone-400 rounded-2xl">
                       <div className="flex items-start justify-between gap-2">
                         {editingCard === card.id ? <Input value={editTitle} onChange={e => setEditTitle(e.target.value)} placeholder="卡片标题" className="text-sm font-medium border-0 p-0 h-auto focus:ring-0 flex-1 bg-transparent font-serif" /> : <CardTitle className="text-sm font-medium text-black flex-1 line-clamp-2 font-serif">
                             {card.title || "未命名卡片"}
@@ -284,7 +284,7 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(({
                       </div>
                     </CardHeader>
                     
-                    <CardContent className="flex-1 flex flex-col min-h-0 bg-amber-100">
+                    <CardContent className="flex-1 flex flex-col min-h-0 bg-amber-100 rounded-2xl">
                       {editingCard === card.id ? <Textarea value={editContent} onChange={e => setEditContent(e.target.value)} placeholder="输入卡片内容..." className="flex-1 resize-none text-sm font-serif leading-relaxed" /> : <div className="flex-1 whitespace-pre-wrap text-black cursor-text leading-relaxed text-sm overflow-y-auto font-serif" onMouseUp={() => handleTextSelection(card.id)}>
                           {card.content || <span className="text-black/60 italic">暂无内容，点击编辑按钮开始写作</span>}
                         </div>}
