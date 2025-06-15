@@ -109,7 +109,7 @@ export const ProjectsManager = ({
         </CardHeader>
         <CardContent>
           <div className="flex gap-3">
-            <Input placeholder="输入项目名称..." value={newProjectTitle} onChange={e => setNewProjectTitle(e.target.value)} onKeyPress={handleKeyPress} className="flex-1" disabled={isCreating} />
+            <Input placeholder="输入项目名称..." value={newProjectTitle} onChange={e => setNewProjectTitle(e.target.value)} onKeyPress={handleKeyPress} disabled={isCreating} className="flex-1 bg-neutral-300" />
             <Button onClick={handleCreateProject} disabled={!newProjectTitle.trim() || isCreating} className="bg-slate-950 hover:bg-slate-800">
               {isCreating ? "创建中..." : "创建项目"}
             </Button>
