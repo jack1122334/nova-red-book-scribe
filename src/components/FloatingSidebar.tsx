@@ -41,7 +41,7 @@ export const FloatingSidebar = ({ currentPage }: FloatingSidebarProps) => {
           variant="ghost"
           size="sm"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full mb-3 hover:bg-hermes-50 transition-colors rounded-2xl shadow-none hover:shadow-black border-2 border-transparent hover:border-hermes-300"
+          className="w-full mb-3 hover:bg-gray-100 transition-colors rounded-2xl shadow-none hover:shadow-black border-2 border-transparent hover:border-black"
         >
           {isExpanded ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
         </Button>
@@ -57,8 +57,8 @@ export const FloatingSidebar = ({ currentPage }: FloatingSidebarProps) => {
               className={cn(
                 "w-full justify-start transition-all duration-200 font-serif text-sm rounded-2xl border-2",
                 currentPage === item.id
-                  ? "bg-hermes-500 text-white hover:bg-hermes-600 shadow-hermes border-hermes-500"
-                  : "hover:bg-hermes-50 text-black shadow-none hover:shadow-black border-transparent hover:border-hermes-300",
+                  ? "bg-black text-white hover:bg-gray-800 shadow-black border-black"
+                  : "hover:bg-gray-100 text-black shadow-none hover:shadow-black border-transparent hover:border-black",
                 !isExpanded && "px-3"
               )}
             >

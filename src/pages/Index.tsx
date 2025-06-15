@@ -51,7 +51,7 @@ const Index = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-hermes-500">
       <FloatingSidebar currentPage="home" />
       
       <div className="pl-20">
@@ -59,17 +59,17 @@ const Index = () => {
         <section className="px-8 py-16 text-center">
           <div className="max-w-4xl mx-auto">
             <div className="mb-8 animate-fade-in">
-              <div className="inline-flex items-center space-x-2 bg-hermes-100 border-2 border-hermes-500 rounded-full px-6 py-3 mb-8">
-                <Sparkles className="w-5 h-5 text-hermes-600" />
+              <div className="inline-flex items-center space-x-2 bg-white border-2 border-black rounded-full px-6 py-3 mb-8">
+                <Sparkles className="w-5 h-5 text-black" />
                 <span className="text-sm font-serif text-black font-medium">智能写作平台</span>
               </div>
               
               <h1 className="text-6xl font-serif font-bold text-black mb-8 tracking-tight leading-tight">
                 让创作<br />
-                <span className="text-hermes-500">更加优雅</span>
+                <span className="text-white">更加优雅</span>
               </h1>
               
-              <p className="text-xl text-gray-800 mb-12 max-w-2xl mx-auto leading-relaxed font-serif">
+              <p className="text-xl text-black mb-12 max-w-2xl mx-auto leading-relaxed font-serif">
                 结合人工智能与人文美学，为您提供专业的写作环境和创作灵感。
                 在这里，每一个字都有其独特的价值与意义。
               </p>
@@ -105,11 +105,11 @@ const Index = () => {
                   style={{ animationDelay: `${0.3 + index * 0.1}s` }}
                 >
                   <CardContent className="p-0">
-                    <div className="w-14 h-14 mx-auto mb-4 bg-hermes-100 border-2 border-hermes-500 rounded-2xl flex items-center justify-center">
-                      <feature.icon className="w-7 h-7 text-hermes-600" />
+                    <div className="w-14 h-14 mx-auto mb-4 bg-black border-2 border-black rounded-2xl flex items-center justify-center">
+                      <feature.icon className="w-7 h-7 text-white" />
                     </div>
                     <h3 className="font-serif font-semibold text-black mb-2 text-lg">{feature.title}</h3>
-                    <p className="text-sm text-gray-700 font-serif leading-relaxed">{feature.description}</p>
+                    <p className="text-sm text-black font-serif leading-relaxed">{feature.description}</p>
                   </CardContent>
                 </Card>
               ))}
@@ -118,7 +118,7 @@ const Index = () => {
         </section>
 
         {/* Goodcase Gallery */}
-        <section className="px-8 py-16 bg-hermes-50 border-t-2 border-hermes-500">
+        <section className="px-8 py-16 bg-white border-t-2 border-black">
           <div className="max-w-6xl mx-auto">
             <GoodcaseGallery />
           </div>

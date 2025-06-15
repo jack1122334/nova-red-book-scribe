@@ -44,7 +44,7 @@ export const GoodcaseGallery = () => {
       <h2 className="text-4xl font-serif font-semibold text-black mb-4 tracking-tight">
         精选创作
       </h2>
-      <p className="text-gray-800 mb-12 text-xl font-serif leading-relaxed">
+      <p className="text-black mb-12 text-xl font-serif leading-relaxed">
         从这些优秀的创作案例中汲取灵感
       </p>
       
@@ -56,7 +56,7 @@ export const GoodcaseGallery = () => {
             style={{ animationDelay: `${index * 0.1}s` }}
           >
             <CardContent className="p-0">
-              <div className={`h-28 ${goodcase.color} border-b-2 border-hermes-500 flex items-end justify-start p-6 rounded-t-3xl`}>
+              <div className={`h-28 ${goodcase.color} border-b-2 border-black flex items-end justify-start p-6 rounded-t-3xl`}>
                 <Badge 
                   variant="secondary" 
                   className="bg-white border-2 border-black text-black font-serif text-sm font-medium rounded-xl shadow-black px-4 py-2"
@@ -66,26 +66,26 @@ export const GoodcaseGallery = () => {
               </div>
               
               <div className="p-6">
-                <h3 className="font-serif font-semibold text-black mb-3 text-xl leading-tight group-hover:text-hermes-600 transition-colors">
+                <h3 className="font-serif font-semibold text-black mb-3 text-xl leading-tight group-hover:text-gray-600 transition-colors">
                   {goodcase.title}
                 </h3>
                 
-                <p className="text-gray-700 mb-6 leading-relaxed text-base font-serif">
+                <p className="text-black mb-6 leading-relaxed text-base font-serif">
                   {goodcase.content}
                 </p>
                 
-                <div className="flex items-center justify-between text-sm text-gray-600 font-serif">
-                  <div className="flex items-center space-x-2 bg-hermes-50 border border-hermes-300 rounded-xl px-3 py-2">
-                    <Heart className="w-4 h-4 text-hermes-500" />
-                    <span className="text-black font-medium">{goodcase.engagement.likes.toLocaleString()}</span>
+                <div className="flex items-center justify-between text-sm text-black font-serif">
+                  <div className="flex items-center space-x-2 bg-black border border-black rounded-xl px-3 py-2">
+                    <Heart className="w-4 h-4 text-white" />
+                    <span className="text-white font-medium">{goodcase.engagement.likes.toLocaleString()}</span>
                   </div>
-                  <div className="flex items-center space-x-2 bg-hermes-50 border border-hermes-300 rounded-xl px-3 py-2">
-                    <MessageCircle className="w-4 h-4 text-hermes-500" />
-                    <span className="text-black font-medium">{goodcase.engagement.comments}</span>
+                  <div className="flex items-center space-x-2 bg-black border border-black rounded-xl px-3 py-2">
+                    <MessageCircle className="w-4 h-4 text-white" />
+                    <span className="text-white font-medium">{goodcase.engagement.comments}</span>
                   </div>
-                  <div className="flex items-center space-x-2 bg-hermes-50 border border-hermes-300 rounded-xl px-3 py-2">
-                    <Share2 className="w-4 h-4 text-hermes-500" />
-                    <span className="text-black font-medium">{goodcase.engagement.shares}</span>
+                  <div className="flex items-center space-x-2 bg-black border border-black rounded-xl px-3 py-2">
+                    <Share2 className="w-4 h-4 text-white" />
+                    <span className="text-white font-medium">{goodcase.engagement.shares}</span>
                   </div>
                 </div>
               </div>
