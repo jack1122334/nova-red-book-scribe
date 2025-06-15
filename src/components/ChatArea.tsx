@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -25,9 +24,16 @@ interface ChatMessage {
   created_at: string;
 }
 
+interface DifyToolCall {
+  tool: string;
+  tool_input: string;
+  tool_labels: { [key: string]: { zh_Hans: string; en_US: string } };
+  observation?: string;
+}
+
 interface StreamingMessage extends ChatMessage {
   thoughts?: string[];
-  toolCalls?: any[];
+  toolCalls?: DifyToolCall[];
   isStreaming?: boolean;
 }
 
@@ -35,7 +41,10 @@ interface StreamingEvent {
   event: string;
   thought?: string;
   answer?: string;
-  tool_calls?: any[];
+  tool?: string;
+  tool_input?: string;
+  tool_labels?: any;
+  observation?: string;
   conversation_id?: string;
 }
 
@@ -221,11 +230,25 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
               
               switch (event.event) {
                 case 'agent_thought':
+                  // 处理 Dify 的 agent_thought 事件
                   if (event.thought) {
-                    console.log('ChatArea: Adding thought:', event.thought);
+                    console.log('ChatArea: Adding Dify thought:', event.thought);
                     updated.thoughts = [...(updated.thoughts || []), event.thought];
                   }
+                  
+                  // 处理工具调用信息
+                  if (event.tool && event.tool_input) {
+                    console.log('ChatArea: Adding Dify tool call:', event.tool, event.tool_input);
+                    const toolCall: DifyToolCall = {
+                      tool: event.tool,
+                      tool_input: event.tool_input,
+                      tool_labels: event.tool_labels || {},
+                      observation: event.observation
+                    };
+                    updated.toolCalls = [...(updated.toolCalls || []), toolCall];
+                  }
                   break;
+                  
                 case 'agent_message':
                 case 'message':
                   if (event.answer) {
@@ -233,12 +256,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
                     updated.content += event.answer;
                   }
                   break;
-                case 'tool_calls':
-                  if (event.tool_calls) {
-                    console.log('ChatArea: Adding tool calls:', event.tool_calls);
-                    updated.toolCalls = [...(updated.toolCalls || []), ...event.tool_calls];
-                  }
-                  break;
+                  
                 case 'message_end':
                   console.log('ChatArea: Message ended, cleaning up XML tags');
                   updated.isStreaming = false;
@@ -313,13 +331,27 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
           </div>
         )}
         
-        {/* Tool Calls */}
+        {/* Tool Calls - 优化显示 Dify 工具调用 */}
         {message.toolCalls && message.toolCalls.length > 0 && (
           <div className="bg-black/5 rounded-lg p-3 border-l-4 border-green-500">
             <div className="text-xs font-medium text-black/60 mb-2">🔧 工具调用</div>
-            {message.toolCalls.map((tool, index) => (
-              <div key={index} className="text-sm text-black/70 mb-1 last:mb-0">
-                <span className="font-medium">{tool.name || 'Tool'}:</span> {tool.input || JSON.stringify(tool)}
+            {message.toolCalls.map((toolCall, index) => (
+              <div key={index} className="text-sm text-black/70 mb-2 last:mb-0">
+                <div className="font-medium text-green-700 mb-1">
+                  工具: {toolCall.tool.split(';').join(', ')}
+                </div>
+                {toolCall.tool_input && (
+                  <div className="bg-black/5 rounded p-2 text-xs font-mono">
+                    <div className="text-black/50 mb-1">输入参数:</div>
+                    <div>{toolCall.tool_input}</div>
+                  </div>
+                )}
+                {toolCall.observation && (
+                  <div className="bg-blue-50 rounded p-2 text-xs mt-1">
+                    <div className="text-blue-600 font-medium mb-1">执行结果:</div>
+                    <div className="text-black/70">{toolCall.observation}</div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -497,8 +529,6 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
                 )}
               </div>
             ))}
-
-            {/* 移除了重复的isLoading显示，因为现在流式消息本身会显示状态 */}
           </div>
         )}
       </div>
