@@ -235,13 +235,11 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
               
               switch (event.event) {
                 case 'agent_thought':
-                  // 处理思考内容
                   if (event.thought) {
                     console.log('ChatArea: Adding Dify thought:', event.thought);
                     updated.thoughts = [...(updated.thoughts || []), event.thought];
                   }
                   
-                  // 处理工具调用信息 - 创建或更新工具调用记录
                   if (event.tool && event.tool_input) {
                     console.log('ChatArea: Processing tool call:', {
                       id: event.id,
@@ -264,17 +262,14 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
                     };
 
                     if (toolCallIndex >= 0) {
-                      // 更新现有的工具调用（可能是添加了observation）
                       updated.toolCalls = existingToolCalls.map((tc, index) => 
                         index === toolCallIndex ? { ...tc, ...toolCall } : tc
                       );
                     } else {
-                      // 添加新的工具调用
                       updated.toolCalls = [...existingToolCalls, toolCall];
                     }
                   }
                   
-                  // 如果只有observation而没有tool信息，尝试更新对应的工具调用
                   if (event.observation && event.id && !event.tool) {
                     console.log('ChatArea: Updating tool call observation:', event.id, event.observation);
                     const existingToolCalls = updated.toolCalls || [];
@@ -354,79 +349,95 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
 
     return (
       <div className="space-y-3">
-        {/* Thoughts */}
+        {/* Thoughts - 独立显示，实时更新 */}
         {message.thoughts && message.thoughts.length > 0 && (
-          <div className="bg-black/5 rounded-lg p-3 border-l-4 border-blue-500">
-            <div className="text-xs font-medium text-black/60 mb-2">🤔 AI思考过程</div>
-            {message.thoughts.map((thought, index) => (
-              <div key={index} className="text-sm text-black/70 mb-1 last:mb-0">
-                {thought}
+          <Card className="bg-blue-50 border-blue-200">
+            <CardContent className="p-3">
+              <div className="text-xs font-medium text-blue-700 mb-2 flex items-center gap-2">
+                🤔 AI思考过程
+                {message.isStreaming && <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>}
               </div>
-            ))}
-          </div>
+              {message.thoughts.map((thought, index) => (
+                <div key={index} className="text-sm text-blue-800 mb-2 last:mb-0 leading-relaxed">
+                  {thought}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
         )}
         
-        {/* Tool Calls - 按position排序并显示完整信息 */}
+        {/* Tool Calls - 独立显示，每个工具调用单独卡片 */}
         {message.toolCalls && message.toolCalls.length > 0 && (
-          <div className="bg-black/5 rounded-lg p-3 border-l-4 border-green-500">
-            <div className="text-xs font-medium text-black/60 mb-2">🔧 工具调用</div>
+          <div className="space-y-2">
             {message.toolCalls
               .sort((a, b) => (a.position || 0) - (b.position || 0))
               .map((toolCall, index) => (
-                <div key={toolCall.id || index} className="text-sm text-black/70 mb-3 last:mb-0">
-                  <div className="font-medium text-green-700 mb-1">
-                    工具: {toolCall.tool.split(';').join(', ')}
-                  </div>
-                  
-                  {toolCall.tool_input && (
-                    <div className="bg-black/5 rounded p-2 text-xs font-mono mb-2">
-                      <div className="text-black/50 mb-1">输入参数:</div>
-                      <div className="whitespace-pre-wrap">{toolCall.tool_input}</div>
+                <Card key={toolCall.id || index} className="bg-green-50 border-green-200">
+                  <CardContent className="p-3">
+                    <div className="text-xs font-medium text-green-700 mb-2 flex items-center gap-2">
+                      🔧 工具调用: {toolCall.tool.split(';').join(', ')}
+                      {!toolCall.observation && (
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      )}
                     </div>
-                  )}
-                  
-                  {toolCall.observation ? (
-                    <div className="bg-blue-50 rounded p-2 text-xs">
-                      <div className="text-blue-600 font-medium mb-1">执行结果:</div>
-                      <div className="text-black/70 whitespace-pre-wrap">{toolCall.observation}</div>
-                    </div>
-                  ) : (
-                    <div className="bg-yellow-50 rounded p-2 text-xs">
-                      <div className="text-yellow-600 font-medium mb-1">状态:</div>
-                      <div className="text-black/70">工具执行中...</div>
-                    </div>
-                  )}
-                </div>
+                    
+                    {toolCall.tool_input && (
+                      <div className="bg-green-100 rounded p-2 text-xs font-mono mb-2">
+                        <div className="text-green-600 mb-1">输入参数:</div>
+                        <div className="whitespace-pre-wrap text-green-800">{toolCall.tool_input}</div>
+                      </div>
+                    )}
+                    
+                    {toolCall.observation ? (
+                      <div className="bg-white rounded p-2 text-xs border border-green-200">
+                        <div className="text-green-600 font-medium mb-1">执行结果:</div>
+                        <div className="text-green-800 whitespace-pre-wrap">{toolCall.observation}</div>
+                      </div>
+                    ) : (
+                      <div className="bg-yellow-50 rounded p-2 text-xs border border-yellow-200">
+                        <div className="text-yellow-600 font-medium mb-1">状态:</div>
+                        <div className="text-yellow-700">工具执行中...</div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               ))}
           </div>
         )}
         
-        {/* Main Content - 实时显示内容 */}
+        {/* Main Content - 独立显示，实时更新 */}
         {message.content && (
-          <ReactMarkdown 
-            className="prose prose-sm max-w-none text-black leading-relaxed prose-headings:text-black prose-p:text-black prose-strong:text-black prose-em:text-black prose-ul:text-black prose-ol:text-black prose-li:text-black prose-blockquote:text-black/70 prose-code:text-black prose-pre:bg-black/10 prose-pre:text-black"
-          >
-            {message.content}
-          </ReactMarkdown>
+          <Card className="bg-white border-gray-200">
+            <CardContent className="p-4">
+              <ReactMarkdown 
+                className="prose prose-sm max-w-none text-black leading-relaxed prose-headings:text-black prose-p:text-black prose-strong:text-black prose-em:text-black prose-ul:text-black prose-ol:text-black prose-li:text-black prose-blockquote:text-black/70 prose-code:text-black prose-pre:bg-black/10 prose-pre:text-black"
+              >
+                {message.content}
+              </ReactMarkdown>
+              {/* 流式传输光标 */}
+              {message.isStreaming && (
+                <div className="inline-flex items-center mt-2">
+                  <div className="w-2 h-4 bg-black/60 animate-pulse ml-1"></div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         )}
         
-        {/* Streaming indicator - 只在真正流式传输且没有任何实际内容时显示 */}
+        {/* 初始连接指示器 - 只在没有任何内容时显示 */}
         {message.isStreaming && !message.thoughts?.length && !message.toolCalls?.length && !message.content && (
-          <div className="flex items-center gap-2 text-black/50">
-            <div className="flex gap-1">
-              <div className="w-2 h-2 bg-black/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-              <div className="w-2 h-2 bg-black/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-              <div className="w-2 h-2 bg-black/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-            </div>
-            <span className="text-sm">Nova正在连接...</span>
-          </div>
-        )}
-        
-        {/* 流式传输光标 - 在有内容且仍在流式传输时显示 */}
-        {message.isStreaming && (message.content || message.thoughts?.length || message.toolCalls?.length) && (
-          <div className="inline-flex items-center">
-            <div className="w-2 h-4 bg-black/60 animate-pulse ml-1"></div>
-          </div>
+          <Card className="bg-gray-50 border-gray-200">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 text-gray-500">
+                <div className="flex gap-1">
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
+                <span className="text-sm">Nova正在连接...</span>
+              </div>
+            </CardContent>
+          </Card>
         )}
       </div>
     );
@@ -551,11 +562,9 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="cursor-pointer group relative" onClick={() => handleMessageClick(message)}>
-                        <div className="p-3 rounded-xl transition-colors border border-transparent hover:border-black/20 bg-stone-400">
-                          {renderStreamingContent(message)}
-                          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Info className="w-4 h-4 text-black/40" />
-                          </div>
+                        {renderStreamingContent(message)}
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Info className="w-4 h-4 text-black/40" />
                         </div>
                       </div>
                     </div>
