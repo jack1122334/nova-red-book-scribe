@@ -94,6 +94,7 @@ export type Database = {
       }
       projects: {
         Row: {
+          conversation_id: string | null
           created_at: string
           id: string
           title: string
@@ -101,6 +102,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          conversation_id?: string | null
           created_at?: string
           id?: string
           title: string
@@ -108,6 +110,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          conversation_id?: string | null
           created_at?: string
           id?: string
           title?: string
