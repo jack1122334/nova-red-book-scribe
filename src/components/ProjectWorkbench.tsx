@@ -63,9 +63,9 @@ export const ProjectWorkbench = ({ project, onBack, initialMessage }: ProjectWor
   };
 
   return (
-    <div className="h-screen flex flex-col bg-background">
+    <div className="h-screen flex flex-col">
       {/* Header */}
-      <header className="border-b border-gray-200/60 bg-white/80 backdrop-blur-sm">
+      <header className="border-b border-gray-200 bg-white">
         <div className="px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-6">
@@ -113,7 +113,7 @@ export const ProjectWorkbench = ({ project, onBack, initialMessage }: ProjectWor
             />
           </ResizablePanel>
           
-          <ResizableHandle withHandle className="bg-gray-200/60 hover:bg-gray-300/60 transition-colors w-1" />
+          <ResizableHandle withHandle className="bg-gray-200 hover:bg-gray-300 transition-colors w-1" />
           
           {/* Chat Area */}
           <ResizablePanel defaultSize={45} minSize={35} maxSize={65}>
