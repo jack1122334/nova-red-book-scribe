@@ -1,12 +1,12 @@
-
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Send, Bot, User, Link, Edit3, Check, X } from "lucide-react";
+import { Send, Bot, User, Link, Edit3, Check, X, Info } from "lucide-react";
 import { chatApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { MessageDetailsDialog } from "@/components/MessageDetailsDialog";
 
 interface ChatAreaProps {
   projectId: string;
@@ -48,6 +48,8 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
     const [editingRemark, setEditingRemark] = useState<number | null>(null);
     const [editRemarkText, setEditRemarkText] = useState("");
     const [pendingSystemMessages, setPendingSystemMessages] = useState<string[]>([]);
+    const [selectedMessage, setSelectedMessage] = useState<ChatMessage | null>(null);
+    const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
     const { toast } = useToast();
 
     useImperativeHandle(ref, () => ({
@@ -228,6 +230,16 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
       }
     };
 
+    const handleMessageClick = (message: ChatMessage) => {
+      setSelectedMessage(message);
+      setIsMessageDialogOpen(true);
+    };
+
+    const closeMessageDialog = () => {
+      setIsMessageDialogOpen(false);
+      setSelectedMessage(null);
+    };
+
     return (
       <div className="h-full flex flex-col bg-white">
         {/* Header */}
@@ -355,9 +367,15 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
                         <Bot className="w-4 h-4 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="prose prose-sm max-w-none">
-                          <div className="whitespace-pre-wrap text-gray-800 leading-relaxed">
+                        <div 
+                          className="prose prose-sm max-w-none cursor-pointer group relative"
+                          onClick={() => handleMessageClick(message)}
+                        >
+                          <div className="whitespace-pre-wrap text-gray-800 leading-relaxed p-3 rounded-xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200">
                             {message.content}
+                            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Info className="w-4 h-4 text-gray-400" />
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -368,8 +386,14 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
                         <User className="w-4 h-4 text-gray-600" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="whitespace-pre-wrap text-gray-800 leading-relaxed">
+                        <div 
+                          className="whitespace-pre-wrap text-gray-800 leading-relaxed p-3 rounded-xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200 cursor-pointer group relative"
+                          onClick={() => handleMessageClick(message)}
+                        >
                           {message.content}
+                          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Info className="w-4 h-4 text-gray-400" />
+                          </div>
                         </div>
                       </div>
                     </>
@@ -425,6 +449,13 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
             </Button>
           </div>
         </div>
+
+        {/* Message Details Dialog */}
+        <MessageDetailsDialog
+          message={selectedMessage}
+          isOpen={isMessageDialogOpen}
+          onClose={closeMessageDialog}
+        />
       </div>
     );
   }
