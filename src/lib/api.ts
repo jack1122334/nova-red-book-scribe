@@ -189,6 +189,52 @@ export const chatApi = {
     return data || [];
   },
 
+  sendMessageStream: async (
+    projectId: string, 
+    content: string, 
+    references: any[] = [], 
+    systemMessages: string[] = [],
+    onEvent: (event: any) => void
+  ) => {
+    const { data, error } = await supabase.functions.invoke('chat-dify', {
+      body: {
+        project_id: projectId,
+        core_instruction: content,
+        references: references,
+        system_messages: systemMessages
+      }
+    });
+
+    if (error) throw error;
+
+    // Handle streaming response
+    if (data instanceof ReadableStream) {
+      const reader = data.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const eventData = JSON.parse(line.slice(6));
+              onEvent(eventData);
+            } catch (parseError) {
+              console.warn('Failed to parse event:', line);
+            }
+          }
+        }
+      }
+    }
+
+    return data;
+  },
+
   sendMessage: async (projectId: string, content: string, references: any[] = [], systemMessages: string[] = []) => {
     const { data, error } = await supabase.functions.invoke('chat-dify', {
       body: {

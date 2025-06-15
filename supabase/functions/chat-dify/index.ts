@@ -23,7 +23,7 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // 1. 存储用户消息
+    // Store user message
     const { data: userMessage, error: userMessageError } = await supabase
       .from('chat_messages')
       .insert({
@@ -40,7 +40,7 @@ serve(async (req) => {
       throw userMessageError;
     }
 
-    // 2. 获取或创建会话ID（从项目中获取conversation_id，如果没有则创建新的）
+    // Get or create conversation ID
     let conversationId = '';
     const { data: projectData } = await supabase
       .from('projects')
@@ -52,23 +52,20 @@ serve(async (req) => {
       conversationId = projectData.conversation_id;
     }
 
-    // 3. 构建完整的查询内容，包含引用和系统消息
+    // Build full query with system messages and references
     let fullQuery = core_instruction;
 
-    // 添加系统消息（用户编辑操作）
     if (system_messages.length > 0) {
       const systemContent = system_messages.join('\n\n');
       fullQuery = `${systemContent}\n\n用户当前请求：${core_instruction}`;
     }
 
-    // 处理引用
     if (references.length > 0) {
       let referencesContent = "\n\n用户为本次创作提供了以下参考信息：\n\n";
       
       for (let i = 0; i < references.length; i++) {
         const ref = references[i];
         
-        // 获取卡片内容
         const { data: cardData, error: cardError } = await supabase
           .from('cards')
           .select('*')
@@ -98,7 +95,7 @@ serve(async (req) => {
 
     console.log('Sending to Dify:', { query: fullQuery.substring(0, 200), apiKey: difyApiKey ? 'present' : 'missing' });
 
-    // 4. 调用 Dify API
+    // Call Dify API
     const difyResponse = await fetch(`${difyApiUrl}/chat-messages`, {
       method: 'POST',
       headers: {
@@ -123,21 +120,19 @@ serve(async (req) => {
       throw new Error(`Dify API error: ${difyResponse.status} - ${errorText}`);
     }
 
-    // 5. 处理流式响应
-    const reader = difyResponse.body?.getReader();
-    if (!reader) {
-      throw new Error('Failed to get response reader');
-    }
-
-    let fullAiContent = '';
-    let newConversationId = conversationId;
-    let associatedCardId = null;
-
-    // 创建一个可读流来处理 SSE 数据
+    // Create streaming response
     const stream = new ReadableStream({
       async start(controller) {
+        const reader = difyResponse.body?.getReader();
+        if (!reader) {
+          throw new Error('Failed to get response reader');
+        }
+
         const decoder = new TextDecoder();
-        
+        let fullAiContent = '';
+        let newConversationId = conversationId;
+        let associatedCardId = null;
+
         try {
           while (true) {
             const { done, value } = await reader.read();
@@ -150,8 +145,13 @@ serve(async (req) => {
               if (line.startsWith('data: ')) {
                 try {
                   const data = JSON.parse(line.slice(6));
+                  console.log('Dify event:', JSON.stringify(data, null, 2));
                   
-                  // 处理不同类型的事件
+                  // Forward the event to frontend for streaming display
+                  const eventData = `data: ${JSON.stringify(data)}\n\n`;
+                  controller.enqueue(new TextEncoder().encode(eventData));
+                  
+                  // Process different event types
                   if (data.event === 'agent_message' || data.event === 'message') {
                     fullAiContent += data.answer || '';
                     if (data.conversation_id && !newConversationId) {
@@ -160,6 +160,9 @@ serve(async (req) => {
                   } else if (data.event === 'message_end') {
                     newConversationId = data.conversation_id;
                     console.log('Dify response completed:', { length: fullAiContent.length, conversationId: newConversationId });
+                    
+                    // Process final content and handle card operations
+                    await processFinalContent(fullAiContent, project_id, supabase, newConversationId, conversationId, userMessage);
                     break;
                   }
                 } catch (parseError) {
@@ -177,120 +180,14 @@ serve(async (req) => {
       }
     });
 
-    // 等待流处理完成
-    await stream.pipeTo(new WritableStream({
-      write() {
-        // 这里只是为了消费流，实际处理在上面的 start 方法中
-      }
-    }));
-
-    if (!fullAiContent) {
-      throw new Error('No content received from Dify API');
-    }
-
-    // 6. 更新项目的conversation_id（如果是新的）
-    if (newConversationId && newConversationId !== conversationId) {
-      await supabase
-        .from('projects')
-        .update({ conversation_id: newConversationId })
-        .eq('id', project_id);
-    }
-
-    // 7. 解析 XML 标签并执行数据库操作
-    const newCardRegex = /<new_xhs_card(?:\s+title="([^"]*)")?>([^]*?)<\/new_xhs_card>/g;
-    const updateCardRegex = /<update_xhs_card\s+card_ref_id="([^"]*)"([^]*?)<\/update_xhs_card>/g;
-    
-    let match;
-
-    // 处理新卡片创建
-    while ((match = newCardRegex.exec(fullAiContent)) !== null) {
-      const title = match[1] || `AI生成卡片 ${new Date().toISOString().slice(0, 10)}`;
-      const content = match[2].trim();
-      
-      console.log('Creating new card:', { title, content: content.substring(0, 100) });
-      
-      const { data: newCard, error: createError } = await supabase
-        .from('cards')
-        .insert({
-          project_id,
-          title,
-          content,
-          card_order: 999,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .select()
-        .single();
-
-      if (createError) {
-        console.error('Error creating card:', createError);
-      } else {
-        associatedCardId = newCard.id;
-        console.log('Card created successfully:', newCard.id);
-      }
-    }
-
-    // 处理卡片更新
-    while ((match = updateCardRegex.exec(fullAiContent)) !== null) {
-      const cardRefId = match[1];
-      const content = match[2].trim();
-      
-      console.log('Updating card:', { cardRefId, content: content.substring(0, 100) });
-      
-      const { data: existingCard, error: findError } = await supabase
-        .from('cards')
-        .select('*')
-        .eq('project_id', project_id)
-        .eq('title', cardRefId)
-        .single();
-
-      if (findError || !existingCard) {
-        console.error('Card not found for update:', cardRefId);
-        continue;
-      }
-
-      const { error: updateError } = await supabase
-        .from('cards')
-        .update({
-          content,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', existingCard.id);
-
-      if (updateError) {
-        console.error('Error updating card:', updateError);
-      } else {
-        associatedCardId = existingCard.id;
-        console.log('Card updated successfully:', existingCard.id);
-      }
-    }
-
-    // 8. 存储 AI 响应
-    const { error: aiMessageError } = await supabase
-      .from('chat_messages')
-      .insert({
-        project_id,
-        role: 'assistant',
-        content: fullAiContent.replace(/<new_xhs_card[^>]*>[\s\S]*?<\/new_xhs_card>/g, '[新卡片已创建]')
-                              .replace(/<update_xhs_card[^>]*>[\s\S]*?<\/update_xhs_card>/g, '[卡片已更新]'),
-        llm_raw_output: fullAiContent,
-        associated_card_id: associatedCardId,
-        created_at: new Date().toISOString()
-      });
-
-    if (aiMessageError) {
-      console.error('Error storing AI message:', aiMessageError);
-    }
-
-    return new Response(
-      JSON.stringify({ content: fullAiContent }),
-      { 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        } 
-      }
-    );
+    return new Response(stream, {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
+    });
 
   } catch (error) {
     console.error('Error in chat-dify function:', error);
@@ -306,3 +203,101 @@ serve(async (req) => {
     );
   }
 });
+
+async function processFinalContent(fullAiContent: string, projectId: string, supabase: any, newConversationId: string, conversationId: string, userMessage: any) {
+  let associatedCardId = null;
+
+  // Update conversation_id if new
+  if (newConversationId && newConversationId !== conversationId) {
+    await supabase
+      .from('projects')
+      .update({ conversation_id: newConversationId })
+      .eq('id', projectId);
+  }
+
+  // Parse XML tags and execute database operations
+  const newCardRegex = /<new_xhs_card(?:\s+title="([^"]*)")?>([^]*?)<\/new_xhs_card>/g;
+  const updateCardRegex = /<update_xhs_card\s+card_ref_id="([^"]*)"([^]*?)<\/update_xhs_card>/g;
+  
+  let match;
+
+  // Handle new card creation
+  while ((match = newCardRegex.exec(fullAiContent)) !== null) {
+    const title = match[1] || `AI生成卡片 ${new Date().toISOString().slice(0, 10)}`;
+    const content = match[2].trim();
+    
+    console.log('Creating new card:', { title, content: content.substring(0, 100) });
+    
+    const { data: newCard, error: createError } = await supabase
+      .from('cards')
+      .insert({
+        project_id: projectId,
+        title,
+        content,
+        card_order: 999,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (createError) {
+      console.error('Error creating card:', createError);
+    } else {
+      associatedCardId = newCard.id;
+      console.log('Card created successfully:', newCard.id);
+    }
+  }
+
+  // Handle card updates
+  while ((match = updateCardRegex.exec(fullAiContent)) !== null) {
+    const cardRefId = match[1];
+    const content = match[2].trim();
+    
+    console.log('Updating card:', { cardRefId, content: content.substring(0, 100) });
+    
+    const { data: existingCard, error: findError } = await supabase
+      .from('cards')
+      .select('*')
+      .eq('project_id', projectId)
+      .eq('title', cardRefId)
+      .single();
+
+    if (findError || !existingCard) {
+      console.error('Card not found for update:', cardRefId);
+      continue;
+    }
+
+    const { error: updateError } = await supabase
+      .from('cards')
+      .update({
+        content,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', existingCard.id);
+
+    if (updateError) {
+      console.error('Error updating card:', updateError);
+    } else {
+      associatedCardId = existingCard.id;
+      console.log('Card updated successfully:', existingCard.id);
+    }
+  }
+
+  // Store AI response
+  const { error: aiMessageError } = await supabase
+    .from('chat_messages')
+    .insert({
+      project_id: projectId,
+      role: 'assistant',
+      content: fullAiContent.replace(/<new_xhs_card[^>]*>[\s\S]*?<\/new_xhs_card>/g, '[新卡片已创建]')
+                            .replace(/<update_xhs_card[^>]*>[\s\S]*?<\/update_xhs_card>/g, '[卡片已更新]'),
+      llm_raw_output: fullAiContent,
+      associated_card_id: associatedCardId,
+      created_at: new Date().toISOString()
+    });
+
+  if (aiMessageError) {
+    console.error('Error storing AI message:', aiMessageError);
+  }
+}

@@ -41,7 +41,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
   onCardCreated,
   onCardUpdated
 }, ref) => {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<StreamingMessage[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
@@ -49,8 +49,9 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
   const [editingRemark, setEditingRemark] = useState<number | null>(null);
   const [editRemarkText, setEditRemarkText] = useState("");
   const [pendingSystemMessages, setPendingSystemMessages] = useState<string[]>([]);
-  const [selectedMessage, setSelectedMessage] = useState<ChatMessage | null>(null);
+  const [selectedMessage, setSelectedMessage] = useState<StreamingMessage | null>(null);
   const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
+  const [currentStreamingMessage, setCurrentStreamingMessage] = useState<StreamingMessage | null>(null);
   const {
     toast
   } = useToast();
@@ -99,8 +100,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
       const data = await chatApi.getMessages(projectId);
       console.log('Loaded messages:', data);
 
-      // Convert database messages to frontend ChatMessage format
-      const formattedMessages: ChatMessage[] = data.map(msg => ({
+      const formattedMessages: StreamingMessage[] = data.map(msg => ({
         id: msg.id,
         role: msg.role as 'user' | 'assistant' | 'system' || 'user',
         content: msg.content,
@@ -167,47 +167,96 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
   };
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
+    
     const userMessage = inputValue.trim();
     setInputValue("");
     setIsLoading(true);
 
     // Add user message to UI immediately
-    const tempUserMessage: ChatMessage = {
+    const tempUserMessage: StreamingMessage = {
       id: 'temp-user-' + Date.now(),
       role: 'user',
       content: userMessage,
       created_at: new Date().toISOString()
     };
     setMessages(prev => [...prev, tempUserMessage]);
+
+    // Create streaming assistant message
+    const streamingAssistantMessage: StreamingMessage = {
+      id: 'temp-assistant-' + Date.now(),
+      role: 'assistant',
+      content: '',
+      thoughts: [],
+      toolCalls: [],
+      isStreaming: true,
+      created_at: new Date().toISOString()
+    };
+    
+    setCurrentStreamingMessage(streamingAssistantMessage);
+    setMessages(prev => [...prev, streamingAssistantMessage]);
+
     try {
       console.log('Sending message with references:', references);
       console.log('Pending system messages:', pendingSystemMessages);
 
-      // 将待发送的系统消息包含在请求中
-      const response = await chatApi.sendMessage(projectId, userMessage, references, pendingSystemMessages);
-      console.log('Chat API response:', response);
-      if (response?.content) {
-        // Parse XML tags and trigger card operations
-        const displayContent = parseXMLTags(response.content);
+      await chatApi.sendMessageStream(
+        projectId, 
+        userMessage, 
+        references, 
+        pendingSystemMessages,
+        (event: StreamingEvent) => {
+          console.log('Received streaming event:', event);
+          
+          setCurrentStreamingMessage(prev => {
+            if (!prev) return null;
+            
+            const updated = { ...prev };
+            
+            // Handle different event types
+            switch (event.event) {
+              case 'agent_thought':
+                if (event.thought) {
+                  updated.thoughts = [...(updated.thoughts || []), event.thought];
+                }
+                break;
+              case 'agent_message':
+              case 'message':
+                if (event.answer) {
+                  updated.content += event.answer;
+                }
+                break;
+              case 'tool_calls':
+                if (event.tool_calls) {
+                  updated.toolCalls = [...(updated.toolCalls || []), ...event.tool_calls];
+                }
+                break;
+              case 'message_end':
+                updated.isStreaming = false;
+                // Parse XML tags for final content
+                updated.content = parseXMLTags(updated.content);
+                break;
+            }
+            
+            return updated;
+          });
+          
+          // Update the message in the list
+          setMessages(prev => prev.map(msg => 
+            msg.id === streamingAssistantMessage.id ? { ...streamingAssistantMessage, ...currentStreamingMessage } : msg
+          ));
+        }
+      );
 
-        // Add assistant message to UI
-        const assistantMessage: ChatMessage = {
-          id: 'temp-assistant-' + Date.now(),
-          role: 'assistant',
-          content: displayContent,
-          llm_raw_output: response.content,
-          created_at: new Date().toISOString()
-        };
-        setMessages(prev => [...prev.slice(0, -1), tempUserMessage, assistantMessage]);
-
-        // Clear references and pending system messages after successful message
-        setReferences([]);
-        setPendingSystemMessages([]);
-        toast({
-          title: "消息发送成功",
-          description: "AI 已回复您的消息"
-        });
-      }
+      // Clear references and pending system messages after successful message
+      setReferences([]);
+      setPendingSystemMessages([]);
+      setCurrentStreamingMessage(null);
+      
+      toast({
+        title: "消息发送成功",
+        description: "AI 已回复您的消息"
+      });
+      
     } catch (error: any) {
       console.error('Failed to send message:', error);
       toast({
@@ -215,8 +264,9 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
         description: error.message || "无法发送消息，请重试",
         variant: "destructive"
       });
-      // Remove the temporary user message on error
-      setMessages(prev => prev.slice(0, -1));
+      // Remove the temporary messages on error
+      setMessages(prev => prev.slice(0, -2));
+      setCurrentStreamingMessage(null);
     } finally {
       setIsLoading(false);
     }
@@ -227,13 +277,63 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
       handleSendMessage();
     }
   };
-  const handleMessageClick = (message: ChatMessage) => {
+  const handleMessageClick = (message: StreamingMessage) => {
     setSelectedMessage(message);
     setIsMessageDialogOpen(true);
   };
   const closeMessageDialog = () => {
     setIsMessageDialogOpen(false);
     setSelectedMessage(null);
+  };
+  const renderStreamingContent = (message: StreamingMessage) => {
+    return (
+      <div className="space-y-3">
+        {/* Thoughts */}
+        {message.thoughts && message.thoughts.length > 0 && (
+          <div className="bg-black/5 rounded-lg p-3 border-l-4 border-blue-500">
+            <div className="text-xs font-medium text-black/60 mb-2">🤔 AI思考过程</div>
+            {message.thoughts.map((thought, index) => (
+              <div key={index} className="text-sm text-black/70 mb-1 last:mb-0">
+                {thought}
+              </div>
+            ))}
+          </div>
+        )}
+        
+        {/* Tool Calls */}
+        {message.toolCalls && message.toolCalls.length > 0 && (
+          <div className="bg-black/5 rounded-lg p-3 border-l-4 border-green-500">
+            <div className="text-xs font-medium text-black/60 mb-2">🔧 工具调用</div>
+            {message.toolCalls.map((tool, index) => (
+              <div key={index} className="text-sm text-black/70 mb-1 last:mb-0">
+                <span className="font-medium">{tool.name || 'Tool'}:</span> {tool.input || JSON.stringify(tool)}
+              </div>
+            ))}
+          </div>
+        )}
+        
+        {/* Main Content */}
+        {message.content && (
+          <ReactMarkdown 
+            className="prose prose-sm max-w-none text-black leading-relaxed prose-headings:text-black prose-p:text-black prose-strong:text-black prose-em:text-black prose-ul:text-black prose-ol:text-black prose-li:text-black prose-blockquote:text-black/70 prose-code:text-black prose-pre:bg-black/10 prose-pre:text-black"
+          >
+            {message.content}
+          </ReactMarkdown>
+        )}
+        
+        {/* Streaming indicator */}
+        {message.isStreaming && (
+          <div className="flex items-center gap-2 text-black/50">
+            <div className="flex gap-1">
+              <div className="w-2 h-2 bg-black/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+              <div className="w-2 h-2 bg-black/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+              <div className="w-2 h-2 bg-black/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+            </div>
+            <span className="text-sm">AI正在思考和处理...</span>
+          </div>
+        )}
+      </div>
+    );
   };
   return <div className="h-full flex flex-col bg-amber-300">
         {/* Header */}
@@ -314,25 +414,24 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
               </p>
             </div> : <div className="p-4 space-y-6">
               {messages.map(message => <div key={message.id} className="flex gap-4">
-                  {message.role === 'assistant' ? <>
+                  {message.role === 'assistant' ? (
+                    <>
                       <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center flex-shrink-0">
                         <Bot className="w-4 h-4 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="cursor-pointer group relative" onClick={() => handleMessageClick(message)}>
                           <div className="p-3 rounded-xl transition-colors border border-transparent hover:border-black/20 bg-stone-400">
-                            <ReactMarkdown 
-                              className="prose prose-sm max-w-none text-black leading-relaxed prose-headings:text-black prose-p:text-black prose-strong:text-black prose-em:text-black prose-ul:text-black prose-ol:text-black prose-li:text-black prose-blockquote:text-black/70 prose-code:text-black prose-pre:bg-black/10 prose-pre:text-black"
-                            >
-                              {message.content}
-                            </ReactMarkdown>
+                            {renderStreamingContent(message)}
                             <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                               <Info className="w-4 h-4 text-black/40" />
                             </div>
                           </div>
                         </div>
                       </div>
-                    </> : <>
+                    </>
+                  ) : (
+                    <>
                       <div className="w-8 h-8 rounded-full bg-black/20 flex items-center justify-center flex-shrink-0">
                         <User className="w-4 h-4 text-black/60" />
                       </div>
@@ -344,7 +443,8 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
                           </div>
                         </div>
                       </div>
-                    </>}
+                    </>
+                  )}
                 </div>)}
 
               {isLoading && <div className="flex gap-4">
