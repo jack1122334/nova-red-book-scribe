@@ -52,7 +52,7 @@ const Creation = () => {
   };
 
   return (
-    <div className="min-h-screen bg-hermes-500">
+    <div className="min-h-screen bg-background">
       <FloatingSidebar currentPage="creation" />
       
       <div className="pl-20">

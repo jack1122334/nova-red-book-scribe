@@ -32,8 +32,8 @@ export const FloatingSidebar = ({ currentPage }: FloatingSidebarProps) => {
     <div className="fixed left-8 top-1/2 transform -translate-y-1/2 z-50">
       <div
         className={cn(
-          "hermes-floating transition-all duration-300",
-          isExpanded ? "w-48 p-4" : "w-16 p-3"
+          "notion-floating transition-all duration-300",
+          isExpanded ? "w-48 p-4" : "w-14 p-3"
         )}
       >
         {/* Toggle Button */}
@@ -41,7 +41,7 @@ export const FloatingSidebar = ({ currentPage }: FloatingSidebarProps) => {
           variant="ghost"
           size="sm"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full mb-3 hover:bg-gray-100 transition-colors rounded-2xl shadow-none hover:shadow-black border-2 border-transparent hover:border-black"
+          className="w-full mb-3 hover:bg-gray-100 transition-colors rounded-xl shadow-none hover:shadow-sm"
         >
           {isExpanded ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
         </Button>
@@ -55,10 +55,10 @@ export const FloatingSidebar = ({ currentPage }: FloatingSidebarProps) => {
               size="sm"
               onClick={() => navigate(item.path)}
               className={cn(
-                "w-full justify-start transition-all duration-200 font-serif text-sm rounded-2xl border-2",
+                "w-full justify-start transition-all duration-200 font-serif text-sm rounded-xl",
                 currentPage === item.id
-                  ? "bg-black text-white hover:bg-gray-800 shadow-black border-black"
-                  : "hover:bg-gray-100 text-black shadow-none hover:shadow-black border-transparent hover:border-black",
+                  ? "bg-gray-900 text-white hover:bg-gray-800 shadow-notion"
+                  : "hover:bg-gray-100 text-gray-700 shadow-none hover:shadow-sm",
                 !isExpanded && "px-3"
               )}
             >

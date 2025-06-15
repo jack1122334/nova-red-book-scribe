@@ -51,7 +51,7 @@ const Index = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-hermes-500">
+    <div className="min-h-screen bg-background">
       <FloatingSidebar currentPage="home" />
       
       <div className="pl-20">
@@ -59,17 +59,17 @@ const Index = () => {
         <section className="px-8 py-16 text-center">
           <div className="max-w-4xl mx-auto">
             <div className="mb-8 animate-fade-in">
-              <div className="inline-flex items-center space-x-2 bg-white border-2 border-black rounded-full px-6 py-3 mb-8">
-                <Sparkles className="w-5 h-5 text-black" />
-                <span className="text-sm font-serif text-black font-medium">智能写作平台</span>
+              <div className="inline-flex items-center space-x-2 bg-gray-100 rounded-full px-4 py-2 mb-6">
+                <Sparkles className="w-4 h-4 text-gray-600" />
+                <span className="text-sm font-serif text-gray-700">智能写作平台</span>
               </div>
               
-              <h1 className="text-6xl font-serif font-bold text-black mb-8 tracking-tight leading-tight">
+              <h1 className="text-5xl font-serif font-bold text-gray-900 mb-6 tracking-tight leading-tight">
                 让创作<br />
-                <span className="text-white">更加优雅</span>
+                <span className="text-gray-600">更加优雅</span>
               </h1>
               
-              <p className="text-xl text-black mb-12 max-w-2xl mx-auto leading-relaxed font-serif">
+              <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed font-serif">
                 结合人工智能与人文美学，为您提供专业的写作环境和创作灵感。
                 在这里，每一个字都有其独特的价值与意义。
               </p>
@@ -82,16 +82,16 @@ const Index = () => {
                   placeholder="描述您想要创作的内容..."
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  className="flex-1 h-14 text-base font-serif"
+                  className="flex-1 h-12 text-base font-serif rounded-xl border-gray-200 focus:border-gray-400"
                   onKeyPress={(e) => e.key === 'Enter' && handleStart()}
                 />
                 <Button 
                   onClick={handleStart} 
                   size="lg"
-                  className="h-14 px-8 font-serif text-base"
+                  className="h-12 px-8 font-serif rounded-xl shadow-notion hover:shadow-notion-hover"
                 >
                   开始创作
-                  <ArrowRight className="w-5 h-5 ml-2" />
+                  <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>
             </div>
@@ -101,15 +101,15 @@ const Index = () => {
               {features.map((feature, index) => (
                 <Card 
                   key={index} 
-                  className="text-center p-6 animate-fade-in"
+                  className="text-center p-6 hover:shadow-notion-hover transition-all duration-300 hover:-translate-y-1 animate-fade-in border-gray-200/60"
                   style={{ animationDelay: `${0.3 + index * 0.1}s` }}
                 >
                   <CardContent className="p-0">
-                    <div className="w-14 h-14 mx-auto mb-4 bg-black border-2 border-black rounded-2xl flex items-center justify-center">
-                      <feature.icon className="w-7 h-7 text-white" />
+                    <div className="w-12 h-12 mx-auto mb-4 bg-gray-100 rounded-xl flex items-center justify-center">
+                      <feature.icon className="w-6 h-6 text-gray-700" />
                     </div>
-                    <h3 className="font-serif font-semibold text-black mb-2 text-lg">{feature.title}</h3>
-                    <p className="text-sm text-black font-serif leading-relaxed">{feature.description}</p>
+                    <h3 className="font-serif font-semibold text-gray-900 mb-2">{feature.title}</h3>
+                    <p className="text-sm text-gray-600 font-serif">{feature.description}</p>
                   </CardContent>
                 </Card>
               ))}
@@ -118,7 +118,7 @@ const Index = () => {
         </section>
 
         {/* Goodcase Gallery */}
-        <section className="px-8 py-16 bg-white border-t-2 border-black">
+        <section className="px-8 py-16 bg-gray-50/50">
           <div className="max-w-6xl mx-auto">
             <GoodcaseGallery />
           </div>

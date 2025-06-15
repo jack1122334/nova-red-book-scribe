@@ -7,84 +7,84 @@
 
 @layer base {
   :root {
-    /* 爱马仕橙色背景+黑白组件主题 */
-    --background: 255 102 0; /* 爱马仕橙色背景 */
-    --foreground: 0 0 0;
+    /* Notion-inspired monochrome palette */
+    --background: 250 250 250;
+    --foreground: 37 37 37;
 
-    --card: 255 255 255; /* 白色卡片 */
-    --card-foreground: 0 0 0;
+    --card: 255 255 255;
+    --card-foreground: 37 37 37;
 
     --popover: 255 255 255;
-    --popover-foreground: 0 0 0;
+    --popover-foreground: 37 37 37;
 
-    --primary: 0 0 0; /* 黑色主要色 */
+    --primary: 37 37 37;
     --primary-foreground: 255 255 255;
 
-    --secondary: 255 255 255; /* 白色次要色 */
-    --secondary-foreground: 0 0 0;
+    --secondary: 246 246 246;
+    --secondary-foreground: 37 37 37;
 
-    --muted: 245 245 245;
-    --muted-foreground: 64 64 64;
+    --muted: 246 246 246;
+    --muted-foreground: 115 115 115;
 
-    --accent: 0 0 0;
-    --accent-foreground: 255 255 255;
+    --accent: 241 241 241;
+    --accent-foreground: 37 37 37;
 
     --destructive: 220 38 38;
     --destructive-foreground: 255 255 255;
 
-    --border: 0 0 0; /* 黑色边框 */
-    --input: 255 255 255; /* 白色输入框背景 */
-    --ring: 0 0 0;
+    --border: 229 229 229;
+    --input: 229 229 229;
+    --ring: 37 37 37;
 
-    --radius: 16px;
+    --radius: 12px;
 
     --sidebar-background: 255 255 255;
-    --sidebar-foreground: 0 0 0;
-    --sidebar-primary: 0 0 0;
+    --sidebar-foreground: 115 115 115;
+    --sidebar-primary: 37 37 37;
     --sidebar-primary-foreground: 255 255 255;
-    --sidebar-accent: 248 248 248;
-    --sidebar-accent-foreground: 0 0 0;
-    --sidebar-border: 0 0 0;
-    --sidebar-ring: 0 0 0;
+    --sidebar-accent: 246 246 246;
+    --sidebar-accent-foreground: 37 37 37;
+    --sidebar-border: 229 229 229;
+    --sidebar-ring: 37 37 37;
   }
 
   .dark {
-    --background: 255 102 0;
-    --foreground: 0 0 0;
+    --background: 25 25 25;
+    --foreground: 250 250 250;
 
-    --card: 255 255 255;
-    --card-foreground: 0 0 0;
+    --card: 37 37 37;
+    --card-foreground: 250 250 250;
 
-    --popover: 255 255 255;
-    --popover-foreground: 0 0 0;
+    --popover: 37 37 37;
+    --popover-foreground: 250 250 250;
 
-    --primary: 0 0 0;
-    --primary-foreground: 255 255 255;
+    --primary: 250 250 250;
+    --primary-foreground: 37 37 37;
 
-    --secondary: 255 255 255;
-    --secondary-foreground: 0 0 0;
+    --secondary: 64 64 64;
+    --secondary-foreground: 250 250 250;
 
-    --muted: 245 245 245;
-    --muted-foreground: 64 64 64;
+    --muted: 64 64 64;
+    --muted-foreground: 163 163 163;
 
-    --accent: 0 0 0;
-    --accent-foreground: 255 255 255;
+    --accent: 64 64 64;
+    --accent-foreground: 250 250 250;
 
     --destructive: 239 68 68;
-    --destructive-foreground: 255 255 255;
+    --destructive-foreground: 250 250 250;
 
-    --border: 0 0 0;
-    --input: 255 255 255;
-    --ring: 0 0 0;
+    --border: 64 64 64;
+    --input: 64 64 64;
+    --ring: 212 212 212;
     
-    --sidebar-background: 255 255 255;
-    --sidebar-foreground: 0 0 0;
-    --sidebar-primary: 0 0 0;
-    --sidebar-primary-foreground: 255 255 255;
-    --sidebar-accent: 248 248 248;
-    --sidebar-accent-foreground: 0 0 0;
-    --sidebar-border: 0 0 0;
-    --sidebar-ring: 0 0 0;
+    --sidebar-background: 37 37 37;
+    --sidebar-foreground: 163 163 163;
+    --sidebar-primary: 250 250 250;
+    --sidebar-primary-foreground: 37 37 37;
+    --sidebar-accent: 64 64 64;
+    --sidebar-accent-foreground: 250 250 250;
+    --sidebar-border: 64 64 64;
+    --sidebar-ring: 212 212 212;
   }
 }
 
@@ -94,7 +94,7 @@
   }
 
   body {
-    @apply bg-hermes-500 text-black;
+    @apply bg-background text-foreground;
     font-family: 'Noto Serif SC', serif;
     line-height: 1.7;
     letter-spacing: 0.02em;
@@ -112,57 +112,63 @@
 }
 
 @layer components {
-  .hermes-card {
-    @apply bg-white border-2 border-black rounded-3xl shadow-black hover:shadow-black-strong transition-all duration-300 hover:-translate-y-1;
+  .notion-card {
+    @apply bg-white border border-gray-200/60 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
   }
 
-  .hermes-button {
-    @apply font-serif font-medium tracking-wide transition-all duration-200 rounded-2xl border-2 shadow-black;
-    @apply hover:-translate-y-1 hover:shadow-black-strong active:translate-y-0;
+  .notion-card:hover {
+    box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   }
 
-  .hermes-button-primary {
-    @apply hermes-button bg-black text-white border-black hover:bg-gray-800 hover:border-gray-800;
+  .notion-button {
+    @apply font-serif font-medium tracking-wide transition-all duration-200 rounded-xl border shadow-sm;
+    @apply hover:-translate-y-0.5 hover:shadow-md active:translate-y-0;
   }
 
-  .hermes-button-secondary {
-    @apply hermes-button bg-white text-black border-black hover:bg-gray-100;
+  .notion-button-primary {
+    @apply notion-button bg-gray-900 text-white border-gray-900 hover:bg-gray-800 hover:border-gray-800;
   }
 
-  .hermes-input {
-    @apply font-serif border-2 border-black rounded-2xl focus:border-black focus:ring-2 focus:ring-black transition-all duration-200;
-    @apply shadow-black focus:shadow-black-strong bg-white;
+  .notion-button-secondary {
+    @apply notion-button bg-white text-gray-900 border-gray-300 hover:bg-gray-50 hover:border-gray-400;
   }
 
-  .hermes-floating {
-    @apply bg-white border-2 border-black rounded-3xl shadow-black-strong;
+  .notion-input {
+    @apply font-serif border-gray-200 rounded-xl focus:border-gray-400 focus:ring-2 focus:ring-gray-200 transition-all duration-200;
+    @apply shadow-sm focus:shadow-md;
+  }
+
+  .notion-floating {
+    @apply bg-white/95 backdrop-blur-sm border border-gray-200/60 rounded-xl shadow-lg;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   }
 
   .elegant-prose {
-    @apply text-black leading-relaxed font-serif;
+    @apply text-gray-800 leading-relaxed font-serif;
   }
 
   .elegant-prose h1 {
-    @apply text-3xl font-semibold text-black mb-6 tracking-tight;
+    @apply text-3xl font-semibold text-gray-900 mb-6 tracking-tight;
   }
 
   .elegant-prose h2 {
-    @apply text-2xl font-semibold text-black mb-4 tracking-tight;
+    @apply text-2xl font-semibold text-gray-900 mb-4 tracking-tight;
   }
 
   .elegant-prose h3 {
-    @apply text-xl font-medium text-black mb-3 tracking-tight;
+    @apply text-xl font-medium text-gray-900 mb-3 tracking-tight;
   }
 
   .elegant-prose p {
-    @apply mb-4 text-black;
+    @apply mb-4 text-gray-700;
   }
 
   .elegant-prose blockquote {
-    @apply border-l-4 border-black pl-6 italic text-black my-6;
+    @apply border-l-4 border-gray-300 pl-6 italic text-gray-600 my-6;
   }
 
-  .hermes-gradient {
-    @apply bg-gradient-to-br from-black to-gray-800;
+  .glass-effect {
+    @apply bg-white/80 backdrop-blur-lg border border-white/20;
   }
 }
