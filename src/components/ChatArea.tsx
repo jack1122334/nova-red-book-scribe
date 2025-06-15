@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -25,10 +26,12 @@ interface ChatMessage {
 }
 
 interface DifyToolCall {
+  id?: string;
   tool: string;
   tool_input: string;
   tool_labels: { [key: string]: { zh_Hans: string; en_US: string } };
   observation?: string;
+  position?: number;
 }
 
 interface StreamingMessage extends ChatMessage {
@@ -39,12 +42,14 @@ interface StreamingMessage extends ChatMessage {
 
 interface StreamingEvent {
   event: string;
+  id?: string;
   thought?: string;
   answer?: string;
   tool?: string;
   tool_input?: string;
   tool_labels?: any;
   observation?: string;
+  position?: number;
   conversation_id?: string;
 }
 
@@ -230,22 +235,52 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
               
               switch (event.event) {
                 case 'agent_thought':
-                  // 处理 Dify 的 agent_thought 事件
+                  // 处理思考内容
                   if (event.thought) {
                     console.log('ChatArea: Adding Dify thought:', event.thought);
                     updated.thoughts = [...(updated.thoughts || []), event.thought];
                   }
                   
-                  // 处理工具调用信息
+                  // 处理工具调用信息 - 创建或更新工具调用记录
                   if (event.tool && event.tool_input) {
-                    console.log('ChatArea: Adding Dify tool call:', event.tool, event.tool_input);
+                    console.log('ChatArea: Processing tool call:', {
+                      id: event.id,
+                      tool: event.tool,
+                      tool_input: event.tool_input,
+                      observation: event.observation,
+                      position: event.position
+                    });
+
+                    const existingToolCalls = updated.toolCalls || [];
+                    const toolCallIndex = existingToolCalls.findIndex(tc => tc.id === event.id);
+                    
                     const toolCall: DifyToolCall = {
+                      id: event.id,
                       tool: event.tool,
                       tool_input: event.tool_input,
                       tool_labels: event.tool_labels || {},
-                      observation: event.observation
+                      observation: event.observation,
+                      position: event.position
                     };
-                    updated.toolCalls = [...(updated.toolCalls || []), toolCall];
+
+                    if (toolCallIndex >= 0) {
+                      // 更新现有的工具调用（可能是添加了observation）
+                      updated.toolCalls = existingToolCalls.map((tc, index) => 
+                        index === toolCallIndex ? { ...tc, ...toolCall } : tc
+                      );
+                    } else {
+                      // 添加新的工具调用
+                      updated.toolCalls = [...existingToolCalls, toolCall];
+                    }
+                  }
+                  
+                  // 如果只有observation而没有tool信息，尝试更新对应的工具调用
+                  if (event.observation && event.id && !event.tool) {
+                    console.log('ChatArea: Updating tool call observation:', event.id, event.observation);
+                    const existingToolCalls = updated.toolCalls || [];
+                    updated.toolCalls = existingToolCalls.map(tc => 
+                      tc.id === event.id ? { ...tc, observation: event.observation } : tc
+                    );
                   }
                   break;
                   
@@ -331,33 +366,42 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
           </div>
         )}
         
-        {/* Tool Calls - 优化显示 Dify 工具调用 */}
+        {/* Tool Calls - 按position排序并显示完整信息 */}
         {message.toolCalls && message.toolCalls.length > 0 && (
           <div className="bg-black/5 rounded-lg p-3 border-l-4 border-green-500">
             <div className="text-xs font-medium text-black/60 mb-2">🔧 工具调用</div>
-            {message.toolCalls.map((toolCall, index) => (
-              <div key={index} className="text-sm text-black/70 mb-2 last:mb-0">
-                <div className="font-medium text-green-700 mb-1">
-                  工具: {toolCall.tool.split(';').join(', ')}
+            {message.toolCalls
+              .sort((a, b) => (a.position || 0) - (b.position || 0))
+              .map((toolCall, index) => (
+                <div key={toolCall.id || index} className="text-sm text-black/70 mb-3 last:mb-0">
+                  <div className="font-medium text-green-700 mb-1">
+                    工具: {toolCall.tool.split(';').join(', ')}
+                  </div>
+                  
+                  {toolCall.tool_input && (
+                    <div className="bg-black/5 rounded p-2 text-xs font-mono mb-2">
+                      <div className="text-black/50 mb-1">输入参数:</div>
+                      <div className="whitespace-pre-wrap">{toolCall.tool_input}</div>
+                    </div>
+                  )}
+                  
+                  {toolCall.observation ? (
+                    <div className="bg-blue-50 rounded p-2 text-xs">
+                      <div className="text-blue-600 font-medium mb-1">执行结果:</div>
+                      <div className="text-black/70 whitespace-pre-wrap">{toolCall.observation}</div>
+                    </div>
+                  ) : (
+                    <div className="bg-yellow-50 rounded p-2 text-xs">
+                      <div className="text-yellow-600 font-medium mb-1">状态:</div>
+                      <div className="text-black/70">工具执行中...</div>
+                    </div>
+                  )}
                 </div>
-                {toolCall.tool_input && (
-                  <div className="bg-black/5 rounded p-2 text-xs font-mono">
-                    <div className="text-black/50 mb-1">输入参数:</div>
-                    <div>{toolCall.tool_input}</div>
-                  </div>
-                )}
-                {toolCall.observation && (
-                  <div className="bg-blue-50 rounded p-2 text-xs mt-1">
-                    <div className="text-blue-600 font-medium mb-1">执行结果:</div>
-                    <div className="text-black/70">{toolCall.observation}</div>
-                  </div>
-                )}
-              </div>
-            ))}
+              ))}
           </div>
         )}
         
-        {/* Main Content */}
+        {/* Main Content - 实时显示内容 */}
         {message.content && (
           <ReactMarkdown 
             className="prose prose-sm max-w-none text-black leading-relaxed prose-headings:text-black prose-p:text-black prose-strong:text-black prose-em:text-black prose-ul:text-black prose-ol:text-black prose-li:text-black prose-blockquote:text-black/70 prose-code:text-black prose-pre:bg-black/10 prose-pre:text-black"
@@ -366,7 +410,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
           </ReactMarkdown>
         )}
         
-        {/* Streaming indicator - 只有在真正流式传输且没有任何实际内容时才显示 */}
+        {/* Streaming indicator - 只在真正流式传输且没有任何实际内容时显示 */}
         {message.isStreaming && !message.thoughts?.length && !message.toolCalls?.length && !message.content && (
           <div className="flex items-center gap-2 text-black/50">
             <div className="flex gap-1">
@@ -375,6 +419,13 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
               <div className="w-2 h-2 bg-black/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
             </div>
             <span className="text-sm">Nova正在连接...</span>
+          </div>
+        )}
+        
+        {/* 流式传输光标 - 在有内容且仍在流式传输时显示 */}
+        {message.isStreaming && (message.content || message.thoughts?.length || message.toolCalls?.length) && (
+          <div className="inline-flex items-center">
+            <div className="w-2 h-4 bg-black/60 animate-pulse ml-1"></div>
           </div>
         )}
       </div>
