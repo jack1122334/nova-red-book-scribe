@@ -99,7 +99,7 @@ export const ProjectWorkbench = ({
             <WritingArea ref={writingAreaRef} projectId={project.id} onCardUpdate={handleCardUpdate} onCardCreate={handleCardCreate} onTextSelect={handleTextSelection} onAddReference={handleAddReference} />
           </ResizablePanel>
           
-          <ResizableHandle withHandle className="transition-colors w-1 bg-amber-400" />
+          <ResizableHandle withHandle className="transition-colors w-1 bg-stone-500" />
           
           {/* Chat Area */}
           <ResizablePanel defaultSize={45} minSize={35} maxSize={65}>
