@@ -20,8 +20,8 @@ export default {
 		},
 		extend: {
 			fontFamily: {
-				serif: ['Crimson Text', 'Georgia', 'serif'],
-				sans: ['Inter', 'system-ui', 'sans-serif'],
+				serif: ['Noto Serif SC', 'serif'],
+				sans: ['Noto Serif SC', 'serif'], // 统一使用宋体
 			},
 			colors: {
 				border: 'hsl(var(--border))',
@@ -66,24 +66,19 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				},
-				'newyorker': {
-					50: '#fafafa',
-					100: '#f5f5f5',
-					200: '#e5e5e5',
-					300: '#d4d4d4',
-					400: '#a3a3a3',
-					500: '#737373',
-					600: '#525252',
-					700: '#404040',
-					800: '#262626',
-					900: '#171717',
 				}
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
-				sm: 'calc(var(--radius) - 4px)'
+				sm: 'calc(var(--radius) - 4px)',
+				xl: '16px',
+				'2xl': '20px'
+			},
+			boxShadow: {
+				'notion': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+				'notion-hover': '0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+				'notion-float': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
 			},
 			keyframes: {
 				'accordion-down': {
@@ -111,36 +106,21 @@ export default {
 						opacity: '1',
 						transform: 'translateY(0)'
 					}
+				},
+				'float': {
+					'0%, 100%': {
+						transform: 'translateY(0px)'
+					},
+					'50%': {
+						transform: 'translateY(-4px)'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
-				'fade-in': 'fade-in 0.3s ease-out'
-			},
-			typography: {
-				DEFAULT: {
-					css: {
-						fontFamily: '"Crimson Text", serif',
-						lineHeight: '1.6',
-						color: '#374151',
-						h1: {
-							fontFamily: '"Inter", sans-serif',
-							fontWeight: '500',
-							letterSpacing: '-0.02em',
-						},
-						h2: {
-							fontFamily: '"Inter", sans-serif',
-							fontWeight: '500',
-							letterSpacing: '-0.02em',
-						},
-						h3: {
-							fontFamily: '"Inter", sans-serif',
-							fontWeight: '500',
-							letterSpacing: '-0.02em',
-						},
-					}
-				}
+				'fade-in': 'fade-in 0.3s ease-out',
+				'float': 'float 3s ease-in-out infinite'
 			}
 		}
 	},

@@ -41,10 +41,10 @@ const goodcases = [
 export const GoodcaseGallery = () => {
   return (
     <div>
-      <h2 className="text-3xl font-sans font-medium text-gray-900 mb-3 tracking-tight">
+      <h2 className="text-3xl font-serif font-semibold text-gray-900 mb-3 tracking-tight">
         精选创作
       </h2>
-      <p className="text-gray-600 mb-12 text-lg">
+      <p className="text-gray-600 mb-12 text-lg font-serif">
         从这些优秀的创作案例中汲取灵感
       </p>
       
@@ -52,29 +52,29 @@ export const GoodcaseGallery = () => {
         {goodcases.map((goodcase, index) => (
           <Card
             key={goodcase.id}
-            className="group cursor-pointer transition-all duration-300 hover:shadow-lg border-gray-200 bg-white animate-fade-in"
+            className="group cursor-pointer transition-all duration-300 hover:shadow-notion-hover border-gray-200/60 bg-white animate-fade-in"
             style={{ animationDelay: `${index * 0.1}s` }}
           >
             <CardContent className="p-0">
-              <div className={`h-24 bg-gradient-to-br ${goodcase.color} border-b border-gray-100 flex items-end justify-start p-6`}>
+              <div className={`h-24 bg-gradient-to-br ${goodcase.color} border-b border-gray-100/60 flex items-end justify-start p-6 rounded-t-xl`}>
                 <Badge 
                   variant="secondary" 
-                  className="bg-white/90 text-gray-700 font-sans text-xs font-medium border-0"
+                  className="bg-white/90 text-gray-700 font-serif text-xs font-medium border-0 rounded-lg shadow-sm"
                 >
                   {goodcase.category}
                 </Badge>
               </div>
               
               <div className="p-6">
-                <h3 className="font-sans font-medium text-gray-900 mb-3 text-lg leading-tight group-hover:text-gray-700 transition-colors">
+                <h3 className="font-serif font-semibold text-gray-900 mb-3 text-lg leading-tight group-hover:text-gray-700 transition-colors">
                   {goodcase.title}
                 </h3>
                 
-                <p className="text-gray-600 mb-6 leading-relaxed text-sm">
+                <p className="text-gray-600 mb-6 leading-relaxed text-sm font-serif">
                   {goodcase.content}
                 </p>
                 
-                <div className="flex items-center justify-between text-xs text-gray-500 font-sans">
+                <div className="flex items-center justify-between text-xs text-gray-500 font-serif">
                   <div className="flex items-center space-x-1">
                     <Heart className="w-3 h-3" />
                     <span>{goodcase.engagement.likes.toLocaleString()}</span>

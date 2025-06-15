@@ -63,9 +63,9 @@ export const ProjectWorkbench = ({ project, onBack, initialMessage }: ProjectWor
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
+    <div className="h-screen flex flex-col bg-background">
       {/* Header */}
-      <header className="border-b border-gray-200 bg-white">
+      <header className="border-b border-gray-200/60 bg-white/80 backdrop-blur-sm">
         <div className="px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-6">
@@ -73,7 +73,7 @@ export const ProjectWorkbench = ({ project, onBack, initialMessage }: ProjectWor
                 variant="ghost"
                 size="sm"
                 onClick={onBack}
-                className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 font-sans"
+                className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 font-serif rounded-xl"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 返回项目
@@ -82,14 +82,16 @@ export const ProjectWorkbench = ({ project, onBack, initialMessage }: ProjectWor
               <div className="h-6 w-px bg-gray-300" />
               
               <div className="flex items-center space-x-3">
-                <Feather className="w-5 h-5 text-gray-700" />
-                <h1 className="text-xl font-sans font-medium text-gray-900 tracking-tight">
+                <div className="p-2 bg-gray-100 rounded-xl">
+                  <Feather className="w-5 h-5 text-gray-700" />
+                </div>
+                <h1 className="text-xl font-serif font-semibold text-gray-900 tracking-tight">
                   {project.title}
                 </h1>
               </div>
             </div>
             
-            <div className="text-sm text-gray-500 font-sans">
+            <div className="text-sm text-gray-500 font-serif bg-gray-100 px-3 py-1 rounded-lg">
               创作工作台
             </div>
           </div>
@@ -100,7 +102,7 @@ export const ProjectWorkbench = ({ project, onBack, initialMessage }: ProjectWor
       <div className="flex-1 min-h-0">
         <ResizablePanelGroup direction="horizontal" className="h-full">
           {/* Writing Area */}
-          <ResizablePanel defaultSize={60} minSize={40}>
+          <ResizablePanel defaultSize={55} minSize={40}>
             <WritingArea 
               ref={writingAreaRef}
               projectId={project.id} 
@@ -111,10 +113,10 @@ export const ProjectWorkbench = ({ project, onBack, initialMessage }: ProjectWor
             />
           </ResizablePanel>
           
-          <ResizableHandle withHandle className="bg-gray-200 hover:bg-gray-300 transition-colors" />
+          <ResizableHandle withHandle className="bg-gray-200/60 hover:bg-gray-300/60 transition-colors w-1" />
           
           {/* Chat Area */}
-          <ResizablePanel defaultSize={40} minSize={30} maxSize={60}>
+          <ResizablePanel defaultSize={45} minSize={35} maxSize={65}>
             <ChatArea 
               ref={chatAreaRef}
               projectId={project.id} 
