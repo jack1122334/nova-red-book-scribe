@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Feather } from "lucide-react";
@@ -63,37 +62,33 @@ export const ProjectWorkbench = ({ project, onBack, initialMessage }: ProjectWor
   };
 
   return (
-    <div className="h-screen flex flex-col">
-      {/* Header */}
-      <header className="border-b border-gray-200 bg-white">
-        <div className="px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-6">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onBack}
-                className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 font-serif rounded-xl"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                返回项目
-              </Button>
-              
-              <div className="h-6 w-px bg-gray-300" />
-              
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-gray-100 rounded-xl">
-                  <Feather className="w-5 h-5 text-gray-700" />
-                </div>
-                <h1 className="text-xl font-serif font-semibold text-gray-900 tracking-tight">
-                  {project.title}
-                </h1>
-              </div>
-            </div>
+    <div className="h-screen flex flex-col bg-orange-500">
+      {/* Simplified Header */}
+      <header className="px-8 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-6">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onBack}
+              className="text-white hover:text-orange-500 hover:bg-white/90 font-serif rounded-xl border-0 shadow-none"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              返回项目
+            </Button>
             
-            <div className="text-sm text-gray-500 font-serif bg-gray-100 px-3 py-1 rounded-lg">
-              创作工作台
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-white rounded-xl">
+                <Feather className="w-5 h-5 text-black" />
+              </div>
+              <h1 className="text-xl font-serif font-semibold text-white tracking-tight">
+                {project.title}
+              </h1>
             </div>
+          </div>
+          
+          <div className="text-sm text-white font-serif bg-white/20 px-3 py-1 rounded-lg">
+            创作工作台
           </div>
         </div>
       </header>
@@ -113,7 +108,7 @@ export const ProjectWorkbench = ({ project, onBack, initialMessage }: ProjectWor
             />
           </ResizablePanel>
           
-          <ResizableHandle withHandle className="bg-gray-200 hover:bg-gray-300 transition-colors w-1" />
+          <ResizableHandle withHandle className="bg-white/20 hover:bg-white/30 transition-colors w-1" />
           
           {/* Chat Area */}
           <ResizablePanel defaultSize={45} minSize={35} maxSize={65}>

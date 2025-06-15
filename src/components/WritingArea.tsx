@@ -216,22 +216,22 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(
 
     if (loading) {
       return (
-        <div className="h-full flex items-center justify-center">
-          <div className="animate-spin w-6 h-6 border-2 border-gray-300 border-t-black rounded-full" />
+        <div className="h-full flex items-center justify-center bg-white">
+          <div className="animate-spin w-6 h-6 border-2 border-orange-300 border-t-orange-500 rounded-full" />
         </div>
       );
     }
 
     return (
-      <div className="h-full flex flex-col">
-        {/* Header */}
-        <div className="p-6 border-b border-gray-200">
+      <div className="h-full flex flex-col bg-white">
+        {/* Simplified Header */}
+        <div className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 font-serif">创作卡片</h2>
+              <h2 className="text-lg font-semibold text-black font-serif">创作卡片</h2>
               <p className="text-sm text-gray-600 mt-1 font-serif">管理您的内容草稿和创作素材</p>
             </div>
-            <Button onClick={handleCreateCard} size="sm">
+            <Button onClick={handleCreateCard} size="sm" className="bg-black text-white hover:bg-gray-800">
               <Plus className="w-4 h-4 mr-2" />
               新建卡片
             </Button>
@@ -242,14 +242,14 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(
         <div className="flex-1 overflow-hidden">
           {cards.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-500 p-6">
-              <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                <FileText className="w-8 h-8 text-gray-400" />
+              <div className="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center mb-4">
+                <FileText className="w-8 h-8 text-orange-500" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2 font-serif">还没有创作卡片</h3>
+              <h3 className="text-lg font-medium text-black mb-2 font-serif">还没有创作卡片</h3>
               <p className="text-sm text-center max-w-md mb-6 font-serif text-gray-600 leading-relaxed">
                 卡片是您的创作素材库，可以保存草稿、想法和参考内容，方便在对话中引用。
               </p>
-              <Button onClick={handleCreateCard}>
+              <Button onClick={handleCreateCard} className="bg-black text-white hover:bg-gray-800">
                 <Plus className="w-4 h-4 mr-2" />
                 创建第一个卡片
               </Button>
@@ -258,7 +258,7 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(
             <div className="h-full overflow-x-auto overflow-y-hidden p-6">
               <div className="flex gap-4 h-full min-w-fit">
                 {cards.map((card) => (
-                  <Card key={card.id} className="w-80 h-full flex flex-col">
+                  <Card key={card.id} className="w-80 h-full flex flex-col bg-white border-gray-200 shadow-sm">
                     <CardHeader className="pb-3 flex-shrink-0">
                       <div className="flex items-start justify-between gap-2">
                         {editingCard === card.id ? (
@@ -269,7 +269,7 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(
                             className="text-sm font-medium border-0 p-0 h-auto focus:ring-0 flex-1 bg-transparent font-serif"
                           />
                         ) : (
-                          <CardTitle className="text-sm font-medium text-gray-900 flex-1 line-clamp-2 font-serif">
+                          <CardTitle className="text-sm font-medium text-black flex-1 line-clamp-2 font-serif">
                             {card.title || "未命名卡片"}
                           </CardTitle>
                         )}
@@ -368,14 +368,14 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(
                       {/* Show selected text indicator */}
                       {selectedText && selectedCardId === card.id && (
                         <div className="mt-3">
-                          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                            <p className="text-xs text-gray-800 font-medium mb-1 font-serif">
+                          <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                            <p className="text-xs text-orange-800 font-medium mb-1 font-serif">
                               已选中文本
                             </p>
-                            <p className="text-xs text-gray-700 mb-2 font-serif">
+                            <p className="text-xs text-orange-700 mb-2 font-serif">
                               "{selectedText.substring(0, 80)}..."
                             </p>
-                            <p className="text-xs text-gray-600 font-serif">
+                            <p className="text-xs text-orange-600 font-serif">
                               点击"片段"按钮将此文本添加为引用
                             </p>
                           </div>
