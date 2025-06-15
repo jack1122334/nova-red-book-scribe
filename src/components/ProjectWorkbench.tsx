@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Feather } from "lucide-react";
@@ -62,32 +63,32 @@ export const ProjectWorkbench = ({ project, onBack, initialMessage }: ProjectWor
   };
 
   return (
-    <div className="h-screen flex flex-col bg-orange-500">
+    <div className="h-screen flex flex-col bg-white">
       {/* Simplified Header */}
-      <header className="px-8 py-4">
+      <header className="px-8 py-4 bg-white border-b border-black/10">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-6">
             <Button
               variant="ghost"
               size="sm"
               onClick={onBack}
-              className="text-white hover:text-orange-500 hover:bg-white/90 font-serif rounded-xl border-0 shadow-none"
+              className="text-black hover:text-white hover:bg-black font-serif rounded-xl border-0 shadow-none"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               返回项目
             </Button>
             
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-white rounded-xl">
-                <Feather className="w-5 h-5 text-black" />
+              <div className="p-2 bg-black rounded-xl">
+                <Feather className="w-5 h-5 text-white" />
               </div>
-              <h1 className="text-xl font-serif font-semibold text-white tracking-tight">
+              <h1 className="text-xl font-serif font-semibold text-black tracking-tight">
                 {project.title}
               </h1>
             </div>
           </div>
           
-          <div className="text-sm text-white font-serif bg-white/20 px-3 py-1 rounded-lg">
+          <div className="text-sm text-black font-serif bg-black/10 px-3 py-1 rounded-lg">
             创作工作台
           </div>
         </div>
@@ -108,7 +109,7 @@ export const ProjectWorkbench = ({ project, onBack, initialMessage }: ProjectWor
             />
           </ResizablePanel>
           
-          <ResizableHandle withHandle className="bg-white/20 hover:bg-white/30 transition-colors w-1" />
+          <ResizableHandle withHandle className="bg-black/10 hover:bg-black/20 transition-colors w-1" />
           
           {/* Chat Area */}
           <ResizablePanel defaultSize={45} minSize={35} maxSize={65}>
