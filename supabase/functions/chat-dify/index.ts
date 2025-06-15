@@ -93,7 +93,12 @@ serve(async (req) => {
       fullQuery += referencesContent;
     }
 
-    console.log('Sending to Dify:', { query: fullQuery.substring(0, 200), apiKey: difyApiKey ? 'present' : 'missing' });
+    console.log('=== DIFY REQUEST START ===');
+    console.log('Sending to Dify:', { 
+      query: fullQuery.substring(0, 500) + (fullQuery.length > 500 ? '...' : ''),
+      conversationId,
+      apiKey: difyApiKey ? 'present' : 'missing' 
+    });
 
     // Call Dify API
     const difyResponse = await fetch(`${difyApiUrl}/chat-messages`, {
@@ -132,6 +137,9 @@ serve(async (req) => {
         let fullAiContent = '';
         let newConversationId = conversationId;
         let associatedCardId = null;
+        let allEvents = []; // Store all events for debugging
+        let thoughts = [];
+        let toolCalls = [];
 
         try {
           while (true) {
@@ -145,28 +153,81 @@ serve(async (req) => {
               if (line.startsWith('data: ')) {
                 try {
                   const data = JSON.parse(line.slice(6));
-                  console.log('Dify event:', JSON.stringify(data, null, 2));
+                  
+                  // Store all events for complete logging
+                  allEvents.push({
+                    timestamp: new Date().toISOString(),
+                    event: data
+                  });
+                  
+                  console.log('=== DIFY EVENT ===');
+                  console.log('Event type:', data.event);
+                  console.log('Full event data:', JSON.stringify(data, null, 2));
                   
                   // Forward the event to frontend for streaming display
                   const eventData = `data: ${JSON.stringify(data)}\n\n`;
                   controller.enqueue(new TextEncoder().encode(eventData));
                   
-                  // Process different event types
-                  if (data.event === 'agent_message' || data.event === 'message') {
-                    fullAiContent += data.answer || '';
+                  // Process different event types and collect detailed info
+                  if (data.event === 'agent_thought') {
+                    console.log('AGENT THOUGHT:', data.thought);
+                    if (data.thought) {
+                      thoughts.push({
+                        timestamp: new Date().toISOString(),
+                        thought: data.thought
+                      });
+                    }
+                  } else if (data.event === 'tool_calls') {
+                    console.log('TOOL CALLS:', JSON.stringify(data.tool_calls, null, 2));
+                    if (data.tool_calls) {
+                      toolCalls.push({
+                        timestamp: new Date().toISOString(),
+                        tools: data.tool_calls
+                      });
+                    }
+                  } else if (data.event === 'agent_message' || data.event === 'message') {
+                    if (data.answer) {
+                      fullAiContent += data.answer;
+                    }
                     if (data.conversation_id && !newConversationId) {
                       newConversationId = data.conversation_id;
                     }
                   } else if (data.event === 'message_end') {
                     newConversationId = data.conversation_id;
-                    console.log('Dify response completed:', { length: fullAiContent.length, conversationId: newConversationId });
+                    console.log('=== DIFY RESPONSE COMPLETED ===');
+                    console.log('Total content length:', fullAiContent.length);
+                    console.log('Total thoughts:', thoughts.length);
+                    console.log('Total tool calls:', toolCalls.length);
+                    console.log('Conversation ID:', newConversationId);
                     
                     // Process final content and handle card operations
-                    await processFinalContent(fullAiContent, project_id, supabase, newConversationId, conversationId, userMessage);
+                    await processFinalContent(
+                      fullAiContent, 
+                      project_id, 
+                      supabase, 
+                      newConversationId, 
+                      conversationId, 
+                      userMessage,
+                      {
+                        allEvents,
+                        thoughts,
+                        toolCalls,
+                        fullResponse: {
+                          content: fullAiContent,
+                          metadata: {
+                            conversation_id: newConversationId,
+                            total_events: allEvents.length,
+                            thoughts_count: thoughts.length,
+                            tool_calls_count: toolCalls.length
+                          }
+                        }
+                      }
+                    );
                     break;
                   }
                 } catch (parseError) {
                   console.warn('Failed to parse SSE data:', line);
+                  console.warn('Parse error:', parseError);
                 }
               }
             }
@@ -175,6 +236,8 @@ serve(async (req) => {
           console.error('Error reading stream:', error);
           throw error;
         } finally {
+          console.log('=== STREAM COMPLETED ===');
+          console.log('Total events processed:', allEvents.length);
           controller.close();
         }
       }
@@ -204,8 +267,20 @@ serve(async (req) => {
   }
 });
 
-async function processFinalContent(fullAiContent: string, projectId: string, supabase: any, newConversationId: string, conversationId: string, userMessage: any) {
+async function processFinalContent(
+  fullAiContent: string, 
+  projectId: string, 
+  supabase: any, 
+  newConversationId: string, 
+  conversationId: string, 
+  userMessage: any,
+  debugInfo: any
+) {
   let associatedCardId = null;
+
+  console.log('=== PROCESSING FINAL CONTENT ===');
+  console.log('Content length:', fullAiContent.length);
+  console.log('Debug info:', JSON.stringify(debugInfo.metadata, null, 2));
 
   // Update conversation_id if new
   if (newConversationId && newConversationId !== conversationId) {
@@ -284,20 +359,38 @@ async function processFinalContent(fullAiContent: string, projectId: string, sup
     }
   }
 
-  // Store AI response
+  // Store AI response with complete debugging information
+  const cleanedContent = fullAiContent
+    .replace(/<new_xhs_card[^>]*>[\s\S]*?<\/new_xhs_card>/g, '[新卡片已创建]')
+    .replace(/<update_xhs_card[^>]*>[\s\S]*?<\/update_xhs_card>/g, '[卡片已更新]');
+
   const { error: aiMessageError } = await supabase
     .from('chat_messages')
     .insert({
       project_id: projectId,
       role: 'assistant',
-      content: fullAiContent.replace(/<new_xhs_card[^>]*>[\s\S]*?<\/new_xhs_card>/g, '[新卡片已创建]')
-                            .replace(/<update_xhs_card[^>]*>[\s\S]*?<\/update_xhs_card>/g, '[卡片已更新]'),
-      llm_raw_output: fullAiContent,
+      content: cleanedContent,
+      llm_raw_output: {
+        original_content: fullAiContent,
+        debug_info: debugInfo,
+        processing_summary: {
+          total_events: debugInfo.allEvents.length,
+          thoughts_count: debugInfo.thoughts.length,
+          tool_calls_count: debugInfo.toolCalls.length,
+          conversation_id: newConversationId,
+          cards_created: associatedCardId ? 1 : 0
+        },
+        complete_event_log: debugInfo.allEvents,
+        thoughts_log: debugInfo.thoughts,
+        tool_calls_log: debugInfo.toolCalls
+      },
       associated_card_id: associatedCardId,
       created_at: new Date().toISOString()
     });
 
   if (aiMessageError) {
     console.error('Error storing AI message:', aiMessageError);
+  } else {
+    console.log('AI message stored successfully with complete debug info');
   }
 }
