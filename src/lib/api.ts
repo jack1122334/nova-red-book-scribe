@@ -190,7 +190,7 @@ export const chatApi = {
   },
 
   sendMessage: async (projectId: string, content: string, references: any[] = [], systemMessages: string[] = []) => {
-    const { data, error } = await supabase.functions.invoke('chat-deepseek', {
+    const { data, error } = await supabase.functions.invoke('chat-dify', {
       body: {
         project_id: projectId,
         core_instruction: content,
