@@ -7,6 +7,8 @@ import { Send, Bot, User, Link, Edit3, Check, X, Info } from "lucide-react";
 import { chatApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { MessageDetailsDialog } from "@/components/MessageDetailsDialog";
+import ReactMarkdown from 'react-markdown';
+
 interface ChatAreaProps {
   projectId: string;
   initialMessage?: string;
@@ -317,9 +319,13 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
                         <Bot className="w-4 h-4 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="prose prose-sm max-w-none cursor-pointer group relative" onClick={() => handleMessageClick(message)}>
-                          <div className="whitespace-pre-wrap text-black leading-relaxed p-3 rounded-xl transition-colors border border-transparent hover:border-black/20 bg-stone-400">
-                            {message.content}
+                        <div className="cursor-pointer group relative" onClick={() => handleMessageClick(message)}>
+                          <div className="p-3 rounded-xl transition-colors border border-transparent hover:border-black/20 bg-stone-400">
+                            <ReactMarkdown 
+                              className="prose prose-sm max-w-none text-black leading-relaxed prose-headings:text-black prose-p:text-black prose-strong:text-black prose-em:text-black prose-ul:text-black prose-ol:text-black prose-li:text-black prose-blockquote:text-black/70 prose-code:text-black prose-pre:bg-black/10 prose-pre:text-black"
+                            >
+                              {message.content}
+                            </ReactMarkdown>
                             <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                               <Info className="w-4 h-4 text-black/40" />
                             </div>
