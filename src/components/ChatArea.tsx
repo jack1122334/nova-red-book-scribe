@@ -243,15 +243,15 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
     return (
       <div className="h-full flex flex-col bg-white">
         {/* Header */}
-        <div className="p-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Nova</h2>
-          <p className="text-sm text-gray-600">小红书内容创作助手</p>
+        <div className="p-4 border-b border-black/20">
+          <h2 className="text-lg font-semibold text-black">Nova</h2>
+          <p className="text-sm text-black/60">小红书内容创作助手</p>
         </div>
 
         {/* System Messages Indicator */}
         {pendingSystemMessages.length > 0 && (
-          <div className="px-4 py-2 bg-blue-50 border-b border-blue-200">
-            <p className="text-xs text-blue-700">
+          <div className="px-4 py-2 bg-black/5 border-b border-black/20">
+            <p className="text-xs text-black/70">
               有 {pendingSystemMessages.length} 个编辑操作等待发送给AI
             </p>
           </div>
@@ -259,21 +259,21 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
 
         {/* References Section */}
         {references.length > 0 && (
-          <div className="p-4 border-b border-gray-200 bg-gray-50">
-            <h3 className="text-sm font-medium text-gray-800 mb-3 flex items-center gap-2">
+          <div className="p-4 border-b border-black/20 bg-black/5">
+            <h3 className="text-sm font-medium text-black mb-3 flex items-center gap-2">
               <Link className="w-4 h-4" />
               引用内容 ({references.length})
             </h3>
             <div className="space-y-3">
               {references.map((ref, index) => (
-                <div key={index} className="bg-white rounded-lg border border-gray-200 p-3 text-sm">
+                <div key={index} className="bg-white rounded-lg border border-black/20 p-3 text-sm">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="font-medium text-gray-900 truncate">
+                        <span className="font-medium text-black truncate">
                           {ref.card_friendly_title}
                         </span>
-                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                        <span className="text-xs text-black/50 bg-black/10 px-2 py-1 rounded">
                           {ref.type === 'full_card' ? '整个卡片' : '文本片段'}
                         </span>
                       </div>
@@ -309,14 +309,14 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
                         </div>
                       ) : (
                         <div className="flex items-start justify-between gap-2">
-                          <p className="text-gray-600 text-xs flex-1">
+                          <p className="text-black/60 text-xs flex-1">
                             {ref.user_remark || "暂无备注"}
                           </p>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => startEditingRemark(index, ref.user_remark)}
-                            className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
+                            className="h-6 w-6 p-0 text-black/40 hover:text-black/60"
                           >
                             <Edit3 className="w-3 h-3" />
                           </Button>
@@ -324,7 +324,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
                       )}
                       
                       {ref.snippet_content && (
-                        <div className="mt-2 p-2 bg-gray-50 rounded text-xs text-gray-600 border-l-2 border-blue-200">
+                        <div className="mt-2 p-2 bg-black/5 rounded text-xs text-black/60 border-l-2 border-black/20">
                           "{ref.snippet_content.substring(0, 100)}..."
                         </div>
                       )}
@@ -334,7 +334,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
                       variant="ghost"
                       size="sm"
                       onClick={() => removeReference(index)}
-                      className="h-6 w-6 p-0 text-gray-400 hover:text-red-500 flex-shrink-0"
+                      className="h-6 w-6 p-0 text-black/40 hover:text-black flex-shrink-0"
                     >
                       <X className="w-3 h-3" />
                     </Button>
@@ -348,11 +348,11 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
         {/* Messages */}
         <div className="flex-1 overflow-auto">
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-gray-500 p-8">
-              <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                <Bot className="w-8 h-8 text-gray-400" />
+            <div className="flex flex-col items-center justify-center h-full text-black/50 p-8">
+              <div className="w-16 h-16 rounded-full bg-black/10 flex items-center justify-center mb-4">
+                <Bot className="w-8 h-8 text-black/40" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">开始与 Nova 对话</h3>
+              <h3 className="text-lg font-medium text-black mb-2">开始与 Nova 对话</h3>
               <p className="text-sm text-center max-w-md">
                 我是您的小红书内容创作助手，可以帮您撰写、优化和完善各种类型的小红书笔记内容。
               </p>
@@ -371,10 +371,10 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
                           className="prose prose-sm max-w-none cursor-pointer group relative"
                           onClick={() => handleMessageClick(message)}
                         >
-                          <div className="whitespace-pre-wrap text-gray-800 leading-relaxed p-3 rounded-xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200">
+                          <div className="whitespace-pre-wrap text-black leading-relaxed p-3 rounded-xl hover:bg-black/5 transition-colors border border-transparent hover:border-black/20">
                             {message.content}
                             <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <Info className="w-4 h-4 text-gray-400" />
+                              <Info className="w-4 h-4 text-black/40" />
                             </div>
                           </div>
                         </div>
@@ -382,17 +382,17 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
                     </>
                   ) : (
                     <>
-                      <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
-                        <User className="w-4 h-4 text-gray-600" />
+                      <div className="w-8 h-8 rounded-full bg-black/20 flex items-center justify-center flex-shrink-0">
+                        <User className="w-4 h-4 text-black/60" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div 
-                          className="whitespace-pre-wrap text-gray-800 leading-relaxed p-3 rounded-xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200 cursor-pointer group relative"
+                          className="whitespace-pre-wrap text-black leading-relaxed p-3 rounded-xl hover:bg-black/5 transition-colors border border-transparent hover:border-black/20 cursor-pointer group relative"
                           onClick={() => handleMessageClick(message)}
                         >
                           {message.content}
                           <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Info className="w-4 h-4 text-gray-400" />
+                            <Info className="w-4 h-4 text-black/40" />
                           </div>
                         </div>
                       </div>
@@ -407,11 +407,11 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
                     <Bot className="w-4 h-4 text-white" />
                   </div>
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 text-gray-500">
+                    <div className="flex items-center gap-2 text-black/50">
                       <div className="flex gap-1">
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                        <div className="w-2 h-2 bg-black/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                        <div className="w-2 h-2 bg-black/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                        <div className="w-2 h-2 bg-black/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                       </div>
                       <span className="text-sm">Nova 正在思考...</span>
                     </div>
@@ -423,7 +423,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
         </div>
 
         {/* Input Area */}
-        <div className="border-t border-gray-200 p-4">
+        <div className="border-t border-black/20 p-4">
           <div className="flex gap-3 items-end">
             <div className="flex-1">
               <Textarea
@@ -431,11 +431,11 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyPress}
                 placeholder="输入消息..."
-                className="min-h-[44px] max-h-[200px] resize-none border-gray-300 focus:border-gray-400 focus:ring-0"
+                className="min-h-[44px] max-h-[200px] resize-none"
                 disabled={isLoading}
               />
               {(references.length > 0 || pendingSystemMessages.length > 0) && (
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-xs text-black/50 mt-2">
                   将发送 {references.length} 个引用{pendingSystemMessages.length > 0 && ` 和 ${pendingSystemMessages.length} 个编辑通知`} 给 AI
                 </p>
               )}
@@ -443,7 +443,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(
             <Button
               onClick={handleSendMessage}
               disabled={!inputValue.trim() || isLoading}
-              className="h-11 w-11 p-0 bg-black hover:bg-gray-800 disabled:bg-gray-300"
+              className="h-11 w-11 p-0 bg-black hover:bg-black/80 disabled:bg-black/30"
             >
               <Send className="w-4 h-4" />
             </Button>
