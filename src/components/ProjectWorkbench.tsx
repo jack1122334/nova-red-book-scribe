@@ -63,35 +63,35 @@ export const ProjectWorkbench = ({ project, onBack, initialMessage }: ProjectWor
   };
 
   return (
-    <div className="h-screen flex flex-col bg-background">
+    <div className="h-screen flex flex-col bg-white">
       {/* Header */}
-      <header className="border-b border-gray-200/60 bg-white/80 backdrop-blur-sm">
+      <header className="border-b-2 border-hermes-500 bg-white">
         <div className="px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-6">
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={onBack}
-                className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 font-serif rounded-xl"
+                className="text-black hover:text-hermes-600 hover:bg-hermes-50 font-serif rounded-2xl"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 返回项目
               </Button>
               
-              <div className="h-6 w-px bg-gray-300" />
+              <div className="h-6 w-px bg-hermes-500" />
               
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-gray-100 rounded-xl">
-                  <Feather className="w-5 h-5 text-gray-700" />
+                <div className="p-3 bg-hermes-100 border-2 border-hermes-500 rounded-2xl">
+                  <Feather className="w-6 h-6 text-hermes-600" />
                 </div>
-                <h1 className="text-xl font-serif font-semibold text-gray-900 tracking-tight">
+                <h1 className="text-xl font-serif font-semibold text-black tracking-tight">
                   {project.title}
                 </h1>
               </div>
             </div>
             
-            <div className="text-sm text-gray-500 font-serif bg-gray-100 px-3 py-1 rounded-lg">
+            <div className="text-sm text-black font-serif bg-hermes-100 border-2 border-hermes-500 px-4 py-2 rounded-2xl font-medium">
               创作工作台
             </div>
           </div>
@@ -113,7 +113,7 @@ export const ProjectWorkbench = ({ project, onBack, initialMessage }: ProjectWor
             />
           </ResizablePanel>
           
-          <ResizableHandle withHandle className="bg-gray-200/60 hover:bg-gray-300/60 transition-colors w-1" />
+          <ResizableHandle withHandle className="bg-hermes-300 hover:bg-hermes-500 transition-colors w-2" />
           
           {/* Chat Area */}
           <ResizablePanel defaultSize={45} minSize={35} maxSize={65}>

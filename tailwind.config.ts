@@ -24,6 +24,19 @@ export default {
 				sans: ['Noto Serif SC', 'serif'], // 统一使用宋体
 			},
 			colors: {
+				// 爱马仕橙色主题
+				hermes: {
+					50: '#fff8f1',
+					100: '#ffeee0',
+					200: '#ffdcc2',
+					300: '#ffc397',
+					400: '#ff9e61',
+					500: '#ff6600', // 主要的爱马仕橙色
+					600: '#e55a00',
+					700: '#cc4d00',
+					800: '#b34400',
+					900: '#993d00',
+				},
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
@@ -73,12 +86,14 @@ export default {
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)',
 				xl: '16px',
-				'2xl': '20px'
+				'2xl': '20px',
+				'3xl': '24px'
 			},
 			boxShadow: {
-				'notion': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
-				'notion-hover': '0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-				'notion-float': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+				'hermes': '0 4px 20px rgba(255, 102, 0, 0.15)',
+				'hermes-strong': '0 8px 32px rgba(255, 102, 0, 0.25)',
+				'black': '0 4px 20px rgba(0, 0, 0, 0.1)',
+				'black-strong': '0 8px 32px rgba(0, 0, 0, 0.15)',
 			},
 			keyframes: {
 				'accordion-down': {

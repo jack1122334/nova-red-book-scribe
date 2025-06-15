@@ -216,25 +216,25 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(
 
     if (loading) {
       return (
-        <div className="p-6 flex items-center justify-center bg-stone-50">
-          <div className="animate-spin w-6 h-6 border-2 border-gray-300 border-t-black rounded-full" />
+        <div className="p-6 flex items-center justify-center bg-hermes-50">
+          <div className="animate-spin w-6 h-6 border-2 border-hermes-300 border-t-hermes-500 rounded-full" />
         </div>
       );
     }
 
     return (
-      <div className="h-full flex flex-col bg-stone-50 border-r border-stone-200">
+      <div className="h-full flex flex-col bg-hermes-50 border-r-2 border-hermes-500">
         {/* Header */}
-        <div className="p-6 border-b border-stone-200 flex-shrink-0 bg-white/80 backdrop-blur-sm">
+        <div className="p-6 border-b-2 border-hermes-500 flex-shrink-0 bg-white">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 font-serif">创作卡片</h2>
-              <p className="text-sm text-gray-600 mt-1 font-serif">管理您的内容草稿和创作素材</p>
+              <h2 className="text-lg font-semibold text-black font-serif">创作卡片</h2>
+              <p className="text-sm text-gray-700 mt-1 font-serif">管理您的内容草稿和创作素材</p>
             </div>
             <Button
               onClick={handleCreateCard}
               size="sm"
-              className="bg-stone-800 hover:bg-stone-700 text-white font-serif shadow-sm border border-stone-300"
+              className="bg-hermes-500 hover:bg-hermes-600 text-white font-serif shadow-hermes border-2 border-hermes-500"
             >
               <Plus className="w-4 h-4 mr-2" />
               新建卡片
@@ -245,17 +245,17 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(
         {/* Content */}
         <div className="flex-1 overflow-hidden">
           {cards.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-gray-500 p-6">
-              <div className="w-16 h-16 rounded-full bg-stone-100 flex items-center justify-center mb-4 border border-stone-200">
-                <FileText className="w-8 h-8 text-stone-400" />
+            <div className="flex flex-col items-center justify-center h-full text-gray-700 p-6">
+              <div className="w-20 h-20 rounded-full bg-white border-2 border-hermes-500 flex items-center justify-center mb-4 shadow-hermes">
+                <FileText className="w-10 h-10 text-hermes-500" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2 font-serif">还没有创作卡片</h3>
-              <p className="text-sm text-center max-w-md mb-6 font-serif text-stone-600 leading-relaxed">
+              <h3 className="text-lg font-medium text-black mb-2 font-serif">还没有创作卡片</h3>
+              <p className="text-sm text-center max-w-md mb-6 font-serif text-gray-700 leading-relaxed">
                 卡片是您的创作素材库，可以保存草稿、想法和参考内容，方便在对话中引用。
               </p>
               <Button
                 onClick={handleCreateCard}
-                className="bg-stone-800 hover:bg-stone-700 text-white font-serif shadow-sm"
+                className="bg-hermes-500 hover:bg-hermes-600 text-white font-serif shadow-hermes"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 创建第一个卡片
@@ -265,8 +265,8 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(
             <div className="h-full overflow-x-auto overflow-y-hidden p-6">
               <div className="flex gap-4 h-full min-w-fit">
                 {cards.map((card) => (
-                  <Card key={card.id} className="w-80 h-full border border-stone-200 hover:border-stone-300 transition-all duration-200 bg-white/95 backdrop-blur-sm shadow-sm hover:shadow-md flex flex-col">
-                    <CardHeader className="pb-3 flex-shrink-0 bg-stone-50/50">
+                  <Card key={card.id} className="w-80 h-full border-2 border-hermes-500 hover:border-hermes-600 transition-all duration-200 bg-white shadow-hermes hover:shadow-hermes-strong flex flex-col">
+                    <CardHeader className="pb-3 flex-shrink-0 bg-hermes-50 border-b border-hermes-300">
                       <div className="flex items-start justify-between gap-2">
                         {editingCard === card.id ? (
                           <Input
@@ -276,7 +276,7 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(
                             className="text-sm font-medium border-0 p-0 h-auto focus:ring-0 flex-1 bg-transparent font-serif"
                           />
                         ) : (
-                          <CardTitle className="text-sm font-medium text-gray-900 flex-1 line-clamp-2 font-serif">
+                          <CardTitle className="text-sm font-medium text-black flex-1 line-clamp-2 font-serif">
                             {card.title || "未命名卡片"}
                           </CardTitle>
                         )}
@@ -289,7 +289,7 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleAddReference(card, 'full_card')}
-                                className="h-7 w-7 p-0 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg"
+                                className="h-7 w-7 p-0 text-gray-500 hover:text-hermes-600 hover:bg-hermes-100 rounded-xl border border-transparent hover:border-hermes-300"
                                 title="引用整个卡片"
                               >
                                 <Link className="w-3 h-3" />
@@ -299,7 +299,7 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => handleAddReference(card, 'text_snippet')}
-                                  className="h-7 px-1.5 text-stone-600 hover:text-stone-700 hover:bg-stone-100 text-xs font-serif rounded-lg"
+                                  className="h-7 px-1.5 text-hermes-600 hover:text-hermes-700 hover:bg-hermes-100 text-xs font-serif rounded-xl border border-transparent hover:border-hermes-300"
                                   title="引用选中文本"
                                 >
                                   <Link className="w-2.5 h-2.5 mr-0.5" />
@@ -316,7 +316,7 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(
                                 variant="ghost"
                                 size="sm"
                                 onClick={handleSaveEdit}
-                                className="h-7 w-7 p-0 text-stone-400 hover:text-green-600 hover:bg-green-50 rounded-lg"
+                                className="h-7 w-7 p-0 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-xl"
                               >
                                 <Save className="w-3 h-3" />
                               </Button>
@@ -324,7 +324,7 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => setEditingCard(null)}
-                                className="h-7 w-7 p-0 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg"
+                                className="h-7 w-7 p-0 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl"
                               >
                                 <X className="w-3 h-3" />
                               </Button>
@@ -335,7 +335,7 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleEditCard(card)}
-                                className="h-7 w-7 p-0 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg"
+                                className="h-7 w-7 p-0 text-gray-500 hover:text-hermes-600 hover:bg-hermes-100 rounded-xl border border-transparent hover:border-hermes-300"
                               >
                                 <Edit3 className="w-3 h-3" />
                               </Button>
@@ -343,7 +343,7 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleDeleteCard(card.id)}
-                                className="h-7 w-7 p-0 text-stone-400 hover:text-red-500 hover:bg-red-50 rounded-lg"
+                                className="h-7 w-7 p-0 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-xl"
                               >
                                 <Trash2 className="w-3 h-3" />
                               </Button>
@@ -359,15 +359,15 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(
                           value={editContent}
                           onChange={(e) => setEditContent(e.target.value)}
                           placeholder="输入卡片内容..."
-                          className="flex-1 resize-none border-stone-200 focus:border-stone-400 focus:ring-0 text-sm bg-white font-serif leading-relaxed"
+                          className="flex-1 resize-none border-2 border-hermes-300 focus:border-hermes-500 focus:ring-0 text-sm bg-white font-serif leading-relaxed rounded-2xl"
                         />
                       ) : (
                         <div 
-                          className="flex-1 whitespace-pre-wrap text-stone-700 cursor-text leading-relaxed text-sm overflow-y-auto font-serif"
+                          className="flex-1 whitespace-pre-wrap text-gray-800 cursor-text leading-relaxed text-sm overflow-y-auto font-serif"
                           onMouseUp={() => handleTextSelection(card.id)}
                         >
                           {card.content || (
-                            <span className="text-stone-400 italic">暂无内容，点击编辑按钮开始写作</span>
+                            <span className="text-gray-500 italic">暂无内容，点击编辑按钮开始写作</span>
                           )}
                         </div>
                       )}
@@ -375,14 +375,14 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(
                       {/* Show selected text indicator */}
                       {selectedText && selectedCardId === card.id && (
                         <div className="mt-3">
-                          <div className="bg-stone-50 border border-stone-200 rounded-lg p-3">
-                            <p className="text-xs text-stone-800 font-medium mb-1 font-serif">
+                          <div className="bg-hermes-50 border-2 border-hermes-300 rounded-2xl p-3">
+                            <p className="text-xs text-black font-medium mb-1 font-serif">
                               已选中文本
                             </p>
-                            <p className="text-xs text-stone-700 mb-2 font-serif">
+                            <p className="text-xs text-gray-700 mb-2 font-serif">
                               "{selectedText.substring(0, 80)}..."
                             </p>
-                            <p className="text-xs text-stone-600 font-serif">
+                            <p className="text-xs text-gray-600 font-serif">
                               点击"片段"按钮将此文本添加为引用
                             </p>
                           </div>
