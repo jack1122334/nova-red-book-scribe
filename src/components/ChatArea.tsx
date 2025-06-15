@@ -233,7 +233,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
     setIsMessageDialogOpen(false);
     setSelectedMessage(null);
   };
-  return <div className="h-full flex flex-col bg-white">
+  return <div className="h-full flex flex-col bg-amber-300">
         {/* Header */}
         <div className="p-4 border-b border-black/20 bg-amber-400">
           <h2 className="text-lg font-semibold text-black">Nova</h2>
@@ -241,20 +241,20 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
         </div>
 
         {/* System Messages Indicator */}
-        {pendingSystemMessages.length > 0 && <div className="px-4 py-2 bg-black/5 border-b border-black/20">
+        {pendingSystemMessages.length > 0 && <div className="px-4 py-2 border-b border-black/20 rounded-xl bg-yellow-200">
             <p className="text-xs text-black/70">
               有 {pendingSystemMessages.length} 个编辑操作等待发送给AI
             </p>
           </div>}
 
         {/* References Section */}
-        {references.length > 0 && <div className="p-4 border-b border-black/20 bg-black/5">
+        {references.length > 0 && <div className="p-4 border-b border-black/20 bg-amber-400">
             <h3 className="text-sm font-medium text-black mb-3 flex items-center gap-2">
               <Link className="w-4 h-4" />
               引用内容 ({references.length})
             </h3>
             <div className="space-y-3">
-              {references.map((ref, index) => <div key={index} className="bg-white rounded-lg border border-black/20 p-3 text-sm">
+              {references.map((ref, index) => <div key={index} className="rounded-lg border border-black/20 p-3 text-sm bg-amber-100">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2">
