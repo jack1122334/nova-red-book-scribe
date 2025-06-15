@@ -69,7 +69,6 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
   const [pendingSystemMessages, setPendingSystemMessages] = useState<string[]>([]);
   const [selectedMessage, setSelectedMessage] = useState<StreamingMessage | null>(null);
   const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
-  const [currentStreamingMessage, setCurrentStreamingMessage] = useState<StreamingMessage | null>(null);
   const { toast } = useToast();
 
   useImperativeHandle(ref, () => ({
@@ -201,7 +200,6 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
       created_at: new Date().toISOString()
     };
     
-    setCurrentStreamingMessage(streamingAssistantMessage);
     setMessages(prev => [...prev, streamingAssistantMessage]);
 
     try {
@@ -216,46 +214,42 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
         (event: StreamingEvent) => {
           console.log('Received streaming event:', event);
           
-          setCurrentStreamingMessage(prev => {
-            if (!prev) return null;
-            
-            const updated = { ...prev };
-            
-            switch (event.event) {
-              case 'agent_thought':
-                if (event.thought) {
-                  updated.thoughts = [...(updated.thoughts || []), event.thought];
-                }
-                break;
-              case 'agent_message':
-              case 'message':
-                if (event.answer) {
-                  updated.content += event.answer;
-                }
-                break;
-              case 'tool_calls':
-                if (event.tool_calls) {
-                  updated.toolCalls = [...(updated.toolCalls || []), ...event.tool_calls];
-                }
-                break;
-              case 'message_end':
-                updated.isStreaming = false;
-                updated.content = parseXMLTags(updated.content);
-                break;
+          setMessages(prev => prev.map(msg => {
+            if (msg.id === streamingAssistantMessage.id) {
+              const updated = { ...msg };
+              
+              switch (event.event) {
+                case 'agent_thought':
+                  if (event.thought) {
+                    updated.thoughts = [...(updated.thoughts || []), event.thought];
+                  }
+                  break;
+                case 'agent_message':
+                case 'message':
+                  if (event.answer) {
+                    updated.content += event.answer;
+                  }
+                  break;
+                case 'tool_calls':
+                  if (event.tool_calls) {
+                    updated.toolCalls = [...(updated.toolCalls || []), ...event.tool_calls];
+                  }
+                  break;
+                case 'message_end':
+                  updated.isStreaming = false;
+                  updated.content = parseXMLTags(updated.content);
+                  break;
+              }
+              
+              return updated;
             }
-            
-            return updated;
-          });
-          
-          setMessages(prev => prev.map(msg => 
-            msg.id === streamingAssistantMessage.id ? { ...streamingAssistantMessage, ...currentStreamingMessage } : msg
-          ));
+            return msg;
+          }));
         }
       );
 
       setReferences([]);
       setPendingSystemMessages([]);
-      setCurrentStreamingMessage(null);
       
       toast({
         title: "消息发送成功",
@@ -270,7 +264,6 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
         variant: "destructive"
       });
       setMessages(prev => prev.slice(0, -2));
-      setCurrentStreamingMessage(null);
     } finally {
       setIsLoading(false);
     }
@@ -329,15 +322,15 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
           </ReactMarkdown>
         )}
         
-        {/* Streaming indicator */}
-        {message.isStreaming && (
+        {/* Streaming indicator - 只有在真正流式传输且没有任何内容时才显示 */}
+        {message.isStreaming && !message.thoughts?.length && !message.toolCalls?.length && !message.content && (
           <div className="flex items-center gap-2 text-black/50">
             <div className="flex gap-1">
               <div className="w-2 h-2 bg-black/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
               <div className="w-2 h-2 bg-black/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
               <div className="w-2 h-2 bg-black/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
             </div>
-            <span className="text-sm">AI正在思考和处理...</span>
+            <span className="text-sm">Nova正在连接...</span>
           </div>
         )}
       </div>
@@ -493,23 +486,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
               </div>
             ))}
 
-            {isLoading && (
-              <div className="flex gap-4">
-                <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center flex-shrink-0">
-                  <Bot className="w-4 h-4 text-white" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 text-black/50">
-                    <div className="flex gap-1">
-                      <div className="w-2 h-2 bg-black/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <div className="w-2 h-2 bg-black/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <div className="w-2 h-2 bg-black/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                    </div>
-                    <span className="text-sm">Nova 正在思考...</span>
-                  </div>
-                </div>
-              </div>
-            )}
+            {/* 移除了重复的isLoading显示，因为现在流式消息本身会显示状态 */}
           </div>
         )}
       </div>
