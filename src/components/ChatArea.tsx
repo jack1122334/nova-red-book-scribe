@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -203,8 +204,8 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
     setMessages(prev => [...prev, streamingAssistantMessage]);
 
     try {
-      console.log('Sending message with references:', references);
-      console.log('Pending system messages:', pendingSystemMessages);
+      console.log('ChatArea: Sending message with references:', references);
+      console.log('ChatArea: Pending system messages:', pendingSystemMessages);
 
       await chatApi.sendMessageStream(
         projectId, 
@@ -212,7 +213,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
         references, 
         pendingSystemMessages,
         (event: StreamingEvent) => {
-          console.log('Received streaming event:', event);
+          console.log('ChatArea: Received streaming event:', event.event, event);
           
           setMessages(prev => prev.map(msg => {
             if (msg.id === streamingAssistantMessage.id) {
@@ -221,21 +222,25 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
               switch (event.event) {
                 case 'agent_thought':
                   if (event.thought) {
+                    console.log('ChatArea: Adding thought:', event.thought);
                     updated.thoughts = [...(updated.thoughts || []), event.thought];
                   }
                   break;
                 case 'agent_message':
                 case 'message':
                   if (event.answer) {
+                    console.log('ChatArea: Adding answer chunk:', event.answer);
                     updated.content += event.answer;
                   }
                   break;
                 case 'tool_calls':
                   if (event.tool_calls) {
+                    console.log('ChatArea: Adding tool calls:', event.tool_calls);
                     updated.toolCalls = [...(updated.toolCalls || []), ...event.tool_calls];
                   }
                   break;
                 case 'message_end':
+                  console.log('ChatArea: Message ended, cleaning up XML tags');
                   updated.isStreaming = false;
                   updated.content = parseXMLTags(updated.content);
                   break;
@@ -257,7 +262,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
       });
       
     } catch (error: any) {
-      console.error('Failed to send message:', error);
+      console.error('ChatArea: Failed to send message:', error);
       toast({
         title: "发送失败",
         description: error.message || "无法发送消息，请重试",
@@ -287,6 +292,13 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
   };
 
   const renderStreamingContent = (message: StreamingMessage) => {
+    console.log('ChatArea: Rendering streaming content:', {
+      thoughts: message.thoughts?.length || 0,
+      toolCalls: message.toolCalls?.length || 0,
+      contentLength: message.content?.length || 0,
+      isStreaming: message.isStreaming
+    });
+
     return (
       <div className="space-y-3">
         {/* Thoughts */}
@@ -322,7 +334,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
           </ReactMarkdown>
         )}
         
-        {/* Streaming indicator - 只有在真正流式传输且没有任何内容时才显示 */}
+        {/* Streaming indicator - 只有在真正流式传输且没有任何实际内容时才显示 */}
         {message.isStreaming && !message.thoughts?.length && !message.toolCalls?.length && !message.content && (
           <div className="flex items-center gap-2 text-black/50">
             <div className="flex gap-1">

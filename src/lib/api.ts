@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
 
@@ -196,43 +197,64 @@ export const chatApi = {
     systemMessages: string[] = [],
     onEvent: (event: any) => void
   ) => {
-    const { data, error } = await supabase.functions.invoke('chat-dify', {
-      body: {
+    console.log('API: Starting stream request to chat-dify function');
+    
+    const response = await fetch(`https://evpczvwygelrvxzfdcgv.supabase.co/functions/v1/chat-dify`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabase.supabaseKey}`,
+      },
+      body: JSON.stringify({
         project_id: projectId,
         core_instruction: content,
         references: references,
         system_messages: systemMessages
-      }
+      })
     });
 
-    if (error) throw error;
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API: Stream request failed:', response.status, errorText);
+      throw new Error(`发送消息失败: ${response.status} - ${errorText}`);
+    }
 
-    // Handle streaming response
-    if (data instanceof ReadableStream) {
-      const reader = data.getReader();
-      const decoder = new TextDecoder();
+    if (!response.body) {
+      throw new Error('没有响应流');
+    }
 
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+
+    try {
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) {
+          console.log('API: Stream reading completed');
+          break;
+        }
 
-        const chunk = decoder.decode(value);
+        const chunk = decoder.decode(value, { stream: true });
         const lines = chunk.split('\n');
 
         for (const line of lines) {
           if (line.startsWith('data: ')) {
             try {
               const eventData = JSON.parse(line.slice(6));
+              console.log('API: Received event:', eventData.event, eventData);
               onEvent(eventData);
             } catch (parseError) {
-              console.warn('Failed to parse event:', line);
+              console.warn('API: Failed to parse event:', line, parseError);
             }
           }
         }
       }
+    } catch (error) {
+      console.error('API: Error reading stream:', error);
+      throw error;
+    } finally {
+      reader.releaseLock();
     }
-
-    return data;
   },
 
   sendMessage: async (projectId: string, content: string, references: any[] = [], systemMessages: string[] = []) => {
