@@ -1,12 +1,13 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Calendar, MessageSquare } from "lucide-react";
 import { Project } from "@/pages/Creation";
 import { projectsApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { CreateProjectDialog } from "./CreateProjectDialog";
 
 interface ProjectsManagerProps {
   onProjectSelect?: (project: Project) => void;
@@ -16,9 +17,8 @@ export const ProjectsManager = ({
   onProjectSelect
 }: ProjectsManagerProps) => {
   const [projects, setProjects] = useState<Project[]>([]);
-  const [newProjectTitle, setNewProjectTitle] = useState("");
-  const [isCreating, setIsCreating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -37,8 +37,7 @@ export const ProjectsManager = ({
         id: proj.id,
         title: proj.title,
         createdAt: proj.created_at.split('T')[0],
-        // Convert to date string
-        updatedAt: proj.updated_at.split('T')[0] // Convert to date string
+        updatedAt: proj.updated_at.split('T')[0]
       }));
       setProjects(formattedProjects);
     } catch (error) {
@@ -53,43 +52,13 @@ export const ProjectsManager = ({
     }
   };
 
-  const handleCreateProject = async () => {
-    if (!newProjectTitle.trim() || isCreating) return;
-    setIsCreating(true);
-    try {
-      console.log('Creating project:', newProjectTitle);
-      const dbProject = await projectsApi.create({
-        title: newProjectTitle.trim()
-      });
-      console.log('Created project:', dbProject);
-      const newProject: Project = {
-        id: dbProject.id,
-        title: dbProject.title,
-        createdAt: dbProject.created_at.split('T')[0],
-        updatedAt: dbProject.updated_at.split('T')[0]
-      };
-      setProjects(prev => [newProject, ...prev]);
-      setNewProjectTitle("");
-      toast({
-        title: "项目创建成功",
-        description: `项目"${newProject.title}"已创建`
-      });
-
-      // Auto-select the new project or navigate to creation page
-      if (onProjectSelect) {
-        onProjectSelect(newProject);
-      } else {
-        navigate(`/creation/workbench/${newProject.id}`);
-      }
-    } catch (error: any) {
-      console.error('Failed to create project:', error);
-      toast({
-        title: "创建项目失败",
-        description: error.message || "无法创建项目，请重试",
-        variant: "destructive"
-      });
-    } finally {
-      setIsCreating(false);
+  const handleProjectCreated = (newProject: Project) => {
+    setProjects(prev => [newProject, ...prev]);
+    
+    if (onProjectSelect) {
+      onProjectSelect(newProject);
+    } else {
+      navigate(`/creation/workbench/${newProject.id}`);
     }
   };
 
@@ -98,12 +67,6 @@ export const ProjectsManager = ({
       onProjectSelect(project);
     } else {
       navigate(`/creation/workbench/${project.id}`);
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleCreateProject();
     }
   };
 
@@ -128,12 +91,12 @@ export const ProjectsManager = ({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-3">
-            <Input placeholder="输入项目名称..." value={newProjectTitle} onChange={e => setNewProjectTitle(e.target.value)} onKeyPress={handleKeyPress} disabled={isCreating} className="flex-1 bg-neutral-300" />
-            <Button onClick={handleCreateProject} disabled={!newProjectTitle.trim() || isCreating} className="bg-slate-950 hover:bg-slate-800">
-              {isCreating ? "创建中..." : "创建项目"}
-            </Button>
-          </div>
+          <Button 
+            onClick={() => setCreateDialogOpen(true)}
+            className="bg-slate-950 hover:bg-slate-800"
+          >
+            创建项目
+          </Button>
         </CardContent>
       </Card>
 
@@ -163,5 +126,11 @@ export const ProjectsManager = ({
           <p>还没有项目</p>
           <p className="text-sm">创建你的第一个小红书创作项目吧</p>
         </div>}
+
+      <CreateProjectDialog 
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onProjectCreated={handleProjectCreated}
+      />
     </div>;
 };
