@@ -84,7 +84,7 @@ export const ProjectWorkbench = ({
   return (
     <div className="h-screen flex flex-col bg-white">
       {/* Simplified Header */}
-      <header className="px-8 py-4 border-b border-black/10 bg-amber-400">
+      <header className="px-8 py-4 border-b border-black/10 bg-white">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-6">
             <Button variant="ghost" size="sm" onClick={onBack} className="text-black hover:text-white hover:bg-black font-serif rounded-xl border-0 shadow-none">
