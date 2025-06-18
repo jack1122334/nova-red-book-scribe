@@ -2,7 +2,8 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Check, X, Grid3X3 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Check, X, Grid3X3, RotateCcw } from 'lucide-react';
 
 export interface CanvasItem {
   id: string;
@@ -67,34 +68,93 @@ const mockInsights: CanvasItem[] = [
 export const CanvasArea: React.FC<CanvasAreaProps> = ({ onItemSelect, onItemDisable }) => {
   const [canvasItems, setCanvasItems] = useState<CanvasItem[]>(mockCanvasItems);
   const [insights, setInsights] = useState<CanvasItem[]>(mockInsights);
-  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+  const [selectedCanvasItems, setSelectedCanvasItems] = useState<Set<string>>(new Set());
+  const [selectedInsights, setSelectedInsights] = useState<Set<string>>(new Set());
 
-  const handleItemAction = (item: CanvasItem, action: 'select' | 'disable') => {
-    if (action === 'select') {
-      onItemSelect(item);
-      // Update the item's selected state
-      if (item.type === 'canvas') {
-        setCanvasItems(prev => prev.map(i => 
-          i.id === item.id ? { ...i, isSelected: !i.isSelected } : i
-        ));
-      } else {
-        setInsights(prev => prev.map(i => 
-          i.id === item.id ? { ...i, isSelected: !i.isSelected } : i
-        ));
-      }
+  const handleCanvasCheckboxChange = (itemId: string, checked: boolean) => {
+    const newSelected = new Set(selectedCanvasItems);
+    if (checked) {
+      newSelected.add(itemId);
     } else {
-      onItemDisable(item.id);
-      // Update the item's disabled state
-      if (item.type === 'canvas') {
+      newSelected.delete(itemId);
+    }
+    setSelectedCanvasItems(newSelected);
+  };
+
+  const handleInsightCheckboxChange = (itemId: string, checked: boolean) => {
+    const newSelected = new Set(selectedInsights);
+    if (checked) {
+      newSelected.add(itemId);
+    } else {
+      newSelected.delete(itemId);
+    }
+    setSelectedInsights(newSelected);
+  };
+
+  const handleCanvasBatchSelect = () => {
+    // 批量选中操作
+    selectedCanvasItems.forEach(itemId => {
+      const item = canvasItems.find(i => i.id === itemId);
+      if (item && !item.isDisabled) {
+        const updatedItem = { ...item, isSelected: true };
+        onItemSelect(updatedItem);
         setCanvasItems(prev => prev.map(i => 
-          i.id === item.id ? { ...i, isDisabled: true } : i
-        ));
-      } else {
-        setInsights(prev => prev.map(i => 
-          i.id === item.id ? { ...i, isDisabled: true } : i
+          i.id === itemId ? updatedItem : i
         ));
       }
-    }
+    });
+    setSelectedCanvasItems(new Set());
+  };
+
+  const handleCanvasBatchDisable = () => {
+    // 批量置灰操作
+    selectedCanvasItems.forEach(itemId => {
+      onItemDisable(itemId);
+      setCanvasItems(prev => prev.map(i => 
+        i.id === itemId ? { ...i, isDisabled: true, isSelected: false } : i
+      ));
+    });
+    setSelectedCanvasItems(new Set());
+  };
+
+  const handleInsightBatchSelect = () => {
+    // 批量选中操作
+    selectedInsights.forEach(itemId => {
+      const item = insights.find(i => i.id === itemId);
+      if (item && !item.isDisabled) {
+        const updatedItem = { ...item, isSelected: true };
+        onItemSelect(updatedItem);
+        setInsights(prev => prev.map(i => 
+          i.id === itemId ? updatedItem : i
+        ));
+      }
+    });
+    setSelectedInsights(new Set());
+  };
+
+  const handleInsightBatchDisable = () => {
+    // 批量置灰操作
+    selectedInsights.forEach(itemId => {
+      onItemDisable(itemId);
+      setInsights(prev => prev.map(i => 
+        i.id === itemId ? { ...i, isDisabled: true, isSelected: false } : i
+      ));
+    });
+    setSelectedInsights(new Set());
+  };
+
+  const handleCanvasRestore = (itemId: string) => {
+    // 恢复置灰状态
+    setCanvasItems(prev => prev.map(i => 
+      i.id === itemId ? { ...i, isDisabled: false } : i
+    ));
+  };
+
+  const handleInsightRestore = (itemId: string) => {
+    // 恢复置灰状态
+    setInsights(prev => prev.map(i => 
+      i.id === itemId ? { ...i, isDisabled: false } : i
+    ));
   };
 
   return (
@@ -106,82 +166,108 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({ onItemSelect, onItemDisa
 
       <div className="flex-1 overflow-auto p-4 space-y-6">
         {/* Canvas Grid Section */}
-        <div>
+        <div className="relative">
           <div className="flex items-center gap-2 mb-4">
             <Grid3X3 className="w-5 h-5 text-black" />
             <h3 className="font-medium text-black font-serif">Canvas</h3>
           </div>
           
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-3 mb-4">
             {canvasItems.map((item) => (
               <div
                 key={item.id}
-                className={`relative group aspect-square ${
+                className={`relative aspect-square ${
                   item.isDisabled ? 'opacity-30' : ''
                 }`}
-                onMouseEnter={() => setHoveredItem(item.id)}
-                onMouseLeave={() => setHoveredItem(null)}
               >
-                <Card className={`h-full cursor-pointer transition-all duration-200 ${
+                <Card className={`h-full transition-all duration-200 ${
                   item.isSelected 
                     ? 'ring-2 ring-black bg-black/5' 
                     : 'hover:shadow-md hover:-translate-y-0.5'
                 }`}>
-                  <CardContent className="p-3 h-full flex items-center justify-center">
-                    <span className="text-sm text-center text-black font-serif">
-                      {item.title}
-                    </span>
+                  <CardContent className="p-3 h-full flex flex-col">
+                    <div className="flex items-start justify-between mb-2">
+                      <Checkbox
+                        checked={selectedCanvasItems.has(item.id)}
+                        onCheckedChange={(checked) => 
+                          handleCanvasCheckboxChange(item.id, checked as boolean)
+                        }
+                        disabled={item.isDisabled}
+                        className="flex-shrink-0"
+                      />
+                      {item.isDisabled && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-5 w-5 p-0 rounded-full hover:bg-green-50 hover:border-green-300"
+                          onClick={() => handleCanvasRestore(item.id)}
+                        >
+                          <RotateCcw className="w-3 h-3" />
+                        </Button>
+                      )}
+                    </div>
+                    <div className="flex-1 flex items-center justify-center">
+                      <span className="text-sm text-center text-black font-serif">
+                        {item.title}
+                      </span>
+                    </div>
                   </CardContent>
                 </Card>
-                
-                {/* Action buttons - show on hover or when selected */}
-                {(hoveredItem === item.id || item.isSelected) && !item.isDisabled && (
-                  <div className="absolute -bottom-2 -right-2 flex gap-1">
-                    <Button
-                      size="sm"
-                      variant={item.isSelected ? "default" : "outline"}
-                      className="h-6 w-6 p-0 rounded-full"
-                      onClick={() => handleItemAction(item, 'select')}
-                    >
-                      <Check className="w-3 h-3" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-6 w-6 p-0 rounded-full hover:bg-red-50 hover:border-red-300"
-                      onClick={() => handleItemAction(item, 'disable')}
-                    >
-                      <X className="w-3 h-3" />
-                    </Button>
-                  </div>
-                )}
               </div>
             ))}
           </div>
+
+          {/* Canvas Batch Operation Buttons */}
+          {selectedCanvasItems.size > 0 && (
+            <div className="flex gap-2 justify-end">
+              <Button
+                size="sm"
+                variant="default"
+                className="h-8 w-8 p-0 rounded-full"
+                onClick={handleCanvasBatchSelect}
+              >
+                <Check className="w-4 h-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 w-8 p-0 rounded-full hover:bg-red-50 hover:border-red-300"
+                onClick={handleCanvasBatchDisable}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Insights Section */}
-        <div>
+        <div className="relative">
           <h3 className="font-medium text-black font-serif mb-4">Insights</h3>
           
-          <div className="space-y-3">
+          <div className="space-y-3 mb-4">
             {insights.map((insight) => (
               <div
                 key={insight.id}
-                className={`relative group ${
+                className={`relative ${
                   insight.isDisabled ? 'opacity-30' : ''
                 }`}
-                onMouseEnter={() => setHoveredItem(insight.id)}
-                onMouseLeave={() => setHoveredItem(null)}
               >
-                <Card className={`cursor-pointer transition-all duration-200 ${
+                <Card className={`transition-all duration-200 ${
                   insight.isSelected 
                     ? 'ring-2 ring-black bg-black/5' 
                     : 'hover:shadow-md hover:-translate-y-0.5'
                 }`}>
                   <CardContent className="p-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
+                    <div className="flex items-start gap-3">
+                      <Checkbox
+                        checked={selectedInsights.has(insight.id)}
+                        onCheckedChange={(checked) => 
+                          handleInsightCheckboxChange(insight.id, checked as boolean)
+                        }
+                        disabled={insight.isDisabled}
+                        className="flex-shrink-0 mt-0.5"
+                      />
+                      <div className="flex-1 min-w-0">
                         <h4 className="text-sm font-medium text-black font-serif mb-1">
                           {insight.title}
                         </h4>
@@ -189,27 +275,15 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({ onItemSelect, onItemDisa
                           {insight.content}
                         </p>
                       </div>
-                      
-                      {/* Action buttons - show on hover or when selected */}
-                      {(hoveredItem === insight.id || insight.isSelected) && !insight.isDisabled && (
-                        <div className="flex gap-1 ml-2">
-                          <Button
-                            size="sm"
-                            variant={insight.isSelected ? "default" : "outline"}
-                            className="h-6 w-6 p-0 rounded-full"
-                            onClick={() => handleItemAction(insight, 'select')}
-                          >
-                            <Check className="w-3 h-3" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-6 w-6 p-0 rounded-full hover:bg-red-50 hover:border-red-300"
-                            onClick={() => handleItemAction(insight, 'disable')}
-                          >
-                            <X className="w-3 h-3" />
-                          </Button>
-                        </div>
+                      {insight.isDisabled && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-6 w-6 p-0 rounded-full hover:bg-green-50 hover:border-green-300 flex-shrink-0"
+                          onClick={() => handleInsightRestore(insight.id)}
+                        >
+                          <RotateCcw className="w-3 h-3" />
+                        </Button>
                       )}
                     </div>
                   </CardContent>
@@ -217,6 +291,28 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({ onItemSelect, onItemDisa
               </div>
             ))}
           </div>
+
+          {/* Insights Batch Operation Buttons */}
+          {selectedInsights.size > 0 && (
+            <div className="flex gap-2 justify-end">
+              <Button
+                size="sm"
+                variant="default"
+                className="h-8 w-8 p-0 rounded-full"
+                onClick={handleInsightBatchSelect}
+              >
+                <Check className="w-4 h-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 w-8 p-0 rounded-full hover:bg-red-50 hover:border-red-300"
+                onClick={handleInsightBatchDisable}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>
