@@ -5,6 +5,7 @@ import { ArrowLeft, Feather } from "lucide-react";
 import { Project } from "@/pages/Creation";
 import { WritingArea } from "@/components/WritingArea";
 import { ChatArea } from "@/components/ChatArea";
+import { CanvasArea, CanvasItem } from "@/components/CanvasArea";
 import { UserBackgroundIcon } from "@/components/UserBackgroundIcon";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 
@@ -21,6 +22,7 @@ export const ProjectWorkbench = ({
 }: ProjectWorkbenchProps) => {
   const writingAreaRef = useRef<any>(null);
   const chatAreaRef = useRef<any>(null);
+  const [canvasReferences, setCanvasReferences] = useState<CanvasItem[]>([]);
 
   // Add debugging for project data
   console.log('ProjectWorkbench - project:', project);
@@ -81,6 +83,27 @@ export const ProjectWorkbench = ({
     }
   };
 
+  const handleCanvasItemSelect = (item: CanvasItem) => {
+    console.log('Canvas item selected:', item);
+    if (item.isSelected) {
+      // 添加到引用列表
+      setCanvasReferences(prev => [...prev, item]);
+    } else {
+      // 从引用列表移除
+      setCanvasReferences(prev => prev.filter(ref => ref.id !== item.id));
+    }
+  };
+
+  const handleCanvasItemDisable = (itemId: string) => {
+    console.log('Canvas item disabled:', itemId);
+    // 从引用列表移除（如果存在）
+    setCanvasReferences(prev => prev.filter(ref => ref.id !== itemId));
+  };
+
+  const handleRemoveCanvasReference = (itemId: string) => {
+    setCanvasReferences(prev => prev.filter(ref => ref.id !== itemId));
+  };
+
   return (
     <div className="h-screen flex flex-col bg-white">
       {/* Simplified Header */}
@@ -115,8 +138,18 @@ export const ProjectWorkbench = ({
       {/* Main Content */}
       <div className="flex-1 min-h-0">
         <ResizablePanelGroup direction="horizontal" className="h-full">
-          {/* Writing Area */}
-          <ResizablePanel defaultSize={55} minSize={40}>
+          {/* Canvas Area - Left */}
+          <ResizablePanel defaultSize={25} minSize={20} maxSize={35}>
+            <CanvasArea 
+              onItemSelect={handleCanvasItemSelect}
+              onItemDisable={handleCanvasItemDisable}
+            />
+          </ResizablePanel>
+          
+          <ResizableHandle withHandle className="transition-colors w-1 bg-stone-500" />
+          
+          {/* Writing Area - Middle */}
+          <ResizablePanel defaultSize={40} minSize={30}>
             <WritingArea 
               ref={writingAreaRef} 
               projectId={project.id} 
@@ -129,14 +162,16 @@ export const ProjectWorkbench = ({
           
           <ResizableHandle withHandle className="transition-colors w-1 bg-stone-500" />
           
-          {/* Chat Area */}
-          <ResizablePanel defaultSize={45} minSize={35} maxSize={65}>
+          {/* Chat Area - Right */}
+          <ResizablePanel defaultSize={35} minSize={25} maxSize={50}>
             <ChatArea 
               ref={chatAreaRef} 
               projectId={project.id} 
               initialMessage={initialMessage} 
               onCardCreated={handleCardCreated} 
-              onCardUpdated={handleCardUpdated} 
+              onCardUpdated={handleCardUpdated}
+              canvasReferences={canvasReferences}
+              onRemoveCanvasReference={handleRemoveCanvasReference}
             />
           </ResizablePanel>
         </ResizablePanelGroup>
