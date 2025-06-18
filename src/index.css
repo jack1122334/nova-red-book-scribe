@@ -3,89 +3,60 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@200;300;400;500;600;700;900&display=swap');
-
 @layer base {
   :root {
-    /* 纯色调色板：只有黑白，移除橙色背景 */
-    --background: 255 255 255; /* 白色背景 */
-    --foreground: 0 0 0; /* 黑色 */
-
-    --card: 255 255 255; /* 白色 */
-    --card-foreground: 0 0 0; /* 黑色 */
-
-    --popover: 255 255 255; /* 白色 */
-    --popover-foreground: 0 0 0; /* 黑色 */
-
-    --primary: 0 0 0; /* 黑色 */
-    --primary-foreground: 255 255 255; /* 白色 */
-
-    --secondary: 255 255 255; /* 白色 */
-    --secondary-foreground: 0 0 0; /* 黑色 */
-
-    --muted: 255 255 255; /* 白色 */
-    --muted-foreground: 0 0 0; /* 黑色 */
-
-    --accent: 255 255 255; /* 白色 */
-    --accent-foreground: 0 0 0; /* 黑色 */
-
-    --destructive: 0 0 0; /* 黑色 */
-    --destructive-foreground: 255 255 255; /* 白色 */
-
-    --border: 0 0 0; /* 黑色 */
-    --input: 0 0 0; /* 黑色 */
-    --ring: 0 0 0; /* 黑色 */
-
-    --radius: 12px;
-
-    --sidebar-background: 255 255 255; /* 白色 */
-    --sidebar-foreground: 0 0 0; /* 黑色 */
-    --sidebar-primary: 0 0 0; /* 黑色 */
-    --sidebar-primary-foreground: 255 255 255; /* 白色 */
-    --sidebar-accent: 255 255 255; /* 白色 */
-    --sidebar-accent-foreground: 0 0 0; /* 黑色 */
-    --sidebar-border: 0 0 0; /* 黑色 */
-    --sidebar-ring: 0 0 0; /* 黑色 */
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
   }
 
   .dark {
-    /* 暗色模式也保持相同的黑白配色 */
-    --background: 0 0 0; /* 黑色背景 */
-    --foreground: 255 255 255; /* 白色 */
-
-    --card: 0 0 0; /* 黑色 */
-    --card-foreground: 255 255 255; /* 白色 */
-
-    --popover: 0 0 0; /* 黑色 */
-    --popover-foreground: 255 255 255; /* 白色 */
-
-    --primary: 255 255 255; /* 白色 */
-    --primary-foreground: 0 0 0; /* 黑色 */
-
-    --secondary: 0 0 0; /* 黑色 */
-    --secondary-foreground: 255 255 255; /* 白色 */
-
-    --muted: 0 0 0; /* 黑色 */
-    --muted-foreground: 255 255 255; /* 白色 */
-
-    --accent: 0 0 0; /* 黑色 */
-    --accent-foreground: 255 255 255; /* 白色 */
-
-    --destructive: 255 255 255; /* 白色 */
-    --destructive-foreground: 0 0 0; /* 黑色 */
-
-    --border: 255 255 255; /* 白色 */
-    --input: 255 255 255; /* 白色 */
-    --ring: 255 255 255; /* 白色 */
-    
-    --sidebar-background: 0 0 0; /* 黑色 */
-    --sidebar-foreground: 255 255 255; /* 白色 */
-    --sidebar-primary: 255 255 255; /* 白色 */
-    --sidebar-primary-foreground: 0 0 0; /* 黑色 */
-    --sidebar-accent: 0 0 0; /* 黑色 */
-    --sidebar-accent-foreground: 255 255 255; /* 白色 */
-    --sidebar-border: 255 255 255; /* 白色 */
-    --sidebar-ring: 255 255 255; /* 白色 */
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 94.1%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
   }
 }
 
@@ -93,83 +64,22 @@
   * {
     @apply border-border;
   }
-
   body {
     @apply bg-background text-foreground;
-    font-family: 'Noto Serif SC', serif;
-    line-height: 1.7;
-    letter-spacing: 0.02em;
-  }
-
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Noto Serif SC', serif;
-    font-weight: 600;
-    letter-spacing: 0.01em;
-  }
-
-  .font-serif {
-    font-family: 'Noto Serif SC', serif;
   }
 }
 
-@layer components {
-  .notion-card {
-    @apply bg-white border border-black/20 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
   }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
-  .notion-card:hover {
-    box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  }
-
-  .notion-button {
-    @apply font-serif font-medium tracking-wide transition-all duration-200 rounded-xl border shadow-sm;
-    @apply hover:-translate-y-0.5 hover:shadow-md active:translate-y-0;
-  }
-
-  .notion-button-primary {
-    @apply notion-button bg-black text-white border-black hover:bg-white hover:text-black;
-  }
-
-  .notion-button-secondary {
-    @apply notion-button bg-white text-black border-black hover:bg-black hover:text-white;
-  }
-
-  .notion-input {
-    @apply font-serif border-black rounded-xl focus:border-black focus:ring-2 focus:ring-black transition-all duration-200;
-    @apply shadow-sm focus:shadow-md;
-  }
-
-  .notion-floating {
-    @apply bg-white/95 backdrop-blur-sm border border-black/20 rounded-xl shadow-lg;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  }
-
-  .elegant-prose {
-    @apply text-black leading-relaxed font-serif;
-  }
-
-  .elegant-prose h1 {
-    @apply text-3xl font-semibold text-black mb-6 tracking-tight;
-  }
-
-  .elegant-prose h2 {
-    @apply text-2xl font-semibold text-black mb-4 tracking-tight;
-  }
-
-  .elegant-prose h3 {
-    @apply text-xl font-medium text-black mb-3 tracking-tight;
-  }
-
-  .elegant-prose p {
-    @apply mb-4 text-black/80;
-  }
-
-  .elegant-prose blockquote {
-    @apply border-l-4 border-black pl-6 italic text-black/80 my-6;
-  }
-
-  .glass-effect {
-    @apply bg-white/80 backdrop-blur-lg border border-white/20;
-  }
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out forwards;
 }

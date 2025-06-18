@@ -347,55 +347,92 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
     });
 
     return (
-      <div className="space-y-3">
-        {/* Thoughts - 独立显示，实时更新 */}
-        {message.thoughts && message.thoughts.length > 0 && (
-          <Card className="bg-blue-50 border-blue-200">
-            <CardContent className="p-3">
-              <div className="text-xs font-medium text-blue-700 mb-2 flex items-center gap-2">
-                🤔 AI思考过程
-                {message.isStreaming && <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>}
-              </div>
-              {message.thoughts.map((thought, index) => (
-                <div key={index} className="text-sm text-blue-800 mb-2 last:mb-0 leading-relaxed">
-                  {thought}
+      <div className="space-y-4">
+        {/* 初始连接指示器 - 只在没有任何内容时显示 */}
+        {message.isStreaming && !message.thoughts?.length && !message.toolCalls?.length && !message.content && (
+          <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3 text-blue-600">
+                <div className="flex gap-1">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                 </div>
-              ))}
+                <span className="text-sm font-medium">Nova 正在思考中...</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Thoughts - 实时显示思考过程 */}
+        {message.thoughts && message.thoughts.length > 0 && (
+          <Card className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 shadow-sm">
+            <CardContent className="p-4">
+              <div className="text-sm font-semibold text-amber-700 mb-3 flex items-center gap-2">
+                🤔 AI 思考过程
+                {message.isStreaming && (
+                  <div className="flex gap-1 ml-2">
+                    <div className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse"></div>
+                    <div className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" style={{ animationDelay: '200ms' }}></div>
+                    <div className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" style={{ animationDelay: '400ms' }}></div>
+                  </div>
+                )}
+              </div>
+              <div className="space-y-2">
+                {message.thoughts.map((thought, index) => (
+                  <div 
+                    key={index} 
+                    className="text-sm text-amber-800 leading-relaxed p-3 bg-white/60 rounded-lg border border-amber-100 animate-fadeIn"
+                    style={{ animationDelay: `${index * 100}ms` }}
+                  >
+                    <span className="text-amber-600 font-medium mr-2">#{index + 1}</span>
+                    {thought}
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
         )}
         
-        {/* Tool Calls - 独立显示，每个工具调用单独卡片 */}
+        {/* Tool Calls - 工具调用实时显示 */}
         {message.toolCalls && message.toolCalls.length > 0 && (
-          <div className="space-y-2">
+          <div className="space-y-3">
             {message.toolCalls
               .sort((a, b) => (a.position || 0) - (b.position || 0))
               .map((toolCall, index) => (
-                <Card key={toolCall.id || index} className="bg-green-50 border-green-200">
-                  <CardContent className="p-3">
-                    <div className="text-xs font-medium text-green-700 mb-2 flex items-center gap-2">
+                <Card key={toolCall.id || index} className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 shadow-sm animate-fadeIn">
+                  <CardContent className="p-4">
+                    <div className="text-sm font-semibold text-green-700 mb-3 flex items-center gap-2">
                       🔧 工具调用: {toolCall.tool.split(';').join(', ')}
                       {!toolCall.observation && (
-                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <div className="flex gap-1 ml-2">
+                          <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                          <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" style={{ animationDelay: '200ms' }}></div>
+                        </div>
                       )}
                     </div>
                     
                     {toolCall.tool_input && (
-                      <div className="bg-green-100 rounded p-2 text-xs font-mono mb-2">
-                        <div className="text-green-600 mb-1">输入参数:</div>
-                        <div className="whitespace-pre-wrap text-green-800">{toolCall.tool_input}</div>
+                      <div className="bg-white/80 rounded-lg p-3 text-xs font-mono mb-3 border border-green-100">
+                        <div className="text-green-600 font-semibold mb-2">输入参数:</div>
+                        <div className="whitespace-pre-wrap text-green-800 leading-relaxed">{toolCall.tool_input}</div>
                       </div>
                     )}
                     
                     {toolCall.observation ? (
-                      <div className="bg-white rounded p-2 text-xs border border-green-200">
-                        <div className="text-green-600 font-medium mb-1">执行结果:</div>
-                        <div className="text-green-800 whitespace-pre-wrap">{toolCall.observation}</div>
+                      <div className="bg-white rounded-lg p-3 text-sm border border-green-200 animate-fadeIn">
+                        <div className="text-green-600 font-semibold mb-2 flex items-center gap-2">
+                          ✓ 执行结果:
+                        </div>
+                        <div className="text-green-800 whitespace-pre-wrap leading-relaxed">{toolCall.observation}</div>
                       </div>
                     ) : (
-                      <div className="bg-yellow-50 rounded p-2 text-xs border border-yellow-200">
-                        <div className="text-yellow-600 font-medium mb-1">状态:</div>
-                        <div className="text-yellow-700">工具执行中...</div>
+                      <div className="bg-yellow-50 rounded-lg p-3 text-sm border border-yellow-200">
+                        <div className="text-yellow-600 font-semibold mb-2 flex items-center gap-2">
+                          ⏳ 执行中...
+                          <div className="w-4 h-4 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                        <div className="text-yellow-700">正在处理工具调用...</div>
                       </div>
                     )}
                   </CardContent>
@@ -404,37 +441,25 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
           </div>
         )}
         
-        {/* Main Content - 独立显示，实时更新 */}
+        {/* Main Content - 主要回复内容实时显示 */}
         {message.content && (
-          <Card className="bg-white border-gray-200">
-            <CardContent className="p-4">
-              <ReactMarkdown 
-                className="prose prose-sm max-w-none text-black leading-relaxed prose-headings:text-black prose-p:text-black prose-strong:text-black prose-em:text-black prose-ul:text-black prose-ol:text-black prose-li:text-black prose-blockquote:text-black/70 prose-code:text-black prose-pre:bg-black/10 prose-pre:text-black"
-              >
-                {message.content}
-              </ReactMarkdown>
-              {/* 流式传输光标 */}
+          <Card className="bg-white border border-gray-200 shadow-sm">
+            <CardContent className="p-5">
+              <div className="prose prose-sm max-w-none text-gray-800 leading-relaxed">
+                <ReactMarkdown 
+                  className="prose prose-sm max-w-none text-black leading-relaxed prose-headings:text-black prose-p:text-black prose-strong:text-black prose-em:text-black prose-ul:text-black prose-ol:text-black prose-li:text-black prose-blockquote:text-black/70 prose-code:text-black prose-pre:bg-black/10 prose-pre:text-black"
+                >
+                  {message.content}
+                </ReactMarkdown>
+              </div>
+              
+              {/* 流式传输光标 - 更显眼的动画效果 */}
               {message.isStreaming && (
-                <div className="inline-flex items-center mt-2">
-                  <div className="w-2 h-4 bg-black/60 animate-pulse ml-1"></div>
+                <div className="flex items-center mt-4 gap-2">
+                  <div className="w-3 h-5 bg-blue-500 animate-pulse rounded-sm"></div>
+                  <span className="text-xs text-blue-600 font-medium animate-pulse">正在输入...</span>
                 </div>
               )}
-            </CardContent>
-          </Card>
-        )}
-        
-        {/* 初始连接指示器 - 只在没有任何内容时显示 */}
-        {message.isStreaming && !message.thoughts?.length && !message.toolCalls?.length && !message.content && (
-          <Card className="bg-gray-50 border-gray-200">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 text-gray-500">
-                <div className="flex gap-1">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                </div>
-                <span className="text-sm">Nova正在连接...</span>
-              </div>
             </CardContent>
           </Card>
         )}
@@ -452,8 +477,8 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
 
       {/* System Messages Indicator */}
       {pendingSystemMessages.length > 0 && (
-        <div className="px-4 py-2 border-b border-black/20 rounded-xl bg-yellow-200">
-          <p className="text-xs text-black/70">
+        <div className="px-4 py-2 border-b border-black/20 rounded-xl bg-yellow-50 border border-yellow-200">
+          <p className="text-xs text-yellow-700 font-medium">
             有 {pendingSystemMessages.length} 个编辑操作等待发送给AI
           </p>
         </div>
