@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/components/AuthProvider";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import Index from "./pages/Index";
 import Creation from "./pages/Creation";
 import Profile from "./pages/Profile";
@@ -25,22 +26,38 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/" element={
               <ProtectedRoute>
-                <Index />
+                <SidebarProvider>
+                  <div className="min-h-screen flex w-full">
+                    <Index />
+                  </div>
+                </SidebarProvider>
               </ProtectedRoute>
             } />
             <Route path="/profile" element={
               <ProtectedRoute>
-                <Profile />
+                <SidebarProvider>
+                  <div className="min-h-screen flex w-full">
+                    <Profile />
+                  </div>
+                </SidebarProvider>
               </ProtectedRoute>
             } />
             <Route path="/creation" element={
               <ProtectedRoute>
-                <Creation />
+                <SidebarProvider>
+                  <div className="min-h-screen flex w-full">
+                    <Creation />
+                  </div>
+                </SidebarProvider>
               </ProtectedRoute>
             } />
             <Route path="/creation/workbench/:projectId" element={
               <ProtectedRoute>
-                <Creation />
+                <SidebarProvider>
+                  <div className="min-h-screen flex w-full">
+                    <Creation />
+                  </div>
+                </SidebarProvider>
               </ProtectedRoute>
             } />
             <Route path="*" element={<NotFound />} />

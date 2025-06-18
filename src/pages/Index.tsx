@@ -1,15 +1,22 @@
 
 import { Navbar } from '@/components/Navbar';
 import { ProjectsManager } from '@/components/ProjectsManager';
+import { AppSidebar } from '@/components/AppSidebar';
+import { SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <div className="max-w-7xl mx-auto py-8 px-4">
-        <ProjectsManager />
-      </div>
-    </div>
+    <>
+      <AppSidebar />
+      <SidebarInset>
+        <Navbar />
+        <div className="flex-1 p-8">
+          <div className="max-w-7xl mx-auto">
+            <ProjectsManager />
+          </div>
+        </div>
+      </SidebarInset>
+    </>
   );
 };
 
