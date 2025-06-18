@@ -8,7 +8,13 @@ interface UserBackgroundIconProps {
 }
 
 export const UserBackgroundIcon = ({ userBackground }: UserBackgroundIconProps) => {
-  if (!userBackground) return null;
+  // Add debugging
+  console.log('UserBackgroundIcon - userBackground:', userBackground);
+  
+  if (!userBackground) {
+    console.log('UserBackgroundIcon - No userBackground data, not rendering');
+    return null;
+  }
 
   const renderBackgroundContent = () => {
     const items = [];
@@ -37,12 +43,18 @@ export const UserBackgroundIcon = ({ userBackground }: UserBackgroundIconProps) 
       });
     }
 
+    console.log('UserBackgroundIcon - background items:', items);
     return items;
   };
 
   const backgroundItems = renderBackgroundContent();
 
-  if (backgroundItems.length === 0) return null;
+  if (backgroundItems.length === 0) {
+    console.log('UserBackgroundIcon - No background items, not rendering');
+    return null;
+  }
+
+  console.log('UserBackgroundIcon - Rendering with', backgroundItems.length, 'items');
 
   return (
     <HoverCard>

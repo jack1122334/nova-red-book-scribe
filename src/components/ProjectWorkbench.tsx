@@ -21,6 +21,10 @@ export const ProjectWorkbench = ({
   const writingAreaRef = useRef<any>(null);
   const chatAreaRef = useRef<any>(null);
 
+  // Add debugging for project data
+  console.log('ProjectWorkbench - project:', project);
+  console.log('ProjectWorkbench - project.user_background:', project?.user_background);
+
   if (!project) return null;
 
   const handleCardCreated = async (cardId: string, title: string, content: string) => {
@@ -94,8 +98,10 @@ export const ProjectWorkbench = ({
               <h1 className="text-xl font-serif font-semibold text-black tracking-tight">
                 {project.title}
               </h1>
-              {/* User Background Icon */}
-              <UserBackgroundIcon userBackground={project.user_background} />
+              {/* User Background Icon with debugging */}
+              <div>
+                <UserBackgroundIcon userBackground={project.user_background} />
+              </div>
             </div>
           </div>
           
@@ -137,3 +143,56 @@ export const ProjectWorkbench = ({
     </div>
   );
 };
+
+function handleCardCreated(cardId: string, title: string, content: string) {
+  // 通知WritingArea添加新卡片
+  if (writingAreaRef.current?.addCardFromAgent) {
+    await writingAreaRef.current.addCardFromAgent(title, content);
+  }
+}
+
+function handleCardUpdated(cardTitle: string, content: string) {
+  // 通知WritingArea更新卡片
+  if (writingAreaRef.current?.updateCardFromAgent) {
+    await writingAreaRef.current.updateCardFromAgent(cardTitle, content);
+  }
+}
+
+function handleTextSelection(cardId: string, selectedText: string, instruction: string) {
+  // 将文本选择请求发送给ChatArea
+  console.log('Text selection:', {
+    cardId,
+    selectedText,
+    instruction
+  });
+  // TODO: 实现文本选择处理逻辑
+}
+
+function handleCardUpdate(cardId: string, content: string, title?: string) {
+  console.log('Card updated:', {
+    cardId,
+    content,
+    title
+  });
+  // 通知ChatArea用户编辑了卡片
+  if (chatAreaRef.current?.notifyCardUpdate) {
+    chatAreaRef.current.notifyCardUpdate(cardId, content, title);
+  }
+}
+
+function handleCardCreate(cardId: string) {
+  console.log('Card created:', {
+    cardId
+  });
+  // 通知ChatArea用户创建了新卡片
+  if (chatAreaRef.current?.notifyCardCreate) {
+    chatAreaRef.current.notifyCardCreate(cardId);
+  }
+}
+
+function handleAddReference(reference: any) {
+  // 将引用添加到ChatArea
+  if (chatAreaRef.current?.addReference) {
+    chatAreaRef.current.addReference(reference);
+  }
+}
