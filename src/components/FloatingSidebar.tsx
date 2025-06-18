@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Home, Edit3, Menu, X } from "lucide-react";
+import { Home, Folder, User, Menu, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -23,8 +23,14 @@ export const FloatingSidebar = ({ currentPage }: FloatingSidebarProps) => {
     {
       id: "creation",
       label: "创作台",
-      icon: Edit3,
+      icon: Folder,
       path: "/creation",
+    },
+    {
+      id: "profile",
+      label: "个人",
+      icon: User,
+      path: "/profile",
     },
   ];
 
@@ -41,25 +47,25 @@ export const FloatingSidebar = ({ currentPage }: FloatingSidebarProps) => {
           variant="ghost"
           size="sm"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full mb-3 hover:bg-gray-100 transition-colors rounded-xl shadow-none hover:shadow-sm"
+          className="w-full mb-3 hover:bg-gray-100 transition-colors rounded-xl shadow-none hover:shadow-sm p-2"
         >
           {isExpanded ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
         </Button>
 
         {/* Menu Items */}
-        <div className="space-y-2">
+        <div className="space-y-1">
           {menuItems.map((item) => (
             <Button
               key={item.id}
-              variant={currentPage === item.id ? "default" : "ghost"}
+              variant="ghost"
               size="sm"
               onClick={() => navigate(item.path)}
               className={cn(
-                "w-full justify-start transition-all duration-200 font-serif text-sm rounded-xl",
+                "w-full justify-start transition-all duration-200 font-serif text-sm rounded-xl p-2",
                 currentPage === item.id
-                  ? "bg-gray-900 text-white hover:bg-gray-800 shadow-notion"
+                  ? "bg-gray-900 text-white hover:bg-gray-800 shadow-sm"
                   : "hover:bg-gray-100 text-gray-700 shadow-none hover:shadow-sm",
-                !isExpanded && "px-3"
+                !isExpanded && "justify-center"
               )}
             >
               <item.icon className="w-4 h-4" />
