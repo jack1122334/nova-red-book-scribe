@@ -71,14 +71,14 @@ const Creation = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-amber-400 rounded-none flex items-center justify-center">
+      <div className="min-h-screen bg-white rounded-none flex items-center justify-center">
         <div className="text-black font-serif">加载中...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-amber-400 rounded-none">
+    <div className="min-h-screen bg-white rounded-none">
       <FloatingSidebar currentPage="creation" />
       
       <div className="pl-20">
