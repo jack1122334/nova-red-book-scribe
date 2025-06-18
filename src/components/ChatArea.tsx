@@ -445,7 +445,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
   return (
     <div className="h-full flex flex-col bg-white">
       {/* Header */}
-      <div className="p-4 border-b border-black/20 bg-amber-400">
+      <div className="p-4 border-b border-black/20 bg-white">
         <h2 className="text-lg font-semibold text-black">Nova</h2>
         <p className="text-sm text-black/60">小红书内容创作助手</p>
       </div>
@@ -461,14 +461,14 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
 
       {/* References Section */}
       {references.length > 0 && (
-        <div className="p-4 border-b border-black/20 bg-amber-400">
+        <div className="p-4 border-b border-black/20 bg-white">
           <h3 className="text-sm font-medium text-black mb-3 flex items-center gap-2">
             <Link className="w-4 h-4" />
             引用内容 ({references.length})
           </h3>
           <div className="space-y-3">
             {references.map((ref, index) => (
-              <div key={index} className="rounded-lg border border-black/20 p-3 text-sm bg-amber-100">
+              <div key={index} className="rounded-lg border border-black/20 p-3 text-sm bg-gray-100">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2">
@@ -539,7 +539,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-auto bg-amber-400">
+      <div className="flex-1 overflow-auto bg-white">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-black/50 p-8">
             <div className="w-16 h-16 rounded-full bg-black/10 flex items-center justify-center mb-4">
@@ -576,7 +576,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
                     <div className="flex-1 min-w-0">
                       <div 
                         onClick={() => handleMessageClick(message)} 
-                        className="whitespace-pre-wrap text-black leading-relaxed p-3 rounded-xl transition-colors border border-transparent hover:border-black/20 cursor-pointer group relative bg-amber-200"
+                        className="whitespace-pre-wrap text-black leading-relaxed p-3 rounded-xl transition-colors border border-transparent hover:border-black/20 cursor-pointer group relative bg-gray-100"
                       >
                         {message.content}
                         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -593,7 +593,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
       </div>
 
       {/* Input Area */}
-      <div className="border-t border-black/20 p-4 bg-amber-400">
+      <div className="border-t border-black/20 p-4 bg-white">
         <div className="flex gap-3 items-end">
           <div className="flex-1">
             <Textarea 
@@ -602,7 +602,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
               onKeyDown={handleKeyPress} 
               placeholder="输入消息..." 
               disabled={isLoading} 
-              className="min-h-[44px] max-h-[200px] resize-none bg-amber-100 py-[36px] rounded-2xl my-0" 
+              className="min-h-[44px] max-h-[200px] resize-none bg-gray-100 py-[36px] rounded-2xl my-0" 
             />
             {(references.length > 0 || pendingSystemMessages.length > 0) && (
               <p className="text-xs text-black/50 mt-2">
@@ -613,7 +613,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
           <Button 
             onClick={handleSendMessage} 
             disabled={!inputValue.trim() || isLoading} 
-            className="h-11 w-11 p-0 bg-black hover:bg-black/80 disabled:bg-black/30 rounded-xl text-left text-amber-100 font-normal text-base px-[3px] py-[3px] my-0"
+            className="h-11 w-11 p-0 bg-black hover:bg-black/80 disabled:bg-black/30 rounded-xl text-left text-white font-normal text-base px-[3px] py-[3px] my-0"
           >
             <Send className="w-4 h-4" />
           </Button>
