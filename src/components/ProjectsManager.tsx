@@ -6,9 +6,12 @@ import { Plus, Calendar, MessageSquare } from "lucide-react";
 import { Project } from "@/pages/Creation";
 import { projectsApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
+
 interface ProjectsManagerProps {
-  onProjectSelect: (project: Project) => void;
+  onProjectSelect?: (project: Project) => void;
 }
+
 export const ProjectsManager = ({
   onProjectSelect
 }: ProjectsManagerProps) => {
@@ -16,12 +19,13 @@ export const ProjectsManager = ({
   const [newProjectTitle, setNewProjectTitle] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
   useEffect(() => {
     loadProjects();
   }, []);
+
   const loadProjects = async () => {
     try {
       console.log('Loading projects...');
@@ -48,6 +52,7 @@ export const ProjectsManager = ({
       setIsLoading(false);
     }
   };
+
   const handleCreateProject = async () => {
     if (!newProjectTitle.trim() || isCreating) return;
     setIsCreating(true);
@@ -70,8 +75,12 @@ export const ProjectsManager = ({
         description: `项目"${newProject.title}"已创建`
       });
 
-      // Auto-select the new project
-      onProjectSelect(newProject);
+      // Auto-select the new project or navigate to creation page
+      if (onProjectSelect) {
+        onProjectSelect(newProject);
+      } else {
+        navigate(`/creation/workbench/${newProject.id}`);
+      }
     } catch (error: any) {
       console.error('Failed to create project:', error);
       toast({
@@ -83,16 +92,27 @@ export const ProjectsManager = ({
       setIsCreating(false);
     }
   };
+
+  const handleProjectClick = (project: Project) => {
+    if (onProjectSelect) {
+      onProjectSelect(project);
+    } else {
+      navigate(`/creation/workbench/${project.id}`);
+    }
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       handleCreateProject();
     }
   };
+
   if (isLoading) {
     return <div className="p-8 flex items-center justify-center">
         <div className="animate-spin w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full" />
       </div>;
   }
+
   return <div className="p-8 max-w-6xl mx-auto">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-800 mb-2">我的项目</h1>
@@ -119,7 +139,7 @@ export const ProjectsManager = ({
 
       {/* Projects Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {projects.map(project => <Card key={project.id} className="cursor-pointer hover:shadow-lg transition-all duration-200 bg-white/60 backdrop-blur-sm border-gray-200 hover:border-purple-300" onClick={() => onProjectSelect(project)}>
+        {projects.map(project => <Card key={project.id} className="cursor-pointer hover:shadow-lg transition-all duration-200 bg-white/60 backdrop-blur-sm border-gray-200 hover:border-purple-300" onClick={() => handleProjectClick(project)}>
             <CardHeader>
               <CardTitle className="text-lg text-gray-800">{project.title}</CardTitle>
             </CardHeader>
