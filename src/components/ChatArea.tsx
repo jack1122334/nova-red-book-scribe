@@ -7,6 +7,8 @@ import { Send, Bot, User, Link, Edit3, Check, X, Info } from "lucide-react";
 import { chatApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { MessageDetailsDialog } from "@/components/MessageDetailsDialog";
+import { ReferenceDisplay } from "@/components/ReferenceDisplay";
+import { CanvasItem } from "@/components/CanvasArea";
 import ReactMarkdown from 'react-markdown';
 
 interface ChatAreaProps {
@@ -14,6 +16,8 @@ interface ChatAreaProps {
   initialMessage?: string;
   onCardCreated: (cardId: string, title: string, content: string) => Promise<void>;
   onCardUpdated: (cardTitle: string, content: string) => Promise<void>;
+  canvasReferences?: CanvasItem[];
+  onRemoveCanvasReference?: (itemId: string) => void;
 }
 
 interface ChatMessage {
@@ -71,7 +75,9 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
   projectId,
   initialMessage,
   onCardCreated,
-  onCardUpdated
+  onCardUpdated,
+  canvasReferences = [],
+  onRemoveCanvasReference
 }, ref) => {
   const [messages, setMessages] = useState<StreamingMessage[]>([]);
   const [inputValue, setInputValue] = useState("");
@@ -475,6 +481,14 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
         <p className="text-sm text-black/60">小红书内容创作助手</p>
       </div>
 
+      {/* Canvas References Display */}
+      {canvasReferences.length > 0 && onRemoveCanvasReference && (
+        <ReferenceDisplay 
+          references={canvasReferences} 
+          onRemoveReference={onRemoveCanvasReference} 
+        />
+      )}
+
       {/* System Messages Indicator */}
       {pendingSystemMessages.length > 0 && (
         <div className="px-4 py-2 border-b border-black/20 rounded-xl bg-yellow-50 border border-yellow-200">
@@ -629,9 +643,9 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
               disabled={isLoading} 
               className="min-h-[44px] max-h-[200px] resize-none bg-gray-100 py-[36px] rounded-2xl my-0" 
             />
-            {(references.length > 0 || pendingSystemMessages.length > 0) && (
+            {(references.length > 0 || pendingSystemMessages.length > 0 || canvasReferences.length > 0) && (
               <p className="text-xs text-black/50 mt-2">
-                将发送 {references.length} 个引用{pendingSystemMessages.length > 0 && ` 和 ${pendingSystemMessages.length} 个编辑通知`} 给 AI
+                将发送 {references.length + canvasReferences.length} 个引用{pendingSystemMessages.length > 0 && ` 和 ${pendingSystemMessages.length} 个编辑通知`} 给 AI
               </p>
             )}
           </div>
