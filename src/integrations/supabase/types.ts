@@ -94,28 +94,34 @@ export type Database = {
       }
       projects: {
         Row: {
+          account_style_bg: Json | null
           conversation_id: string | null
           created_at: string
           id: string
           title: string
           updated_at: string
           user_id: string
+          writing_intention_bg: Json | null
         }
         Insert: {
+          account_style_bg?: Json | null
           conversation_id?: string | null
           created_at?: string
           id?: string
           title: string
           updated_at?: string
           user_id: string
+          writing_intention_bg?: Json | null
         }
         Update: {
+          account_style_bg?: Json | null
           conversation_id?: string | null
           created_at?: string
           id?: string
           title?: string
           updated_at?: string
           user_id?: string
+          writing_intention_bg?: Json | null
         }
         Relationships: []
       }

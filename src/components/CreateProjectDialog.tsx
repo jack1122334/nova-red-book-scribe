@@ -97,8 +97,26 @@ export const CreateProjectDialog: React.FC<CreateProjectDialogProps> = ({
         accountStyle: finalAccountStyle,
       });
 
+      // 准备背景信息数据
+      const selectedIntentionCard = intentions.find(i => i.content === finalIntention);
+      const selectedAccountStyleCard = accountStyles.find(s => s.content === finalAccountStyle);
+
+      const userBackground = {
+        personalities: {
+          type: 'intentions',
+          content: finalIntention,
+          id: selectedIntentionCard?.id || null
+        },
+        accountStyles: {
+          type: 'accountStyles', 
+          content: finalAccountStyle,
+          id: selectedAccountStyleCard?.id || null
+        }
+      };
+
       const dbProject = await projectsApi.create({
         title: projectTitle.trim(),
+        user_background: userBackground,
       });
 
       const newProject: Project = {

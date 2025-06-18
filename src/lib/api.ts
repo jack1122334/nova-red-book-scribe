@@ -22,7 +22,7 @@ export const projectsApi = {
     return data || [];
   },
 
-  async create(project: { title: string }): Promise<Project> {
+  async create(project: { title: string; user_background?: any }): Promise<Project> {
     console.log('API: Creating project:', project);
     const user = await supabase.auth.getUser();
     if (!user.data.user) {
@@ -34,6 +34,7 @@ export const projectsApi = {
       .insert({
         title: project.title,
         user_id: user.data.user.id,
+        user_background: project.user_background || null,
       })
       .select()
       .single();
@@ -46,7 +47,7 @@ export const projectsApi = {
     return data;
   },
 
-  async update(id: string, updates: { title?: string }): Promise<Project> {
+  async update(id: string, updates: { title?: string; user_background?: any }): Promise<Project> {
     console.log('API: Updating project:', id, updates);
     const { data, error } = await supabase
       .from('projects')
