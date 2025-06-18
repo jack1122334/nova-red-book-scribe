@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -444,7 +443,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
   };
 
   return (
-    <div className="h-full flex flex-col bg-amber-300">
+    <div className="h-full flex flex-col bg-white">
       {/* Header */}
       <div className="p-4 border-b border-black/20 bg-amber-400">
         <h2 className="text-lg font-semibold text-black">Nova</h2>
