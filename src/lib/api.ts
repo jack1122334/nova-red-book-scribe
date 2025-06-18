@@ -4,6 +4,7 @@ import { Database } from '@/integrations/supabase/types';
 type Project = Database['public']['Tables']['projects']['Row'];
 type Card = Database['public']['Tables']['cards']['Row'];
 type ChatMessage = Database['public']['Tables']['chat_messages']['Row'];
+type UserBackgroundCard = Database['public']['Tables']['user_background_cards']['Row'];
 
 export const projectsApi = {
   async list(): Promise<Project[]> {
@@ -268,5 +269,78 @@ export const chatApi = {
 
     if (error) throw error;
     return data;
+  }
+};
+
+export const userBackgroundCardsApi = {
+  async list(): Promise<UserBackgroundCard[]> {
+    console.log('API: Fetching user background cards...');
+    const { data, error } = await supabase
+      .from('user_background_cards')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('API: Error fetching user background cards:', error);
+      throw new Error(`获取背景卡片失败: ${error.message}`);
+    }
+    console.log('API: User background cards fetched successfully:', data?.length);
+    return data || [];
+  },
+
+  async create(card: { type: string; content: string }): Promise<UserBackgroundCard> {
+    console.log('API: Creating user background card:', card);
+    const user = await supabase.auth.getUser();
+    if (!user.data.user) {
+      throw new Error('用户未登录');
+    }
+
+    const { data, error } = await supabase
+      .from('user_background_cards')
+      .insert({
+        type: card.type,
+        content: card.content,
+        user_id: user.data.user.id,
+      })
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('API: Error creating user background card:', error);
+      throw new Error(`创建背景卡片失败: ${error.message}`);
+    }
+    console.log('API: User background card created successfully:', data);
+    return data;
+  },
+
+  async update(id: string, updates: { content?: string }): Promise<UserBackgroundCard> {
+    console.log('API: Updating user background card:', id, updates);
+    const { data, error } = await supabase
+      .from('user_background_cards')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('API: Error updating user background card:', error);
+      throw new Error(`更新背景卡片失败: ${error.message}`);
+    }
+    console.log('API: User background card updated successfully:', data);
+    return data;
+  },
+
+  async delete(id: string): Promise<void> {
+    console.log('API: Deleting user background card:', id);
+    const { error } = await supabase
+      .from('user_background_cards')
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      console.error('API: Error deleting user background card:', error);
+      throw new Error(`删除背景卡片失败: ${error.message}`);
+    }
+    console.log('API: User background card deleted successfully');
   }
 };
