@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
 
@@ -20,6 +21,22 @@ export const projectsApi = {
     }
     console.log('API: Projects fetched successfully:', data?.length);
     return data || [];
+  },
+
+  async get(id: string): Promise<Project> {
+    console.log('API: Fetching single project:', id);
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error) {
+      console.error('API: Error fetching project:', error);
+      throw new Error(`获取项目失败: ${error.message}`);
+    }
+    console.log('API: Project fetched successfully:', data);
+    return data;
   },
 
   async create(project: { title: string; user_background?: any }): Promise<Project> {
