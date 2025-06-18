@@ -1,9 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useLocation } from "react-router-dom";
-import { AppSidebar } from "@/components/AppSidebar";
-import { SidebarInset } from "@/components/ui/sidebar";
-import { Navbar } from "@/components/Navbar";
+import { FloatingSidebar } from "@/components/FloatingSidebar";
 import { ProjectsManager } from "@/components/ProjectsManager";
 import { ProjectWorkbench } from "@/components/ProjectWorkbench";
 import { projectsApi } from "@/lib/api";
@@ -73,39 +71,28 @@ const Creation = () => {
 
   if (isLoading) {
     return (
-      <>
-        <AppSidebar />
-        <SidebarInset>
-          <div className="min-h-screen flex items-center justify-center">
-            <div className="text-black font-serif">加载中...</div>
-          </div>
-        </SidebarInset>
-      </>
+      <div className="min-h-screen bg-white rounded-none flex items-center justify-center">
+        <div className="text-black font-serif">加载中...</div>
+      </div>
     );
   }
 
   return (
-    <>
-      <AppSidebar />
-      <SidebarInset>
-        {currentView === "workbench" && <Navbar />}
-        <div className="flex-1">
-          {currentView === "projects" ? (
-            <div className="p-8">
-              <div className="max-w-7xl mx-auto">
-                <ProjectsManager onProjectSelect={handleProjectSelect} />
-              </div>
-            </div>
-          ) : (
-            <ProjectWorkbench 
-              project={selectedProject} 
-              onBack={handleBackToProjects} 
-              initialMessage={location.state?.initialMessage} 
-            />
-          )}
-        </div>
-      </SidebarInset>
-    </>
+    <div className="min-h-screen bg-white rounded-none">
+      <FloatingSidebar currentPage="creation" />
+      
+      <div className="pl-20">
+        {currentView === "projects" ? (
+          <ProjectsManager onProjectSelect={handleProjectSelect} />
+        ) : (
+          <ProjectWorkbench 
+            project={selectedProject} 
+            onBack={handleBackToProjects} 
+            initialMessage={location.state?.initialMessage} 
+          />
+        )}
+      </div>
+    </div>
   );
 };
 
