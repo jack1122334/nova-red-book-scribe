@@ -481,7 +481,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
         <p className="text-sm text-black/60">小红书内容创作助手</p>
       </div>
 
-      {/* Canvas References Display */}
+      {/* Canvas References Display - moved above input */}
       {canvasReferences.length > 0 && onRemoveCanvasReference && (
         <ReferenceDisplay 
           references={canvasReferences} 
@@ -594,36 +594,33 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
             {messages.map(message => (
               <div key={message.id} className={`flex gap-4 ${message.role === 'user' ? 'justify-end' : ''}`}>
                 {message.role === 'assistant' ? (
-                  <>
-                    <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center flex-shrink-0">
-                      <Bot className="w-4 h-4 text-white" />
+                  <div className="flex-1 min-w-0 max-w-4xl">
+                    {/* AI Avatar above message */}
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center flex-shrink-0">
+                        <Bot className="w-4 h-4 text-white" />
+                      </div>
+                      <span className="text-sm font-medium text-black">Nova</span>
                     </div>
-                    <div className="flex-1 min-w-0 max-w-4xl">
-                      <div className="cursor-pointer group relative" onClick={() => handleMessageClick(message)}>
-                        {renderStreamingContent(message)}
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Info className="w-4 h-4 text-black/40" />
-                        </div>
+                    <div className="cursor-pointer group relative" onClick={() => handleMessageClick(message)}>
+                      {renderStreamingContent(message)}
+                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Info className="w-4 h-4 text-black/40" />
                       </div>
                     </div>
-                  </>
+                  </div>
                 ) : (
-                  <>
-                    <div className="flex-1 flex justify-end min-w-0 max-w-xl">
-                      <div 
-                        onClick={() => handleMessageClick(message)} 
-                        className="whitespace-pre-wrap text-white leading-relaxed p-4 rounded-2xl transition-colors cursor-pointer group relative bg-black hover:bg-black/80 max-w-md"
-                      >
-                        {message.content}
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Info className="w-4 h-4 text-white/60" />
-                        </div>
+                  <div className="flex-1 flex justify-end min-w-0 max-w-xl">
+                    <div 
+                      onClick={() => handleMessageClick(message)} 
+                      className="whitespace-pre-wrap text-white leading-relaxed p-4 rounded-2xl transition-colors cursor-pointer group relative bg-black hover:bg-black/80 max-w-md"
+                    >
+                      {message.content}
+                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Info className="w-4 h-4 text-white/60" />
                       </div>
                     </div>
-                    <div className="w-8 h-8 rounded-full bg-black/20 flex items-center justify-center flex-shrink-0">
-                      <User className="w-4 h-4 text-black/60" />
-                    </div>
-                  </>
+                  </div>
                 )}
               </div>
             ))}

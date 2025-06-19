@@ -29,7 +29,7 @@ export const ProjectWorkbench = ({
   const canvasAreaRef = useRef<any>(null);
   const [canvasReferences, setCanvasReferences] = useState<CanvasItem[]>([]);
   
-  const { hasCanvasData, hasDraftData, setHasDraftData } = useProjectData(project?.id);
+  const { hasCanvasData, hasDraftData, draftCount, setHasDraftData } = useProjectData(project?.id);
   
   const [layoutState, setLayoutState] = useState<LayoutState>({
     showCanvas: true,
@@ -53,6 +53,13 @@ export const ProjectWorkbench = ({
     
     setLayoutState(defaultLayout);
   }, [hasCanvasData, hasDraftData]);
+
+  // 当draft数量增加时，展开draft区域
+  useEffect(() => {
+    if (hasDraftData && !layoutState.showWriting) {
+      setLayoutState(prev => ({ ...prev, showWriting: true }));
+    }
+  }, [draftCount, hasDraftData, layoutState.showWriting]);
 
   const handlers = useProjectHandlers({
     writingAreaRef,
@@ -85,7 +92,15 @@ export const ProjectWorkbench = ({
         chatAreaRef={chatAreaRef}
         canvasAreaRef={canvasAreaRef}
         onLayoutChange={setLayoutState}
-        {...handlers}
+        onCardCreated={handlers.handleCardCreated}
+        onCardUpdated={handlers.handleCardUpdated}
+        onTextSelection={handlers.handleTextSelection}
+        onCardUpdate={handlers.handleCardUpdate}
+        onCardCreate={handlers.handleCardCreate}
+        onAddReference={handlers.handleAddReference}
+        onCanvasItemSelect={handlers.handleCanvasItemSelect}
+        onCanvasItemDisable={handlers.handleCanvasItemDisable}
+        onRemoveCanvasReference={handlers.handleRemoveCanvasReference}
       />
     </div>
   );
