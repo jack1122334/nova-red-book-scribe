@@ -1,9 +1,8 @@
-
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Check, X, RotateCcw } from "lucide-react";
+import { Check, X, RotateCcw, Lightbulb, Sparkles } from "lucide-react";
 import { CanvasItem } from "../CanvasArea";
 
 interface InsightsListProps {
@@ -23,6 +22,28 @@ export const InsightsList: React.FC<InsightsListProps> = ({
   onBatchDisable,
   onRestore
 }) => {
+  // 如果没有insights，显示空状态
+  if (insights.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 px-4">
+        <div className="relative mb-6">
+          <div className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center">
+            <Lightbulb className="w-10 h-10 text-gray-400" />
+          </div>
+          <div className="absolute -top-1 -right-1 w-8 h-8 bg-black rounded-full flex items-center justify-center">
+            <Sparkles className="w-4 h-4 text-white" />
+          </div>
+        </div>
+        <h3 className="text-lg font-serif font-semibold text-gray-900 mb-2">
+          等待洞察分析
+        </h3>
+        <p className="text-gray-500 text-center font-serif leading-relaxed max-w-sm">
+          AI 将基于对话内容为你生成深度洞察和创作建议，助力你的内容创作
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="relative">
       <div className="space-y-3 mb-4">

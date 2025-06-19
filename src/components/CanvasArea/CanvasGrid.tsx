@@ -1,9 +1,8 @@
-
 import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Check, X, RotateCcw, Heart, Star, MessageCircle } from "lucide-react";
+import { Check, X, RotateCcw, Heart, Star, MessageCircle, Grid3X3, Sparkles } from "lucide-react";
 import { CanvasItem } from "../CanvasArea";
 import { CanvasItemModal } from "./CanvasItemModal";
 
@@ -27,6 +26,28 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
   keywords = []
 }) => {
   const [selectedCard, setSelectedCard] = useState<CanvasItem | null>(null);
+
+  // 如果没有items，显示空状态
+  if (items.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 px-4">
+        <div className="relative mb-6">
+          <div className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center">
+            <Grid3X3 className="w-10 h-10 text-gray-400" />
+          </div>
+          <div className="absolute -top-1 -right-1 w-8 h-8 bg-black rounded-full flex items-center justify-center">
+            <Sparkles className="w-4 h-4 text-white" />
+          </div>
+        </div>
+        <h3 className="text-lg font-serif font-semibold text-gray-900 mb-2">
+          Canvas 等待内容
+        </h3>
+        <p className="text-gray-500 text-center font-serif leading-relaxed max-w-sm">
+          与 AI 对话后，相关的创意内容和案例将在这里展示，帮助你获得更多灵感
+        </p>
+      </div>
+    );
+  }
 
   // 按关键词分组items，每个关键词对应3个卡片
   const groupedItems = keywords.length > 0 ? 
