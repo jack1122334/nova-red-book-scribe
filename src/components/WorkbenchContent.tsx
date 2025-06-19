@@ -103,7 +103,7 @@ export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
     
     // 确保Canvas面板是打开的
     if (!layoutState.showCanvas) {
-      onLayoutChange(prev => ({ ...prev, showCanvas: true }));
+      onLayoutChange({ ...layoutState, showCanvas: true });
     }
   };
 
