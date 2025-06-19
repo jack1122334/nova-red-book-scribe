@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
 
@@ -360,5 +359,78 @@ export const userBackgroundCardsApi = {
       throw new Error(`删除背景卡片失败: ${error.message}`);
     }
     console.log('API: User background card deleted successfully');
+  }
+};
+
+export const bluechatApi = {
+  searchCanvas: async (
+    query: string,
+    projectId: string,
+    selectedIds: string[] = [],
+    onEvent: (event: any) => void
+  ) => {
+    console.log('API: Starting Bluechat canvas search');
+    
+    const stage = selectedIds.length > 0 ? 'STAGE_2' : 'STAGE_1';
+    
+    const response = await fetch(`https://evpczvwygelrvxzfdcgv.supabase.co/functions/v1/chat-bluechat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2cGN6dnd5Z2VscnZ4emZkY2d2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk4OTU3ODUsImV4cCI6MjA2NTQ3MTc4NX0.y7uP6NVj48UAKnMWcB_5LltTVCVFuSeo7xmrCEHlp1I`,
+      },
+      body: JSON.stringify({
+        stage,
+        query: query.trim(),
+        user_id: 'user_123', // TODO: 使用真实的用户ID
+        session_id: projectId,
+        limit: 3,
+        ids: selectedIds,
+        count: 6
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API: Bluechat request failed:', response.status, errorText);
+      throw new Error(`搜索失败: ${response.status} - ${errorText}`);
+    }
+
+    if (!response.body) {
+      throw new Error('没有响应流');
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          console.log('API: Bluechat stream reading completed');
+          break;
+        }
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const eventData = JSON.parse(line.slice(6));
+              console.log('API: Received Bluechat event:', eventData);
+              onEvent(eventData);
+            } catch (parseError) {
+              console.warn('API: Failed to parse Bluechat event:', line, parseError);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('API: Error reading Bluechat stream:', error);
+      throw error;
+    } finally {
+      reader.releaseLock();
+    }
   }
 };

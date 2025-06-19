@@ -63,60 +63,65 @@ export interface BluechatStateResponse {
 }
 
 export class BluechatApi {
-  private baseUrl = 'http://172.22.45.74:8000/api/v1';
-
   async *streamChat(request: BluechatRequest): AsyncGenerator<BluechatKeywordsResponse | BluechatCardsResponse | BluechatStateResponse> {
-    const response = await fetch(`${this.baseUrl}/bluechat`, {
+    console.log('BluechatApi: Starting stream request to chat-bluechat function');
+    
+    const response = await fetch(`https://evpczvwygelrvxzfdcgv.supabase.co/functions/v1/chat-bluechat`, {
       method: 'POST',
       headers: {
-        'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2cGN6dnd5Z2VscnZ4emZkY2d2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk4OTU3ODUsImV4cCI6MjA2NTQ3MTc4NX0.y7uP6NVj48UAKnMWcB_5LltTVCVFuSeo7xmrCEHlp1I`,
       },
       body: JSON.stringify(request),
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorText = await response.text();
+      console.error('BluechatApi: Stream request failed:', response.status, errorText);
+      throw new Error(`发送请求失败: ${response.status} - ${errorText}`);
     }
 
-    const reader = response.body?.getReader();
-    if (!reader) {
-      throw new Error('Failed to get response reader');
+    if (!response.body) {
+      throw new Error('没有响应流');
     }
 
+    const reader = response.body.getReader();
     const decoder = new TextDecoder();
-    let buffer = '';
 
     try {
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) {
+          console.log('BluechatApi: Stream reading completed');
+          break;
+        }
 
-        buffer += decoder.decode(value, { stream: true });
-        
-        // Process complete lines
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || ''; // Keep incomplete line in buffer
-        
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+
         for (const line of lines) {
           if (line.startsWith('data: ')) {
-            const dataStr = line.slice(6).trim();
-            
-            if (dataStr === '[DONE]') {
-              return;
-            }
-            
-            if (dataStr && dataStr !== '') {
-              try {
-                const data = JSON.parse(dataStr);
-                yield data;
-              } catch (error) {
-                console.warn('Failed to parse JSON:', dataStr, error);
+            try {
+              const dataStr = line.slice(6).trim();
+              
+              if (dataStr === '[DONE]') {
+                return;
               }
+              
+              if (dataStr && dataStr !== '') {
+                const data = JSON.parse(dataStr);
+                console.log('BluechatApi: Received event:', data);
+                yield data;
+              }
+            } catch (parseError) {
+              console.warn('BluechatApi: Failed to parse event:', line, parseError);
             }
           }
         }
       }
+    } catch (error) {
+      console.error('BluechatApi: Error reading stream:', error);
+      throw error;
     } finally {
       reader.releaseLock();
     }
