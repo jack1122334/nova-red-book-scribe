@@ -6,6 +6,7 @@ import { WorkbenchHeader } from "@/components/WorkbenchHeader";
 import { WorkbenchContent } from "@/components/WorkbenchContent";
 import { useProjectData } from "@/hooks/useProjectData";
 import { useProjectHandlers } from "@/hooks/useProjectHandlers";
+import { useProjectStore } from "@/stores/projectStore";
 
 interface ProjectWorkbenchProps {
   project: Project | null;
@@ -28,8 +29,12 @@ export const ProjectWorkbench = ({
   const chatAreaRef = useRef<any>(null);
   const canvasAreaRef = useRef<any>(null);
   const [canvasReferences, setCanvasReferences] = useState<CanvasItem[]>([]);
+  const { currentProject } = useProjectStore();
   
-  const { hasCanvasData, hasDraftData, setHasDraftData } = useProjectData(project?.id);
+  // 使用传入的 project 或者从状态管理获取的 currentProject
+  const activeProject = project || currentProject;
+  
+  const { hasCanvasData, hasDraftData, setHasDraftData } = useProjectData(activeProject?.id);
   
   const [layoutState, setLayoutState] = useState<LayoutState>({
     showCanvas: true,
@@ -65,19 +70,19 @@ export const ProjectWorkbench = ({
     setCanvasReferences
   });
 
-  if (!project) return null;
+  if (!activeProject) return null;
 
   return (
     <div className="h-screen flex flex-col bg-white">
       <WorkbenchHeader 
-        project={project}
+        project={activeProject}
         layoutState={layoutState}
         onBack={onBack}
         onLayoutChange={setLayoutState}
       />
 
       <WorkbenchContent 
-        project={project}
+        project={activeProject}
         layoutState={layoutState}
         canvasReferences={canvasReferences}
         initialMessage={initialMessage}
