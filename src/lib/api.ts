@@ -252,6 +252,33 @@ export const chatApi = {
     return data || [];
   },
 
+  saveMessage: async (projectId: string, message: { 
+    role: 'user' | 'assistant' | 'system'; 
+    content: string; 
+    llm_raw_output?: any;
+  }) => {
+    console.log('API: Saving message:', { projectId, role: message.role, contentLength: message.content.length });
+    
+    const { data, error } = await supabase
+      .from('chat_messages')
+      .insert({
+        project_id: projectId,
+        role: message.role,
+        content: message.content,
+        llm_raw_output: message.llm_raw_output || null
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('API: Error saving message:', error);
+      throw new Error(`保存消息失败: ${error.message}`);
+    }
+    
+    console.log('API: Message saved successfully:', data.id);
+    return data;
+  },
+
   sendMessageStream: async (
     projectId: string, 
     content: string, 
