@@ -1,8 +1,10 @@
-import React, { useState, useImperativeHandle, forwardRef } from 'react';
+
+import React, { useState, useImperativeHandle, forwardRef, useEffect } from 'react';
 import { Grid3X3 } from 'lucide-react';
 import { CanvasGrid } from './CanvasArea/CanvasGrid';
 import { InsightsList } from './CanvasArea/InsightsList';
 import { EmptyState } from './CanvasArea/EmptyState';
+import { canvasItemsApi, insightsApi } from '@/lib/api';
 
 export interface CanvasItem {
   id: string;
@@ -28,6 +30,7 @@ export interface CanvasItem {
 }
 
 interface CanvasAreaProps {
+  projectId?: string;
   onItemSelect: (item: CanvasItem) => void;
   onItemDisable: (itemId: string) => void;
   onCanvasDataReceived?: (data: any) => void;
@@ -39,6 +42,7 @@ export interface CanvasAreaRef {
 }
 
 export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({ 
+  projectId,
   onItemSelect, 
   onItemDisable,
   onCanvasDataReceived 
@@ -48,6 +52,64 @@ export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
   const [selectedCanvasItems, setSelectedCanvasItems] = useState<Set<string>>(new Set());
   const [selectedInsights, setSelectedInsights] = useState<Set<string>>(new Set());
   const [keywords, setKeywords] = useState<string[]>([]);
+
+  // Load existing data from database on mount
+  useEffect(() => {
+    const loadExistingData = async () => {
+      if (!projectId) return;
+
+      try {
+        // Load canvas items
+        const canvasData = await canvasItemsApi.list(projectId);
+        const canvasItemsConverted = canvasData.map((item) => ({
+          id: item.external_id,
+          type: 'canvas' as const,
+          title: item.title,
+          content: item.content || '',
+          isSelected: false,
+          isDisabled: false,
+          keyword: item.keyword || undefined,
+          author: item.author || undefined,
+          like_count: item.like_count || undefined,
+          collect_count: item.collect_count || undefined,
+          comment_count: item.comment_count || undefined,
+          cover_url: item.cover_url || undefined,
+          url: item.url || undefined
+        }));
+        
+        if (canvasItemsConverted.length > 0) {
+          setCanvasItems(canvasItemsConverted);
+          // Extract keywords from canvas items
+          const uniqueKeywords = [...new Set(canvasItemsConverted
+            .map(item => item.keyword)
+            .filter(Boolean))];
+          setKeywords(uniqueKeywords);
+        }
+
+        // Load insights
+        const insightsData = await insightsApi.list(projectId);
+        const insightsConverted = insightsData.map((item) => ({
+          id: item.external_id,
+          type: 'insight' as const,
+          title: '',
+          content: item.content,
+          isSelected: false,
+          isDisabled: false
+        }));
+        
+        if (insightsConverted.length > 0) {
+          setInsights(insightsConverted);
+        }
+
+        console.log('Loaded existing canvas data:', canvasItemsConverted.length, 'items');
+        console.log('Loaded existing insights:', insightsConverted.length, 'items');
+      } catch (error) {
+        console.error('Failed to load existing canvas/insights data:', error);
+      }
+    };
+
+    loadExistingData();
+  }, [projectId]);
 
   useImperativeHandle(ref, () => ({
     deselectItem: (itemId: string) => {
@@ -75,7 +137,7 @@ export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
     processCanvasData: (data: any) => {
       console.log('Processing canvas data:', data);
       
-      if (data.keywords) {
+      if (data.type === 'canvas_keywords' && data.keywords) {
         console.log('Setting keywords:', data.keywords);
         setKeywords(data.keywords);
         
@@ -99,7 +161,7 @@ export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
         setCanvasItems(placeholders);
       }
       
-      if (data.keyword && data.cards) {
+      if (data.type === 'canvas_cards' && data.keyword && data.cards) {
         console.log('Updating cards for keyword:', data.keyword, data.cards);
         
         // 标准化关键词匹配逻辑
@@ -176,6 +238,20 @@ export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
           })));
           return newItems;
         });
+      }
+      
+      if (data.type === 'insights_data' && data.insights) {
+        console.log('Processing insights data:', data.insights);
+        const newInsights = data.insights.map((insight: any) => ({
+          id: insight.id,
+          type: 'insight' as const,
+          title: '',
+          content: insight.text,
+          isSelected: false,
+          isDisabled: false
+        }));
+        
+        setInsights(prev => [...prev, ...newInsights]);
       }
       
       if (data.type === 'state_info') {

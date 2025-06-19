@@ -137,9 +137,11 @@ serve(async (req) => {
         let fullAiContent = '';
         let newConversationId = conversationId;
         let associatedCardId = null;
-        let allEvents = []; // Store all events for debugging
+        let allEvents = [];
         let thoughts = [];
         let toolCalls = [];
+        let canvasData = [];
+        let insightsData = [];
 
         try {
           while (true) {
@@ -212,6 +214,8 @@ serve(async (req) => {
                         allEvents,
                         thoughts,
                         toolCalls,
+                        canvasData,
+                        insightsData,
                         fullResponse: {
                           content: fullAiContent,
                           metadata: {
@@ -225,6 +229,56 @@ serve(async (req) => {
                     );
                     break;
                   }
+                  
+                  // Handle Canvas and Insights data
+                  if (data.keywords) {
+                    const canvasEventData = {
+                      type: 'canvas_keywords',
+                      keywords: data.keywords
+                    };
+                    const canvasEvent = `data: ${JSON.stringify(canvasEventData)}\n\n`;
+                    controller.enqueue(new TextEncoder().encode(canvasEvent));
+                  }
+                  
+                  if (data.keyword && data.cards) {
+                    canvasData.push(...data.cards.map((card: any) => ({
+                      external_id: card.id,
+                      project_id: project_id,
+                      title: card.title,
+                      content: card.content || '',
+                      keyword: data.keyword,
+                      author: card.author,
+                      like_count: card.like_count || 0,
+                      collect_count: card.collect_count || 0,
+                      comment_count: card.comment_count || 0,
+                      cover_url: card.cover_url,
+                      url: card.url
+                    })));
+                    
+                    const canvasEventData = {
+                      type: 'canvas_cards',
+                      keyword: data.keyword,
+                      cards: data.cards
+                    };
+                    const canvasEvent = `data: ${JSON.stringify(canvasEventData)}\n\n`;
+                    controller.enqueue(new TextEncoder().encode(canvasEvent));
+                  }
+                  
+                  if (data.insights && Array.isArray(data.insights)) {
+                    insightsData.push(...data.insights.map((insight: any) => ({
+                      external_id: insight.id,
+                      project_id: project_id,
+                      content: insight.text
+                    })));
+                    
+                    const insightsEventData = {
+                      type: 'insights_data',
+                      insights: data.insights
+                    };
+                    const insightsEvent = `data: ${JSON.stringify(insightsEventData)}\n\n`;
+                    controller.enqueue(new TextEncoder().encode(insightsEvent));
+                  }
+                  
                 } catch (parseError) {
                   console.warn('Failed to parse SSE data:', line);
                   console.warn('Parse error:', parseError);
@@ -280,7 +334,8 @@ async function processFinalContent(
 
   console.log('=== PROCESSING FINAL CONTENT ===');
   console.log('Content length:', fullAiContent.length);
-  console.log('Debug info:', JSON.stringify(debugInfo.metadata, null, 2));
+  console.log('Canvas data count:', debugInfo.canvasData.length);
+  console.log('Insights data count:', debugInfo.insightsData.length);
 
   // Update conversation_id if new
   if (newConversationId && newConversationId !== conversationId) {
@@ -288,6 +343,42 @@ async function processFinalContent(
       .from('projects')
       .update({ conversation_id: newConversationId })
       .eq('id', projectId);
+  }
+
+  // Store Canvas data
+  if (debugInfo.canvasData.length > 0) {
+    console.log('Storing canvas data:', debugInfo.canvasData.length, 'items');
+    try {
+      const { error: canvasError } = await supabase
+        .from('canvas_items')
+        .insert(debugInfo.canvasData);
+      
+      if (canvasError) {
+        console.error('Error storing canvas data:', canvasError);
+      } else {
+        console.log('Canvas data stored successfully');
+      }
+    } catch (error) {
+      console.error('Exception storing canvas data:', error);
+    }
+  }
+
+  // Store Insights data
+  if (debugInfo.insightsData.length > 0) {
+    console.log('Storing insights data:', debugInfo.insightsData.length, 'items');
+    try {
+      const { error: insightsError } = await supabase
+        .from('insights')
+        .insert(debugInfo.insightsData);
+      
+      if (insightsError) {
+        console.error('Error storing insights data:', insightsError);
+      } else {
+        console.log('Insights data stored successfully');
+      }
+    } catch (error) {
+      console.error('Exception storing insights data:', error);
+    }
   }
 
   // Parse XML tags and execute database operations
@@ -378,7 +469,9 @@ async function processFinalContent(
           thoughts_count: debugInfo.thoughts.length,
           tool_calls_count: debugInfo.toolCalls.length,
           conversation_id: newConversationId,
-          cards_created: associatedCardId ? 1 : 0
+          cards_created: associatedCardId ? 1 : 0,
+          canvas_items_stored: debugInfo.canvasData.length,
+          insights_stored: debugInfo.insightsData.length
         },
         complete_event_log: debugInfo.allEvents,
         thoughts_log: debugInfo.thoughts,
