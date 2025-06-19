@@ -44,7 +44,7 @@ export const Navbar = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                    <Avatar className="h-10 w-10">
+                    <Avatar className="h-5 w-5">
                       <AvatarFallback className="bg-stone-100 text-stone-600">
                         {getUserInitials()}
                       </AvatarFallback>
