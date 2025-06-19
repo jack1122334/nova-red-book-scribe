@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Send, Bot, User, Link, Edit3, Check, X, Info, Grid3X3, Lightbulb } from "lucide-react";
+import { Send, Bot, User, Link, Edit3, Check, X, Info } from "lucide-react";
 import { chatApi, bluechatApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { MessageDetailsDialog } from "@/components/MessageDetailsDialog";
@@ -27,7 +28,6 @@ interface ChatMessage {
   content: string;
   llm_raw_output?: any;
   created_at: string;
-  referenced_items?: CanvasItem[];
 }
 
 interface DifyToolCall {
@@ -139,8 +139,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
         role: msg.role as 'user' | 'assistant' | 'system' || 'user',
         content: msg.content,
         llm_raw_output: msg.llm_raw_output,
-        created_at: msg.created_at,
-        referenced_items: msg.llm_raw_output?.referenced_items || []
+        created_at: msg.created_at
       }));
       setMessages(formattedMessages);
     } catch (error) {
@@ -206,16 +205,11 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
     setInputValue("");
     setIsLoading(true);
 
-    // 收集所有引用的IDs和内容
-    const allReferencedItems = [...canvasReferences];
-    const referencedIds = allReferencedItems.map(ref => ref.id);
-
     const tempUserMessage: StreamingMessage = {
       id: 'temp-user-' + Date.now(),
       role: 'user',
       content: userMessage,
-      created_at: new Date().toISOString(),
-      referenced_items: allReferencedItems
+      created_at: new Date().toISOString()
     };
     setMessages(prev => [...prev, tempUserMessage]);
 
@@ -230,37 +224,25 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
     setMessages(prev => [...prev, tempAssistantMessage]);
 
     try {
-      console.log('ChatArea: Sending message to bluechat with references:', referencedIds);
-
-      // 保存用户消息到数据库，包含引用信息
-      await chatApi.saveMessage(projectId, {
-        role: 'user',
-        content: userMessage,
-        llm_raw_output: {
-          referenced_items: allReferencedItems,
-          referenced_ids: referencedIds
-        }
-      });
+      console.log('ChatArea: Sending message to bluechat');
 
       // Determine stage based on references
       const stage = canvasReferences.length > 0 ? 'STAGE_2' : 'STAGE_1';
-
-      let assistantContent = '';
+      const selectedIds = canvasReferences.map(ref => ref.id);
 
       await bluechatApi.sendMessageStream(
         projectId,
         userMessage,
         stage,
-        referencedIds,
+        selectedIds,
         (data: any) => {
           console.log('ChatArea: Received bluechat data:', data);
           
           // Handle agent_message events
           if (data.event === 'agent_message' && data.answer) {
-            assistantContent += data.answer;
             setMessages(prev => prev.map(msg => 
               msg.id === tempAssistantMessage.id 
-                ? { ...msg, content: assistantContent }
+                ? { ...msg, content: msg.content + data.answer }
                 : msg
             ));
           }
@@ -271,15 +253,6 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
           }
         }
       );
-
-      // 保存AI回复到数据库
-      if (assistantContent) {
-        await chatApi.saveMessage(projectId, {
-          role: 'assistant',
-          content: assistantContent,
-          llm_raw_output: null
-        });
-      }
 
       // Mark streaming as complete
       setMessages(prev => prev.map(msg => 
@@ -456,62 +429,6 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
     );
   };
 
-  const renderUserMessageWithReferences = (message: StreamingMessage) => {
-    return (
-      <div className="flex-1 flex justify-end min-w-0">
-        <div className="max-w-md space-y-3">
-          {/* 引用内容 */}
-          {message.referenced_items && message.referenced_items.length > 0 && (
-            <div className="space-y-2">
-              <div className="text-xs text-black/60 text-right">引用内容:</div>
-              <div className="grid gap-2">
-                {message.referenced_items.map((item, index) => (
-                  <Card key={index} className="bg-black/5 border border-black/10">
-                    <CardContent className="p-2">
-                      <div className="flex items-start gap-2">
-                        <div className="mt-0.5 flex-shrink-0">
-                          {item.type === 'canvas' ? (
-                            <Grid3X3 className="w-3 h-3 text-black/60" />
-                          ) : (
-                            <Lightbulb className="w-3 h-3 text-black/60" />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-xs font-medium text-black font-serif mb-1 truncate">
-                            {item.title}
-                          </h4>
-                          {item.content && (
-                            <p className="text-xs text-black/60 leading-relaxed line-clamp-2">
-                              {item.content.length > 30 
-                                ? `${item.content.substring(0, 30)}...` 
-                                : item.content
-                              }
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {/* 用户消息 */}
-          <div 
-            onClick={() => handleMessageClick(message)} 
-            className="whitespace-pre-wrap text-white leading-relaxed p-4 rounded-2xl transition-colors cursor-pointer group relative bg-black hover:bg-black/80"
-          >
-            {message.content}
-            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <Info className="w-4 h-4 text-white/60" />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="h-full flex flex-col bg-white">
       {/* Header */}
@@ -630,7 +547,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
                     <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center flex-shrink-0">
                         <Bot className="w-4 h-4 text-white" />
                     </div>
-                    Nova
+                    | Nova
                   </div>
                     
                     <div className="flex-1 min-w-0 max-w-4xl">
@@ -643,7 +560,19 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
                     </div>
                   </>
                 ) : (
-                  renderUserMessageWithReferences(message)
+                  <>
+                    <div className="flex-1 flex justify-end min-w-0">
+                      <div 
+                        onClick={() => handleMessageClick(message)} 
+                        className="whitespace-pre-wrap text-white leading-relaxed p-4 rounded-2xl transition-colors cursor-pointer group relative bg-black hover:bg-black/80 max-w-md"
+                      >
+                        {message.content}
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Info className="w-4 h-4 text-white/60" />
+                        </div>
+                      </div>
+                    </div>
+                  </>
                 )}
               </div>
             ))}
