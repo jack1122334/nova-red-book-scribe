@@ -500,7 +500,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
 
       {/* References Section */}
       {references.length > 0 && (
-        <div className="p-4 border-b border-black/20 bg-white">
+        <div className="border-t border-black/20 p-4 bg-white">
           <h3 className="text-sm font-medium text-black mb-3 flex items-center gap-2">
             <Link className="w-4 h-4" />
             引用内容 ({references.length})
@@ -592,13 +592,13 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
         ) : (
           <div className="p-4 space-y-6">
             {messages.map(message => (
-              <div key={message.id} className="flex gap-4">
+              <div key={message.id} className={`flex gap-4 ${message.role === 'user' ? 'justify-end' : ''}`}>
                 {message.role === 'assistant' ? (
                   <>
                     <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center flex-shrink-0">
                       <Bot className="w-4 h-4 text-white" />
                     </div>
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 max-w-4xl">
                       <div className="cursor-pointer group relative" onClick={() => handleMessageClick(message)}>
                         {renderStreamingContent(message)}
                         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -609,19 +609,19 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
                   </>
                 ) : (
                   <>
-                    <div className="w-8 h-8 rounded-full bg-black/20 flex items-center justify-center flex-shrink-0">
-                      <User className="w-4 h-4 text-black/60" />
-                    </div>
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 flex justify-end min-w-0 max-w-xl">
                       <div 
                         onClick={() => handleMessageClick(message)} 
-                        className="whitespace-pre-wrap text-black leading-relaxed p-3 rounded-xl transition-colors border border-transparent hover:border-black/20 cursor-pointer group relative bg-gray-100"
+                        className="whitespace-pre-wrap text-white leading-relaxed p-4 rounded-2xl transition-colors cursor-pointer group relative bg-black hover:bg-black/80 max-w-md"
                       >
                         {message.content}
                         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Info className="w-4 h-4 text-black/40" />
+                          <Info className="w-4 h-4 text-white/60" />
                         </div>
                       </div>
+                    </div>
+                    <div className="w-8 h-8 rounded-full bg-black/20 flex items-center justify-center flex-shrink-0">
+                      <User className="w-4 h-4 text-black/60" />
                     </div>
                   </>
                 )}

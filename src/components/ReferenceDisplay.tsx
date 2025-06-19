@@ -19,38 +19,38 @@ export const ReferenceDisplay: React.FC<ReferenceDisplayProps> = ({
   }
 
   return (
-    <div className="p-4 border-b border-black/10 bg-gray-50">
+    <div className="border-t border-black/20 p-4 bg-white">
       <h3 className="text-sm font-medium text-black mb-3 font-serif">
         选中的引用内容 ({references.length})
       </h3>
       
-      <div className="space-y-2">
+      <div className="flex flex-wrap gap-2">
         {references.map((ref) => (
-          <Card key={ref.id} className="bg-white">
+          <Card key={ref.id} className="bg-gray-50 border border-black/10 max-w-xs">
             <CardContent className="p-3">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-2 flex-1">
-                  <div className="mt-0.5">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-start gap-2 flex-1 min-w-0">
+                  <div className="mt-0.5 flex-shrink-0">
                     {ref.type === 'canvas' ? (
-                      <Grid3X3 className="w-4 h-4 text-black/60" />
+                      <Grid3X3 className="w-3 h-3 text-black/60" />
                     ) : (
-                      <Lightbulb className="w-4 h-4 text-black/60" />
+                      <Lightbulb className="w-3 h-3 text-black/60" />
                     )}
                   </div>
                   
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-sm font-medium text-black font-serif mb-1 truncate">
+                    <h4 className="text-xs font-medium text-black font-serif mb-1 truncate">
                       {ref.title}
                     </h4>
                     {ref.content && (
-                      <p className="text-xs text-black/60 leading-relaxed">
-                        {ref.content.length > 60 
-                          ? `${ref.content.substring(0, 60)}...` 
+                      <p className="text-xs text-black/60 leading-relaxed line-clamp-2">
+                        {ref.content.length > 40 
+                          ? `${ref.content.substring(0, 40)}...` 
                           : ref.content
                         }
                       </p>
                     )}
-                    <span className="inline-block mt-1 text-xs text-black/40 bg-black/10 px-2 py-1 rounded">
+                    <span className="inline-block mt-1 text-xs text-black/40 bg-black/10 px-1.5 py-0.5 rounded text-center">
                       {ref.type === 'canvas' ? 'Canvas' : 'Insight'}
                     </span>
                   </div>
@@ -59,7 +59,7 @@ export const ReferenceDisplay: React.FC<ReferenceDisplayProps> = ({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-6 w-6 p-0 text-black/40 hover:text-black flex-shrink-0"
+                  className="h-4 w-4 p-0 text-black/40 hover:text-black flex-shrink-0"
                   onClick={() => onRemoveReference(ref.id)}
                 >
                   <X className="w-3 h-3" />
