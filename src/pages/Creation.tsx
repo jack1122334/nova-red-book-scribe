@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { FloatingSidebar } from "@/components/FloatingSidebar";
@@ -81,7 +80,7 @@ const Creation = () => {
     <div className="min-h-screen bg-white rounded-none">
       <FloatingSidebar currentPage="creation" />
       
-      <div className="pl-20">
+      <div className={currentView === "projects" ? "pl-20" : ""}>
         {currentView === "projects" ? (
           <ProjectsManager onProjectSelect={handleProjectSelect} />
         ) : (

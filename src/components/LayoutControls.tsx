@@ -20,10 +20,18 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
   onLayoutChange 
 }) => {
   const togglePanel = (panel: keyof LayoutState) => {
-    onLayoutChange({
+    const newState = {
       ...layoutState,
       [panel]: !layoutState[panel]
-    });
+    };
+    
+    // 至少保留一个布局区域
+    const visiblePanels = Object.values(newState).filter(Boolean).length;
+    if (visiblePanels === 0) {
+      return; // 不允许全部收起
+    }
+    
+    onLayoutChange(newState);
   };
 
   const layouts = [
@@ -36,13 +44,13 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
     {
       key: 'showWriting' as keyof LayoutState,
       icon: FileText,
-      label: '创作',
+      label: 'Draft',
       active: layoutState.showWriting
     },
     {
       key: 'showChat' as keyof LayoutState,
       icon: MessageSquare,
-      label: '对话',
+      label: 'Agent',
       active: layoutState.showChat
     }
   ];

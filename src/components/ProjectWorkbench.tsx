@@ -1,7 +1,6 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Feather, Sidebar, FileText, MessageSquare, ChevronLeft, ChevronRight, Grid3X3 } from "lucide-react";
+import { ArrowLeft, Feather, Collapse } from "lucide-react";
 import { Project } from "@/pages/Creation";
 import { WritingArea } from "@/components/WritingArea";
 import { ChatArea } from "@/components/ChatArea";
@@ -30,12 +29,32 @@ export const ProjectWorkbench = ({
 }: ProjectWorkbenchProps) => {
   const writingAreaRef = useRef<any>(null);
   const chatAreaRef = useRef<any>(null);
+  const canvasAreaRef = useRef<any>(null);
   const [canvasReferences, setCanvasReferences] = useState<CanvasItem[]>([]);
+  const [hasCanvasData, setHasCanvasData] = useState(true); // TODO: 根据实际数据判断
+  const [hasDraftData, setHasDraftData] = useState(false);
   const [layoutState, setLayoutState] = useState<LayoutState>({
     showCanvas: true,
     showWriting: true,
     showChat: true
   });
+
+  // 根据数据状态设置默认布局
+  useEffect(() => {
+    const defaultLayout = {
+      showCanvas: hasCanvasData,
+      showWriting: hasDraftData,
+      showChat: true // Agent 默认显示
+    };
+    
+    // 至少保留一个区域
+    const visibleCount = Object.values(defaultLayout).filter(Boolean).length;
+    if (visibleCount === 0) {
+      defaultLayout.showChat = true;
+    }
+    
+    setLayoutState(defaultLayout);
+  }, [hasCanvasData, hasDraftData]);
 
   // Add debugging for project data
   console.log('ProjectWorkbench - project:', project);
@@ -47,6 +66,12 @@ export const ProjectWorkbench = ({
     // 通知WritingArea添加新卡片
     if (writingAreaRef.current?.addCardFromAgent) {
       await writingAreaRef.current.addCardFromAgent(title, content);
+    }
+    
+    // 显示Draft区域
+    if (!layoutState.showWriting) {
+      setLayoutState(prev => ({ ...prev, showWriting: true }));
+      setHasDraftData(true);
     }
   };
 
@@ -115,13 +140,25 @@ export const ProjectWorkbench = ({
 
   const handleRemoveCanvasReference = (itemId: string) => {
     setCanvasReferences(prev => prev.filter(ref => ref.id !== itemId));
+    // 通知CanvasArea取消选中状态
+    if (canvasAreaRef.current?.deselectItem) {
+      canvasAreaRef.current.deselectItem(itemId);
+    }
   };
 
   const togglePanel = (panel: keyof LayoutState) => {
-    setLayoutState(prev => ({
-      ...prev,
-      [panel]: !prev[panel]
-    }));
+    const newState = {
+      ...layoutState,
+      [panel]: !layoutState[panel]
+    };
+    
+    // 至少保留一个布局区域
+    const visiblePanels = Object.values(newState).filter(Boolean).length;
+    if (visiblePanels === 0) {
+      return;
+    }
+    
+    setLayoutState(newState);
   };
 
   const getVisiblePanelsCount = () => {
@@ -137,7 +174,7 @@ export const ProjectWorkbench = ({
 
   return (
     <div className="h-screen flex flex-col bg-white">
-      {/* Simplified Header */}
+      {/* Header */}
       <header className="px-8 py-4 border-b border-black/10 bg-white">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-6">
@@ -153,7 +190,6 @@ export const ProjectWorkbench = ({
               <h1 className="text-xl font-serif font-semibold text-black tracking-tight">
                 {project.title}
               </h1>
-              {/* User Background Icon with debugging */}
               <div>
                 <UserBackgroundIcon userBackground={project.user_background} />
               </div>
@@ -184,9 +220,10 @@ export const ProjectWorkbench = ({
                     onClick={() => togglePanel('showCanvas')}
                     className="absolute top-2 right-2 z-10 h-6 w-6 p-0 text-black/40 hover:text-black"
                   >
-                    <ChevronLeft className="w-4 h-4" />
+                    <Collapse className="w-4 h-4" />
                   </Button>
                   <CanvasArea 
+                    ref={canvasAreaRef}
                     onItemSelect={handleCanvasItemSelect}
                     onItemDisable={handleCanvasItemDisable}
                   />
@@ -196,7 +233,7 @@ export const ProjectWorkbench = ({
           </AnimatePresence>
           
           {layoutState.showCanvas && layoutState.showWriting && (
-            <ResizableHandle className="w-0 hover:w-1 hover:bg-black/20 transition-all duration-200" />
+            <ResizableHandle className="w-0 hover:w-1 hover:bg-black/20 transition-all duration-200 bg-transparent" />
           )}
           
           {/* Writing Area - Middle */}
@@ -216,7 +253,7 @@ export const ProjectWorkbench = ({
                     onClick={() => togglePanel('showWriting')}
                     className="absolute top-2 right-2 z-10 h-6 w-6 p-0 text-black/40 hover:text-black"
                   >
-                    <ChevronLeft className="w-4 h-4" />
+                    <Collapse className="w-4 h-4" />
                   </Button>
                   <WritingArea 
                     ref={writingAreaRef} 
@@ -232,7 +269,7 @@ export const ProjectWorkbench = ({
           </AnimatePresence>
           
           {layoutState.showWriting && layoutState.showChat && (
-            <ResizableHandle className="w-0 hover:w-1 hover:bg-black/20 transition-all duration-200" />
+            <ResizableHandle className="w-0 hover:w-1 hover:bg-black/20 transition-all duration-200 bg-transparent" />
           )}
           
           {/* Chat Area - Right */}
@@ -252,7 +289,7 @@ export const ProjectWorkbench = ({
                     onClick={() => togglePanel('showChat')}
                     className="absolute top-2 right-2 z-10 h-6 w-6 p-0 text-black/40 hover:text-black"
                   >
-                    <ChevronRight className="w-4 h-4" />
+                    <Collapse className="w-4 h-4" />
                   </Button>
                   <ChatArea 
                     ref={chatAreaRef} 

@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useImperativeHandle, forwardRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -17,6 +16,10 @@ export interface CanvasItem {
 interface CanvasAreaProps {
   onItemSelect: (item: CanvasItem) => void;
   onItemDisable: (itemId: string) => void;
+}
+
+export interface CanvasAreaRef {
+  deselectItem: (itemId: string) => void;
 }
 
 // Mock data for canvas grid (9 items, expandable to 25)
@@ -65,11 +68,38 @@ const mockInsights: CanvasItem[] = [
   },
 ];
 
-export const CanvasArea: React.FC<CanvasAreaProps> = ({ onItemSelect, onItemDisable }) => {
+export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({ onItemSelect, onItemDisable }, ref) => {
   const [canvasItems, setCanvasItems] = useState<CanvasItem[]>(mockCanvasItems);
   const [insights, setInsights] = useState<CanvasItem[]>(mockInsights);
   const [selectedCanvasItems, setSelectedCanvasItems] = useState<Set<string>>(new Set());
   const [selectedInsights, setSelectedInsights] = useState<Set<string>>(new Set());
+
+  useImperativeHandle(ref, () => ({
+    deselectItem: (itemId: string) => {
+      // 取消Canvas项目选中
+      setCanvasItems(prev => prev.map(item => 
+        item.id === itemId ? { ...item, isSelected: false } : item
+      ));
+      
+      // 取消Insights项目选中
+      setInsights(prev => prev.map(item => 
+        item.id === itemId ? { ...item, isSelected: false } : item
+      ));
+      
+      // 从选中集合中移除
+      setSelectedCanvasItems(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(itemId);
+        return newSet;
+      });
+      
+      setSelectedInsights(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(itemId);
+        return newSet;
+      });
+    }
+  }));
 
   const handleCanvasCheckboxChange = (itemId: string, checked: boolean) => {
     const newSelected = new Set(selectedCanvasItems);
@@ -92,7 +122,6 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({ onItemSelect, onItemDisa
   };
 
   const handleCanvasBatchSelect = () => {
-    // 批量选中操作
     selectedCanvasItems.forEach(itemId => {
       const item = canvasItems.find(i => i.id === itemId);
       if (item && !item.isDisabled) {
@@ -107,7 +136,6 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({ onItemSelect, onItemDisa
   };
 
   const handleCanvasBatchDisable = () => {
-    // 批量置灰操作
     selectedCanvasItems.forEach(itemId => {
       onItemDisable(itemId);
       setCanvasItems(prev => prev.map(i => 
@@ -118,7 +146,6 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({ onItemSelect, onItemDisa
   };
 
   const handleInsightBatchSelect = () => {
-    // 批量选中操作
     selectedInsights.forEach(itemId => {
       const item = insights.find(i => i.id === itemId);
       if (item && !item.isDisabled) {
@@ -133,7 +160,6 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({ onItemSelect, onItemDisa
   };
 
   const handleInsightBatchDisable = () => {
-    // 批量置灰操作
     selectedInsights.forEach(itemId => {
       onItemDisable(itemId);
       setInsights(prev => prev.map(i => 
@@ -144,14 +170,12 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({ onItemSelect, onItemDisa
   };
 
   const handleCanvasRestore = (itemId: string) => {
-    // 恢复置灰状态
     setCanvasItems(prev => prev.map(i => 
       i.id === itemId ? { ...i, isDisabled: false } : i
     ));
   };
 
   const handleInsightRestore = (itemId: string) => {
-    // 恢复置灰状态
     setInsights(prev => prev.map(i => 
       i.id === itemId ? { ...i, isDisabled: false } : i
     ));
@@ -317,4 +341,6 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({ onItemSelect, onItemDisa
       </div>
     </div>
   );
-};
+});
+
+CanvasArea.displayName = "CanvasArea";
