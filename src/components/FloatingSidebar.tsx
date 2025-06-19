@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 interface FloatingSidebarProps {
-  currentPage: "home" | "creation";
+  currentPage: "home" | "creation" | "profile";
 }
 
 export const FloatingSidebar = ({ currentPage }: FloatingSidebarProps) => {
