@@ -60,14 +60,6 @@ export const ProjectWorkbench = ({
     setLayoutState(defaultLayout);
   }, [hasCanvasData, hasDraftData]);
 
-  // 如果有初始消息，触发Canvas搜索
-  useEffect(() => {
-    if (initialMessage && canvasAreaRef.current?.searchWithQuery) {
-      setSearchQuery(initialMessage);
-      canvasAreaRef.current.searchWithQuery(initialMessage);
-    }
-  }, [initialMessage]);
-
   const handlers = useProjectHandlers({
     writingAreaRef,
     chatAreaRef,
@@ -79,12 +71,10 @@ export const ProjectWorkbench = ({
     setCanvasReferences
   });
 
-  // 添加从Chat触发Canvas搜索的处理函数
+  // Canvas搜索现在通过ChatArea的流处理，这里不需要直接调用
   const handleCanvasSearch = (query: string) => {
+    console.log('ProjectWorkbench: Canvas search request received:', query);
     setSearchQuery(query);
-    if (canvasAreaRef.current?.searchWithQuery) {
-      canvasAreaRef.current.searchWithQuery(query);
-    }
     
     // 确保Canvas面板是打开的
     if (!layoutState.showCanvas) {

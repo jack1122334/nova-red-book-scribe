@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,6 +19,7 @@ interface ChatAreaProps {
   canvasReferences?: CanvasItem[];
   onRemoveCanvasReference?: (itemId: string) => void;
   onCanvasSearch?: (query: string) => void;
+  onCanvasDataReceived?: (data: any) => void;
 }
 
 interface ChatMessage {
@@ -80,7 +80,8 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
   onCardUpdated,
   canvasReferences = [],
   onRemoveCanvasReference,
-  onCanvasSearch
+  onCanvasSearch,
+  onCanvasDataReceived
 }, ref) => {
   const [messages, setMessages] = useState<StreamingMessage[]>([]);
   const [inputValue, setInputValue] = useState("");
@@ -153,8 +154,18 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
   };
 
   const parseXMLTags = (content: string) => {
-    const newCardRegex = /<new_xhs_card(?:\s+title="([^"]*)")?>([^]*?)<\/new_xhs_card>/g;
+    // Canvas搜索标签解析
+    const canvasSearchRegex = /<canvas_search\s+query="([^"]*)"[^>]*>/g;
     let match;
+    while ((match = canvasSearchRegex.exec(content)) !== null) {
+      const query = match[1];
+      console.log('ChatArea: Found canvas search request:', query);
+      if (onCanvasSearch) {
+        onCanvasSearch(query);
+      }
+    }
+
+    const newCardRegex = /<new_xhs_card(?:\s+title="([^"]*)")?>([^]*?)<\/new_xhs_card>/g;
     while ((match = newCardRegex.exec(content)) !== null) {
       const title = match[1] || `新卡片 ${Date.now()}`;
       const cardContent = match[2].trim();
@@ -171,6 +182,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
     }
 
     return content
+      .replace(/<canvas_search\s+query="[^"]*"[^>]*>/g, '[正在搜索Canvas内容...]')
       .replace(/<new_xhs_card(?:\s+title="[^"]*")?>[^]*?<\/new_xhs_card>/g, '[新卡片已创建]')
       .replace(/<update_xhs_card\s+card_ref_id="[^"]*">[^]*?<\/update_xhs_card>/g, '[卡片已更新]');
   };
@@ -276,6 +288,17 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
                       );
                     } else {
                       updated.toolCalls = [...existingToolCalls, toolCall];
+                    }
+
+                    // 如果工具调用是Canvas搜索，传递数据给CanvasArea
+                    if (event.tool === 'canvas_search' && event.observation && onCanvasDataReceived) {
+                      try {
+                        const canvasData = JSON.parse(event.observation);
+                        console.log('ChatArea: Forwarding canvas data to CanvasArea:', canvasData);
+                        onCanvasDataReceived(canvasData);
+                      } catch (parseError) {
+                        console.error('ChatArea: Failed to parse canvas data:', parseError);
+                      }
                     }
                   }
                   

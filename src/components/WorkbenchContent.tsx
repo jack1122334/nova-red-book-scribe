@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
@@ -57,6 +58,8 @@ export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
   onRemoveCanvasReference,
   onCanvasSearch
 }) => {
+  const [canvasData, setCanvasData] = React.useState<any>(null);
+
   const togglePanel = (panel: keyof LayoutState) => {
     const newState = {
       ...layoutState,
@@ -88,6 +91,22 @@ export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
     return canvasReferences.map(ref => ref.id);
   };
 
+  // 处理从ChatArea传来的Canvas数据
+  const handleCanvasDataReceived = (data: any) => {
+    console.log('WorkbenchContent: Received canvas data from ChatArea:', data);
+    setCanvasData(data);
+    
+    // 传递给CanvasArea
+    if (canvasAreaRef.current?.processCanvasData) {
+      canvasAreaRef.current.processCanvasData(data);
+    }
+    
+    // 确保Canvas面板是打开的
+    if (!layoutState.showCanvas) {
+      onLayoutChange(prev => ({ ...prev, showCanvas: true }));
+    }
+  };
+
   return (
     <div className="flex-1 min-h-0 pl-0 md:pl-16">
       <ResizablePanelGroup direction="horizontal" className="h-full">
@@ -115,6 +134,7 @@ export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
                   projectId={project.id}
                   searchQuery={searchQuery}
                   selectedIds={getSelectedIds()}
+                  canvasData={canvasData}
                   onItemSelect={onCanvasItemSelect}
                   onItemDisable={onCanvasItemDisable}
                 />
@@ -193,6 +213,7 @@ export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
                   canvasReferences={canvasReferences}
                   onRemoveCanvasReference={onRemoveCanvasReference}
                   onCanvasSearch={onCanvasSearch}
+                  onCanvasDataReceived={handleCanvasDataReceived}
                 />
               </motion.div>
             </ResizablePanel>

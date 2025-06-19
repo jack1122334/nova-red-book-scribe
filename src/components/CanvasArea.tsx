@@ -1,9 +1,7 @@
-
 import React, { useState, useImperativeHandle, forwardRef, useEffect } from 'react';
 import { Grid3X3 } from 'lucide-react';
 import { CanvasGrid } from './CanvasArea/CanvasGrid';
 import { InsightsList } from './CanvasArea/InsightsList';
-import { bluechatApi } from '@/lib/api';
 import { BluechatCard } from '@/lib/bluechatApi';
 
 export interface CanvasItem {
@@ -23,11 +21,12 @@ interface CanvasAreaProps {
   onItemDisable: (itemId: string) => void;
   searchQuery?: string;
   selectedIds?: string[];
+  canvasData?: any; // 从ChatArea传来的数据
 }
 
 export interface CanvasAreaRef {
   deselectItem: (itemId: string) => void;
-  searchWithQuery: (query: string) => void;
+  processCanvasData: (data: any) => void;
 }
 
 export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({ 
@@ -35,7 +34,8 @@ export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
   onItemSelect, 
   onItemDisable, 
   searchQuery,
-  selectedIds = []
+  selectedIds = [],
+  canvasData
 }, ref) => {
   const [canvasItems, setCanvasItems] = useState<CanvasItem[]>([]);
   const [insights, setInsights] = useState<CanvasItem[]>([]);
@@ -67,10 +67,82 @@ export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
         return newSet;
       });
     },
-    searchWithQuery: (query: string) => {
-      handleSearch(query);
+    processCanvasData: (data: any) => {
+      processCanvasData(data);
     }
   }));
+
+  const processCanvasData = (data: any) => {
+    console.log('CanvasArea: Processing canvas data:', data);
+    
+    if ('keywords' in data) {
+      console.log('CanvasArea: Setting keywords:', data.keywords);
+      setKeywords(data.keywords);
+      setLoadingKeywords(new Set(data.keywords));
+      
+      // 为每个关键词创建空的canvas行
+      const emptyItems: CanvasItem[] = [];
+      data.keywords.forEach((keyword: string, rowIndex: number) => {
+        for (let colIndex = 0; colIndex < 3; colIndex++) {
+          emptyItems.push({
+            id: `${keyword}_${rowIndex}_${colIndex}`,
+            type: 'canvas',
+            title: '加载中...',
+            content: '',
+            isSelected: false,
+            isDisabled: false,
+            keyword
+          });
+        }
+      });
+      setCanvasItems(emptyItems);
+    } 
+    else if ('keyword' in data && 'cards' in data) {
+      console.log('CanvasArea: Processing cards for keyword:', data.keyword);
+      setLoadingKeywords(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(data.keyword);
+        return newSet;
+      });
+
+      // 更新对应关键词的卡片
+      setCanvasItems(prev => {
+        const rowIndex = keywords.indexOf(data.keyword);
+        if (rowIndex === -1) return prev;
+
+        return prev.map((item, index) => {
+          const itemRowIndex = Math.floor(index / 3);
+          const itemColIndex = index % 3;
+          
+          if (itemRowIndex === rowIndex && itemColIndex < data.cards.length) {
+            const card = data.cards[itemColIndex];
+            return {
+              id: card.id,
+              type: 'canvas' as const,
+              title: card.title,
+              content: card.content || `${card.author} | 👍 ${card.like_count} 💾 ${card.collect_count}`,
+              isSelected: false,
+              isDisabled: false,
+              keyword: data.keyword,
+              bluechatData: card
+            };
+          }
+          return item;
+        });
+      });
+    }
+    else if ('type' in data && data.type === 'state_info') {
+      console.log('CanvasArea: Received state info:', data);
+      // 处理状态信息，可以用于更新UI状态
+    }
+  };
+
+  // 当从ChatArea传来canvas数据时处理
+  useEffect(() => {
+    if (canvasData) {
+      processCanvasData(canvasData);
+    }
+  }, [canvasData]);
 
   const handleSearch = async (query: string) => {
     if (!query.trim()) return;
