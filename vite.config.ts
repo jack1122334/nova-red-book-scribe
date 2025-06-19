@@ -15,6 +15,15 @@ export default defineConfig(({ mode }) => ({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/bluechat/, '/api/v1/bluechat'),
       },
+      '/api/image-proxy': {
+        target: 'https://images.weserv.nl',
+        changeOrigin: true,
+        rewrite: (path) => {
+          const url = new URL(`http://localhost${path}`);
+          const imageUrl = url.searchParams.get('url');
+          return imageUrl ? `/?url=${encodeURIComponent(imageUrl)}&output=webp&q=80` : path;
+        },
+      },
     },
   },
   plugins: [

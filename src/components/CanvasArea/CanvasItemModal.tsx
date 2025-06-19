@@ -19,6 +19,7 @@ import {
   Calendar
 } from "lucide-react";
 import { CanvasItem } from "../CanvasArea";
+import { imageProxyApi } from "@/lib/api";
 
 interface CanvasItemModalProps {
   item: CanvasItem | null;
@@ -60,11 +61,17 @@ export const CanvasItemModal: React.FC<CanvasItemModalProps> = ({
           {item.cover_url && (
             <div className="relative w-full h-64 rounded-lg overflow-hidden bg-gray-100">
               <img
-                src={item.cover_url}
+                src={imageProxyApi.getProxiedImageUrl(item.cover_url)}
                 alt={item.title}
                 className="w-full h-full object-cover"
                 onError={(e) => {
-                  e.currentTarget.style.display = 'none';
+                  // 如果代理失败，尝试使用原始URL
+                  const currentSrc = e.currentTarget.src;
+                  if (currentSrc !== item.cover_url) {
+                    e.currentTarget.src = item.cover_url;
+                  } else {
+                    e.currentTarget.style.display = 'none';
+                  }
                 }}
               />
             </div>
@@ -74,7 +81,7 @@ export const CanvasItemModal: React.FC<CanvasItemModalProps> = ({
           <div className="flex items-center gap-3">
             <Avatar className="w-12 h-12">
               <AvatarImage 
-                src={item.author_avatar} 
+                src={item.author_avatar ? imageProxyApi.getProxiedImageUrl(item.author_avatar) : undefined} 
                 alt={item.author}
               />
               <AvatarFallback className="font-serif">
