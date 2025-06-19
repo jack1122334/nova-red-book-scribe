@@ -82,7 +82,7 @@ const Creation = () => {
   return (
     <div className="min-h-screen bg-white rounded-none">
       <FloatingSidebar currentPage="creation" />
-      <div className={cn("pl-20", currentView === "projects" ? "pl-20" : "")}>
+      <div className={cn(currentView === "projects" ? "" : "")}>
         {currentView === "projects" ? (
           <>
             <Navbar />

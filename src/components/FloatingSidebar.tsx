@@ -35,7 +35,7 @@ export const FloatingSidebar = ({ currentPage }: FloatingSidebarProps) => {
   ];
 
   return (
-    <div className="fixed left-4 top-1/2 transform -translate-y-1/2 z-50">
+    <div className="fixed left-4 top-1/2 transform -translate-y-1/2 z-50 hidden md:block">
       <div
         className={cn(
           "notion-floating transition-all duration-300 bg-white rounded-3xl",
@@ -49,7 +49,11 @@ export const FloatingSidebar = ({ currentPage }: FloatingSidebarProps) => {
           onClick={() => setIsExpanded(!isExpanded)}
           className="w-full mb-3 transition-colors rounded-xl shadow-none hover:shadow-sm p-2"
         >
-          {isExpanded ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+          {isExpanded ? (
+            <X className="w-4 h-4" />
+          ) : (
+            <Menu className="w-4 h-4" />
+          )}
         </Button>
 
         {/* Menu Items */}

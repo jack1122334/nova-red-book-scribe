@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/components/AuthProvider";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { BreathingBackground } from "@/components/BreathingBackground";
 import Index from "./pages/Index";
 import Creation from "./pages/Creation";
 import Profile from "./pages/Profile";
@@ -19,6 +20,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <BreathingBackground intensity="light" />
       <AuthProvider>
         <BrowserRouter>
           <Routes>

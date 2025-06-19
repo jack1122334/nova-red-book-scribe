@@ -56,7 +56,7 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
   ];
 
   return (
-    <div className="flex items-center space-x-1 bg-black/5 p-1 rounded-lg">
+    <div className="flex items-center bg-white/80 backdrop-blur-sm rounded-full p-1 shadow-sm border border-gray-200/50 self-end gap-1">
       {layouts.map(({ key, icon: Icon, label, active }) => (
         <Button
           key={key}
@@ -64,14 +64,14 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
           size="sm"
           onClick={() => togglePanel(key)}
           className={cn(
-            "h-8 px-3 text-xs font-serif transition-all duration-200",
-            active 
-              ? "bg-black text-white hover:bg-black/80" 
-              : "text-black/60 hover:text-black hover:bg-black/10"
+            "h-8 w-8 md:w-auto md:px-3 text-xs font-serif transition-all duration-200 rounded-full md:rounded-lg",
+            active
+              ? "bg-black text-white hover:bg-black/80 shadow-sm"
+              : "text-black/60 hover:text-black hover:bg-black/5"
           )}
         >
-          <Icon className="w-3 h-3 mr-1" />
-          {label}
+          <Icon className="w-4 h-4 md:mr-1" />
+          <span className="hidden md:block">{label}</span>
         </Button>
       ))}
     </div>

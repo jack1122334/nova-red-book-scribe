@@ -76,7 +76,7 @@ export const ProjectsManager = ({
       </div>;
   }
 
-  return <div className="p-8 max-w-6xl mx-auto">
+  return <div className="p-8 md:px-20 max-w-6xl mx-auto">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-800 mb-2">我的项目</h1>
         <p className="text-gray-600">管理你的小红书创作项目</p>

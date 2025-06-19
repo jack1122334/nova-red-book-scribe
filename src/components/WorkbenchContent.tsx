@@ -81,7 +81,7 @@ export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
   };
 
   return (
-    <div className="flex-1 min-h-0">
+    <div className="flex-1 min-h-0 pl-0 md:pl-16">
       <ResizablePanelGroup direction="horizontal" className="h-full">
         {/* Canvas Area - Left */}
         <AnimatePresence>

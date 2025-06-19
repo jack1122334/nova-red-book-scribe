@@ -41,10 +41,6 @@ export const ThemeInput: React.FC<ThemeInputProps> = ({
           </Button>
         </div>
       </div>
-      
-      {/* 装饰性元素 */}
-      <div className="absolute -top-1 -left-1 w-32 h-32 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full blur-2xl animate-pulse"></div>
-      <div className="absolute -bottom-1 -right-1 w-24 h-24 bg-gradient-to-br from-blue-400/20 to-cyan-400/20 rounded-full blur-2xl animate-pulse delay-1000"></div>
     </div>
   );
 };

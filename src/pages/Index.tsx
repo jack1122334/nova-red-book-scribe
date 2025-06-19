@@ -56,7 +56,7 @@ const Index = () => {
 
         {/* 项目展示区域 */}
         {projects.length > 0 && (
-          <div className="mb-8">
+          <div className="mb-8 md:px-20">
             <h2 className="text-2xl font-serif font-semibold text-gray-900 mb-6">
               我的项目
             </h2>
