@@ -29,7 +29,6 @@ export const ProjectWorkbench = ({
   const chatAreaRef = useRef<any>(null);
   const canvasAreaRef = useRef<any>(null);
   const [canvasReferences, setCanvasReferences] = useState<CanvasItem[]>([]);
-  const [searchQuery, setSearchQuery] = useState<string>('');
   const { currentProject } = useProjectStore();
   
   // 使用传入的 project 或者从状态管理获取的 currentProject
@@ -71,17 +70,6 @@ export const ProjectWorkbench = ({
     setCanvasReferences
   });
 
-  // Canvas搜索现在通过ChatArea的流处理，这里不需要直接调用
-  const handleCanvasSearch = (query: string) => {
-    console.log('ProjectWorkbench: Canvas search request received:', query);
-    setSearchQuery(query);
-    
-    // 确保Canvas面板是打开的
-    if (!layoutState.showCanvas) {
-      setLayoutState(prev => ({ ...prev, showCanvas: true }));
-    }
-  };
-
   if (!activeProject) return null;
 
   return (
@@ -98,7 +86,6 @@ export const ProjectWorkbench = ({
         layoutState={layoutState}
         canvasReferences={canvasReferences}
         initialMessage={initialMessage}
-        searchQuery={searchQuery}
         writingAreaRef={writingAreaRef}
         chatAreaRef={chatAreaRef}
         canvasAreaRef={canvasAreaRef}
@@ -112,7 +99,6 @@ export const ProjectWorkbench = ({
         onCanvasItemSelect={handlers.handleCanvasItemSelect}
         onCanvasItemDisable={handlers.handleCanvasItemDisable}
         onRemoveCanvasReference={handlers.handleRemoveCanvasReference}
-        onCanvasSearch={handleCanvasSearch}
       />
     </div>
   );

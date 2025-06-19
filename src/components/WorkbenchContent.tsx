@@ -20,7 +20,6 @@ interface WorkbenchContentProps {
   layoutState: LayoutState;
   canvasReferences: CanvasItem[];
   initialMessage?: string;
-  searchQuery?: string;
   writingAreaRef: React.RefObject<any>;
   chatAreaRef: React.RefObject<any>;
   canvasAreaRef: React.RefObject<any>;
@@ -34,7 +33,6 @@ interface WorkbenchContentProps {
   onCanvasItemSelect: (item: CanvasItem) => void;
   onCanvasItemDisable: (itemId: string) => void;
   onRemoveCanvasReference: (itemId: string) => void;
-  onCanvasSearch?: (query: string) => void;
 }
 
 export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
@@ -42,7 +40,6 @@ export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
   layoutState,
   canvasReferences,
   initialMessage,
-  searchQuery,
   writingAreaRef,
   chatAreaRef,
   canvasAreaRef,
@@ -55,11 +52,8 @@ export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
   onAddReference,
   onCanvasItemSelect,
   onCanvasItemDisable,
-  onRemoveCanvasReference,
-  onCanvasSearch
+  onRemoveCanvasReference
 }) => {
-  const [canvasData, setCanvasData] = React.useState<any>(null);
-
   const togglePanel = (panel: keyof LayoutState) => {
     const newState = {
       ...layoutState,
@@ -86,27 +80,6 @@ export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
     return 33.33;
   };
 
-  // 获取选中的canvas和insights的ID列表
-  const getSelectedIds = (): string[] => {
-    return canvasReferences.map(ref => ref.id);
-  };
-
-  // 处理从ChatArea传来的Canvas数据
-  const handleCanvasDataReceived = (data: any) => {
-    console.log('WorkbenchContent: Received canvas data from ChatArea:', data);
-    setCanvasData(data);
-    
-    // 传递给CanvasArea
-    if (canvasAreaRef.current?.processCanvasData) {
-      canvasAreaRef.current.processCanvasData(data);
-    }
-    
-    // 确保Canvas面板是打开的
-    if (!layoutState.showCanvas) {
-      onLayoutChange({ ...layoutState, showCanvas: true });
-    }
-  };
-
   return (
     <div className="flex-1 min-h-0 pl-0 md:pl-16">
       <ResizablePanelGroup direction="horizontal" className="h-full">
@@ -131,10 +104,6 @@ export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
                 </Button>
                 <CanvasArea 
                   ref={canvasAreaRef}
-                  projectId={project.id}
-                  searchQuery={searchQuery}
-                  selectedIds={getSelectedIds()}
-                  canvasData={canvasData}
                   onItemSelect={onCanvasItemSelect}
                   onItemDisable={onCanvasItemDisable}
                 />
@@ -212,8 +181,6 @@ export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
                   onCardUpdated={onCardUpdated}
                   canvasReferences={canvasReferences}
                   onRemoveCanvasReference={onRemoveCanvasReference}
-                  onCanvasSearch={onCanvasSearch}
-                  onCanvasDataReceived={handleCanvasDataReceived}
                 />
               </motion.div>
             </ResizablePanel>
