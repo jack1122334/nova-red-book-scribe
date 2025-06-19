@@ -16,6 +16,7 @@ interface UseProjectHandlersProps {
   setHasDraftData: React.Dispatch<React.SetStateAction<boolean>>;
   canvasReferences: CanvasItem[];
   setCanvasReferences: React.Dispatch<React.SetStateAction<CanvasItem[]>>;
+  setUserClosedDraft: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export const useProjectHandlers = ({
@@ -26,7 +27,8 @@ export const useProjectHandlers = ({
   setLayoutState,
   setHasDraftData,
   canvasReferences,
-  setCanvasReferences
+  setCanvasReferences,
+  setUserClosedDraft
 }: UseProjectHandlersProps) => {
   const handleCardCreated = async (cardId: string, title: string, content: string) => {
     if (writingAreaRef.current?.addCardFromAgent) {
@@ -36,6 +38,8 @@ export const useProjectHandlers = ({
     if (!layoutState.showWriting) {
       setLayoutState(prev => ({ ...prev, showWriting: true }));
       setHasDraftData(true);
+      // Reset user closed state when new content is created by AI
+      setUserClosedDraft(false);
     }
   };
 

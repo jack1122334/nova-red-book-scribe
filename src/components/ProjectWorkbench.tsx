@@ -29,7 +29,7 @@ export const ProjectWorkbench = ({
   const canvasAreaRef = useRef<any>(null);
   const [canvasReferences, setCanvasReferences] = useState<CanvasItem[]>([]);
   
-  const { hasCanvasData, hasDraftData, draftCount, setHasDraftData } = useProjectData(project?.id);
+  const { hasCanvasData, hasDraftData, draftCount, userClosedDraft, setHasDraftData, setUserClosedDraft } = useProjectData(project?.id);
   
   const [layoutState, setLayoutState] = useState<LayoutState>({
     showCanvas: true,
@@ -37,29 +37,29 @@ export const ProjectWorkbench = ({
     showChat: true
   });
 
-  // 根据数据状态设置默认布局
+  // Set default layout based on data state and user preferences
   useEffect(() => {
     const defaultLayout = {
       showCanvas: hasCanvasData,
-      showWriting: hasDraftData,
-      showChat: true // Agent 默认显示
+      showWriting: hasDraftData && !userClosedDraft, // Respect user's manual close action
+      showChat: true // Agent always defaults to show
     };
     
-    // 至少保留一个区域
+    // Ensure at least one area is visible
     const visibleCount = Object.values(defaultLayout).filter(Boolean).length;
     if (visibleCount === 0) {
       defaultLayout.showChat = true;
     }
     
     setLayoutState(defaultLayout);
-  }, [hasCanvasData, hasDraftData]);
+  }, [hasCanvasData, hasDraftData, userClosedDraft]);
 
-  // 当draft数量增加时，展开draft区域
+  // When draft count increases and user hasn't manually closed it, expand draft area
   useEffect(() => {
-    if (hasDraftData && !layoutState.showWriting) {
+    if (hasDraftData && !userClosedDraft && !layoutState.showWriting) {
       setLayoutState(prev => ({ ...prev, showWriting: true }));
     }
-  }, [draftCount, hasDraftData, layoutState.showWriting]);
+  }, [draftCount, hasDraftData, userClosedDraft, layoutState.showWriting]);
 
   const handlers = useProjectHandlers({
     writingAreaRef,
@@ -69,7 +69,8 @@ export const ProjectWorkbench = ({
     setLayoutState,
     setHasDraftData,
     canvasReferences,
-    setCanvasReferences
+    setCanvasReferences,
+    setUserClosedDraft
   });
 
   if (!project) return null;
@@ -81,6 +82,7 @@ export const ProjectWorkbench = ({
         layoutState={layoutState}
         onBack={onBack}
         onLayoutChange={setLayoutState}
+        onUserToggleDraft={setUserClosedDraft}
       />
 
       <WorkbenchContent 
@@ -101,6 +103,7 @@ export const ProjectWorkbench = ({
         onCanvasItemSelect={handlers.handleCanvasItemSelect}
         onCanvasItemDisable={handlers.handleCanvasItemDisable}
         onRemoveCanvasReference={handlers.handleRemoveCanvasReference}
+        onUserToggleDraft={setUserClosedDraft}
       />
     </div>
   );

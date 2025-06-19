@@ -33,6 +33,7 @@ interface WorkbenchContentProps {
   onCanvasItemSelect: (item: CanvasItem) => void;
   onCanvasItemDisable: (itemId: string) => void;
   onRemoveCanvasReference: (itemId: string) => void;
+  onUserToggleDraft: (closed: boolean) => void;
 }
 
 export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
@@ -52,7 +53,8 @@ export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
   onAddReference,
   onCanvasItemSelect,
   onCanvasItemDisable,
-  onRemoveCanvasReference
+  onRemoveCanvasReference,
+  onUserToggleDraft
 }) => {
   const togglePanel = (panel: keyof LayoutState) => {
     const newState = {
@@ -64,6 +66,11 @@ export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
     const visiblePanels = Object.values(newState).filter(Boolean).length;
     if (visiblePanels === 0) {
       return;
+    }
+    
+    // Track when user manually closes the draft area
+    if (panel === 'showWriting') {
+      onUserToggleDraft(!newState.showWriting);
     }
     
     onLayoutChange(newState);

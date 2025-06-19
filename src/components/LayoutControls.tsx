@@ -13,11 +13,13 @@ interface LayoutState {
 interface LayoutControlsProps {
   layoutState: LayoutState;
   onLayoutChange: (state: LayoutState) => void;
+  onUserToggleDraft: (closed: boolean) => void;
 }
 
 export const LayoutControls: React.FC<LayoutControlsProps> = ({ 
   layoutState, 
-  onLayoutChange 
+  onLayoutChange,
+  onUserToggleDraft
 }) => {
   const togglePanel = (panel: keyof LayoutState) => {
     const newState = {
@@ -29,6 +31,11 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
     const visiblePanels = Object.values(newState).filter(Boolean).length;
     if (visiblePanels === 0) {
       return; // 不允许全部收起
+    }
+    
+    // Track when user manually closes the draft area
+    if (panel === 'showWriting') {
+      onUserToggleDraft(!newState.showWriting);
     }
     
     onLayoutChange(newState);
