@@ -29,6 +29,7 @@ export const ProjectWorkbench = ({
   const chatAreaRef = useRef<any>(null);
   const canvasAreaRef = useRef<any>(null);
   const [canvasReferences, setCanvasReferences] = useState<CanvasItem[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const { currentProject } = useProjectStore();
   
   // 使用传入的 project 或者从状态管理获取的 currentProject
@@ -59,6 +60,14 @@ export const ProjectWorkbench = ({
     setLayoutState(defaultLayout);
   }, [hasCanvasData, hasDraftData]);
 
+  // 如果有初始消息，触发Canvas搜索
+  useEffect(() => {
+    if (initialMessage && canvasAreaRef.current?.searchWithQuery) {
+      setSearchQuery(initialMessage);
+      canvasAreaRef.current.searchWithQuery(initialMessage);
+    }
+  }, [initialMessage]);
+
   const handlers = useProjectHandlers({
     writingAreaRef,
     chatAreaRef,
@@ -69,6 +78,19 @@ export const ProjectWorkbench = ({
     canvasReferences,
     setCanvasReferences
   });
+
+  // 添加从Chat触发Canvas搜索的处理函数
+  const handleCanvasSearch = (query: string) => {
+    setSearchQuery(query);
+    if (canvasAreaRef.current?.searchWithQuery) {
+      canvasAreaRef.current.searchWithQuery(query);
+    }
+    
+    // 确保Canvas面板是打开的
+    if (!layoutState.showCanvas) {
+      setLayoutState(prev => ({ ...prev, showCanvas: true }));
+    }
+  };
 
   if (!activeProject) return null;
 
@@ -86,6 +108,7 @@ export const ProjectWorkbench = ({
         layoutState={layoutState}
         canvasReferences={canvasReferences}
         initialMessage={initialMessage}
+        searchQuery={searchQuery}
         writingAreaRef={writingAreaRef}
         chatAreaRef={chatAreaRef}
         canvasAreaRef={canvasAreaRef}
@@ -99,6 +122,7 @@ export const ProjectWorkbench = ({
         onCanvasItemSelect={handlers.handleCanvasItemSelect}
         onCanvasItemDisable={handlers.handleCanvasItemDisable}
         onRemoveCanvasReference={handlers.handleRemoveCanvasReference}
+        onCanvasSearch={handleCanvasSearch}
       />
     </div>
   );

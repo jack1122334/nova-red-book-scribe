@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
@@ -20,6 +19,7 @@ interface WorkbenchContentProps {
   layoutState: LayoutState;
   canvasReferences: CanvasItem[];
   initialMessage?: string;
+  searchQuery?: string;
   writingAreaRef: React.RefObject<any>;
   chatAreaRef: React.RefObject<any>;
   canvasAreaRef: React.RefObject<any>;
@@ -33,6 +33,7 @@ interface WorkbenchContentProps {
   onCanvasItemSelect: (item: CanvasItem) => void;
   onCanvasItemDisable: (itemId: string) => void;
   onRemoveCanvasReference: (itemId: string) => void;
+  onCanvasSearch?: (query: string) => void;
 }
 
 export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
@@ -40,6 +41,7 @@ export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
   layoutState,
   canvasReferences,
   initialMessage,
+  searchQuery,
   writingAreaRef,
   chatAreaRef,
   canvasAreaRef,
@@ -52,7 +54,8 @@ export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
   onAddReference,
   onCanvasItemSelect,
   onCanvasItemDisable,
-  onRemoveCanvasReference
+  onRemoveCanvasReference,
+  onCanvasSearch
 }) => {
   const togglePanel = (panel: keyof LayoutState) => {
     const newState = {
@@ -80,6 +83,11 @@ export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
     return 33.33;
   };
 
+  // 获取选中的canvas和insights的ID列表
+  const getSelectedIds = (): string[] => {
+    return canvasReferences.map(ref => ref.id);
+  };
+
   return (
     <div className="flex-1 min-h-0 pl-0 md:pl-16">
       <ResizablePanelGroup direction="horizontal" className="h-full">
@@ -104,6 +112,9 @@ export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
                 </Button>
                 <CanvasArea 
                   ref={canvasAreaRef}
+                  projectId={project.id}
+                  searchQuery={searchQuery}
+                  selectedIds={getSelectedIds()}
                   onItemSelect={onCanvasItemSelect}
                   onItemDisable={onCanvasItemDisable}
                 />
@@ -181,6 +192,7 @@ export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
                   onCardUpdated={onCardUpdated}
                   canvasReferences={canvasReferences}
                   onRemoveCanvasReference={onRemoveCanvasReference}
+                  onCanvasSearch={onCanvasSearch}
                 />
               </motion.div>
             </ResizablePanel>

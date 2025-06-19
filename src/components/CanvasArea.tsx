@@ -1,8 +1,9 @@
 
-import React, { useState, useImperativeHandle, forwardRef } from 'react';
+import React, { useState, useImperativeHandle, forwardRef, useEffect } from 'react';
 import { Grid3X3 } from 'lucide-react';
 import { CanvasGrid } from './CanvasArea/CanvasGrid';
 import { InsightsList } from './CanvasArea/InsightsList';
+import { bluechatApi, BluechatCard, BluechatRequest } from '@/lib/bluechatApi';
 
 export interface CanvasItem {
   id: string;
@@ -11,68 +12,37 @@ export interface CanvasItem {
   content?: string;
   isSelected: boolean;
   isDisabled: boolean;
+  keyword?: string;
+  bluechatData?: BluechatCard;
 }
 
 interface CanvasAreaProps {
+  projectId: string;
   onItemSelect: (item: CanvasItem) => void;
   onItemDisable: (itemId: string) => void;
+  searchQuery?: string;
+  selectedIds?: string[];
 }
 
 export interface CanvasAreaRef {
   deselectItem: (itemId: string) => void;
+  searchWithQuery: (query: string) => void;
 }
 
-// Mock data for canvas grid (9 items, expandable to 25)
-const mockCanvasItems: CanvasItem[] = Array.from({ length: 9 }, (_, index) => ({
-  id: `canvas-${index + 1}`,
-  type: 'canvas',
-  title: `创意${index + 1}`,
-  content: `创意内容${index + 1}的详细描述-的详细描述-的详细描述-的详细描述-的详细描述-的详细描述-的详细描述-的详细描述-的详细描述-的详细描述-的详细描述-的详细描述-的详细描述-的详细描述-的详细描述-`,
-  isSelected: false,
-  isDisabled: false,
-}));
-
-// Mock data for insights
-const mockInsights: CanvasItem[] = [
-  {
-    id: 'insight-1',
-    type: 'insight',
-    title: '用户画像分析',
-    content: '目标用户主要为25-35岁的都市白领女性',
-    isSelected: false,
-    isDisabled: false,
-  },
-  {
-    id: 'insight-2',
-    type: 'insight',
-    title: '内容偏好洞察',
-    content: '用户更偏爱实用性强的生活技巧类内容',
-    isSelected: false,
-    isDisabled: false,
-  },
-  {
-    id: 'insight-3',
-    type: 'insight',
-    title: '发布时间优化',
-    content: '晚上8-10点发布效果最佳',
-    isSelected: false,
-    isDisabled: false,
-  },
-  {
-    id: 'insight-4',
-    type: 'insight',
-    title: '标签策略建议',
-    content: '建议使用长尾关键词提高曝光',
-    isSelected: false,
-    isDisabled: false,
-  },
-];
-
-export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({ onItemSelect, onItemDisable }, ref) => {
-  const [canvasItems, setCanvasItems] = useState<CanvasItem[]>(mockCanvasItems);
-  const [insights, setInsights] = useState<CanvasItem[]>(mockInsights);
+export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({ 
+  projectId, 
+  onItemSelect, 
+  onItemDisable, 
+  searchQuery,
+  selectedIds = []
+}, ref) => {
+  const [canvasItems, setCanvasItems] = useState<CanvasItem[]>([]);
+  const [insights, setInsights] = useState<CanvasItem[]>([]);
   const [selectedCanvasItems, setSelectedCanvasItems] = useState<Set<string>>(new Set());
   const [selectedInsights, setSelectedInsights] = useState<Set<string>>(new Set());
+  const [keywords, setKeywords] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingKeywords, setLoadingKeywords] = useState<Set<string>>(new Set());
 
   useImperativeHandle(ref, () => ({
     deselectItem: (itemId: string) => {
@@ -95,8 +65,114 @@ export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({ onItemSe
         newSet.delete(itemId);
         return newSet;
       });
+    },
+    searchWithQuery: (query: string) => {
+      handleSearch(query);
     }
   }));
+
+  const handleSearch = async (query: string) => {
+    if (!query.trim()) return;
+
+    console.log('Starting canvas search with query:', query);
+    setIsLoading(true);
+    setCanvasItems([]);
+    setKeywords([]);
+    setLoadingKeywords(new Set());
+
+    try {
+      const stage = canvasItems.length > 0 ? 'STAGE_2' : 'STAGE_1';
+      
+      const request: BluechatRequest = {
+        stage,
+        query: query.trim(),
+        user_id: 'user_123', // TODO: 使用真实的用户ID
+        session_id: projectId,
+        limit: 3,
+        ids: selectedIds,
+        count: 6
+      };
+
+      console.log('Bluechat request:', request);
+
+      for await (const response of bluechatApi.streamChat(request)) {
+        console.log('Received response:', response);
+
+        if ('keywords' in response) {
+          console.log('Setting keywords:', response.keywords);
+          setKeywords(response.keywords);
+          setLoadingKeywords(new Set(response.keywords));
+          
+          // 为每个关键词创建空的canvas行
+          const emptyItems: CanvasItem[] = [];
+          response.keywords.forEach((keyword, rowIndex) => {
+            for (let colIndex = 0; colIndex < 3; colIndex++) {
+              emptyItems.push({
+                id: `${keyword}_${rowIndex}_${colIndex}`,
+                type: 'canvas',
+                title: '加载中...',
+                content: '',
+                isSelected: false,
+                isDisabled: false,
+                keyword
+              });
+            }
+          });
+          setCanvasItems(emptyItems);
+        } 
+        else if ('keyword' in response && 'cards' in response) {
+          console.log('Processing cards for keyword:', response.keyword);
+          setLoadingKeywords(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(response.keyword);
+            return newSet;
+          });
+
+          // 更新对应关键词的卡片
+          setCanvasItems(prev => {
+            const rowIndex = keywords.indexOf(response.keyword);
+            if (rowIndex === -1) return prev;
+
+            return prev.map((item, index) => {
+              const itemRowIndex = Math.floor(index / 3);
+              const itemColIndex = index % 3;
+              
+              if (itemRowIndex === rowIndex && itemColIndex < response.cards.length) {
+                const card = response.cards[itemColIndex];
+                return {
+                  id: card.id,
+                  type: 'canvas' as const,
+                  title: card.title,
+                  content: card.content || `${card.author} | 👍 ${card.like_count} 💾 ${card.collect_count}`,
+                  isSelected: false,
+                  isDisabled: false,
+                  keyword: response.keyword,
+                  bluechatData: card
+                };
+              }
+              return item;
+            });
+          });
+        }
+        else if ('type' in response && response.type === 'state_info') {
+          console.log('Received state info:', response);
+          // 处理状态信息，可以用于更新UI状态
+        }
+      }
+    } catch (error) {
+      console.error('Error in canvas search:', error);
+    } finally {
+      setIsLoading(false);
+      setLoadingKeywords(new Set());
+    }
+  };
+
+  // 当searchQuery变化时自动搜索
+  useEffect(() => {
+    if (searchQuery) {
+      handleSearch(searchQuery);
+    }
+  }, [searchQuery]);
 
   const handleCanvasCheckboxChange = (itemId: string, checked: boolean) => {
     const newSelected = new Set(selectedCanvasItems);
@@ -183,6 +259,9 @@ export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({ onItemSe
       {/* Header */}
       <div className="p-4 border-b border-black/10">
         <h2 className="text-lg font-semibold text-black font-serif">Canvas</h2>
+        {isLoading && (
+          <div className="text-sm text-gray-500 mt-1">正在搜索相关内容...</div>
+        )}
       </div>
 
       <div className="flex-1 overflow-auto p-4 space-y-6">
@@ -191,7 +270,28 @@ export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({ onItemSe
           <div className="flex items-center gap-2 mb-4">
             <Grid3X3 className="w-5 h-5 text-black" />
             <h3 className="font-medium text-black font-serif">Canvas</h3>
+            {keywords.length > 0 && (
+              <div className="text-sm text-gray-500">
+                ({keywords.length} 个关键词)
+              </div>
+            )}
           </div>
+          
+          {keywords.length > 0 && (
+            <div className="mb-3 text-xs text-gray-600">
+              {keywords.map((keyword, index) => (
+                <div key={keyword} className="flex items-center gap-2 mb-1">
+                  <span className="w-6 h-6 bg-gray-100 rounded text-center leading-6">
+                    {index + 1}
+                  </span>
+                  <span>{keyword}</span>
+                  {loadingKeywords.has(keyword) && (
+                    <span className="animate-pulse text-blue-500">加载中...</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
           
           <CanvasGrid
             items={canvasItems}
