@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -212,6 +213,16 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
     };
     setMessages(prev => [...prev, tempUserMessage]);
 
+    // Create streaming assistant message
+    const tempAssistantMessage: StreamingMessage = {
+      id: 'temp-assistant-' + Date.now(),
+      role: 'assistant',
+      content: '',
+      created_at: new Date().toISOString(),
+      isStreaming: true
+    };
+    setMessages(prev => [...prev, tempAssistantMessage]);
+
     try {
       console.log('ChatArea: Sending message to bluechat');
 
@@ -227,12 +238,28 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
         (data: any) => {
           console.log('ChatArea: Received bluechat data:', data);
           
+          // Handle agent_message events
+          if (data.event === 'agent_message' && data.answer) {
+            setMessages(prev => prev.map(msg => 
+              msg.id === tempAssistantMessage.id 
+                ? { ...msg, content: msg.content + data.answer }
+                : msg
+            ));
+          }
+          
           // Forward canvas data to CanvasArea
           if (onCanvasDataReceived) {
             onCanvasDataReceived(data);
           }
         }
       );
+
+      // Mark streaming as complete
+      setMessages(prev => prev.map(msg => 
+        msg.id === tempAssistantMessage.id 
+          ? { ...msg, isStreaming: false }
+          : msg
+      ));
 
       setReferences([]);
       setPendingSystemMessages([]);
@@ -249,7 +276,8 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
         description: error.message || "无法发送消息，请重试",
         variant: "destructive"
       });
-      setMessages(prev => prev.slice(0, -1));
+      // Remove both user and assistant messages on error
+      setMessages(prev => prev.slice(0, -2));
     } finally {
       setIsLoading(false);
     }
@@ -544,9 +572,6 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
                         </div>
                       </div>
                     </div>
-                    {/* <div className="w-8 h-8 rounded-full bg-black/20 flex items-center justify-center flex-shrink-0">
-                      <User className="w-4 h-4 text-black/60" />
-                    </div> */}
                   </>
                 )}
               </div>
