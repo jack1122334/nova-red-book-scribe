@@ -19,7 +19,7 @@ export const ReferenceDisplay: React.FC<ReferenceDisplayProps> = ({
   }
 
   return (
-    <div className="border-t border-black/20 p-4 bg-white">
+    <div className="pb-2">
       <h3 className="text-sm font-medium text-black mb-3 font-serif">
         选中的引用内容 ({references.length})
       </h3>
@@ -50,9 +50,9 @@ export const ReferenceDisplay: React.FC<ReferenceDisplayProps> = ({
                         }
                       </p>
                     )}
-                    <span className="inline-block mt-1 text-xs text-black/40 bg-black/10 px-1.5 py-0.5 rounded text-center">
+                    {/* <span className="inline-block mt-1 text-xs text-black/40 bg-black/10 px-1.5 py-0.5 rounded text-center">
                       {ref.type === 'canvas' ? 'Canvas' : 'Insight'}
-                    </span>
+                    </span> */}
                   </div>
                 </div>
                 

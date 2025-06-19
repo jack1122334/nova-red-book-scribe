@@ -9,7 +9,7 @@ interface WritingAreaHeaderProps {
 
 export const WritingAreaHeader: React.FC<WritingAreaHeaderProps> = ({ onCreateCard }) => {
   return (
-    <div className="p-6 bg-white">
+    <div className="p-6 pr-10 bg-white">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold font-serif text-slate-950">Draft</h2>

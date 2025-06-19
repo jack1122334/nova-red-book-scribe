@@ -481,14 +481,6 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
         <p className="text-sm text-black/60">小红书内容创作助手</p>
       </div>
 
-      {/* Canvas References Display */}
-      {canvasReferences.length > 0 && onRemoveCanvasReference && (
-        <ReferenceDisplay 
-          references={canvasReferences} 
-          onRemoveReference={onRemoveCanvasReference} 
-        />
-      )}
-
       {/* System Messages Indicator */}
       {pendingSystemMessages.length > 0 && (
         <div className="px-4 py-2 border-b border-black/20 rounded-xl bg-yellow-50 border border-yellow-200">
@@ -633,6 +625,15 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
 
       {/* Input Area */}
       <div className="border-t border-black/20 p-4 bg-white">
+
+        {/* Canvas References Display */}
+        {canvasReferences.length > 0 && onRemoveCanvasReference && (
+          <ReferenceDisplay 
+            references={canvasReferences} 
+            onRemoveReference={onRemoveCanvasReference} 
+          />
+        )}
+        
         <div className="flex gap-3 items-end">
           <div className="flex-1">
             <Textarea 
