@@ -85,7 +85,15 @@ export const ProjectWorkbench = ({
         chatAreaRef={chatAreaRef}
         canvasAreaRef={canvasAreaRef}
         onLayoutChange={setLayoutState}
-        {...handlers}
+        onCardCreated={handlers.handleCardCreated}
+        onCardUpdated={handlers.handleCardUpdated}
+        onTextSelection={handlers.handleTextSelection}
+        onCardUpdate={handlers.handleCardUpdate}
+        onCardCreate={handlers.handleCardCreate}
+        onAddReference={handlers.handleAddReference}
+        onCanvasItemSelect={handlers.handleCanvasItemSelect}
+        onCanvasItemDisable={handlers.handleCanvasItemDisable}
+        onRemoveCanvasReference={handlers.handleRemoveCanvasReference}
       />
     </div>
   );

@@ -1,3 +1,4 @@
+
 import React, { useState, useImperativeHandle, forwardRef } from 'react';
 import { Grid3X3 } from 'lucide-react';
 import { CanvasGrid } from './CanvasArea/CanvasGrid';
