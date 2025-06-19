@@ -458,3 +458,6 @@ export const userBackgroundCardsApi = {
     console.log('API: User background card deleted successfully');
   }
 };
+
+// Export canvas API
+export { canvasApi } from './canvasApi';

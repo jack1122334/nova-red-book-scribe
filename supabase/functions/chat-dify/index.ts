@@ -140,6 +140,8 @@ serve(async (req) => {
         let allEvents = []; // Store all events for debugging
         let thoughts = [];
         let toolCalls = [];
+        let canvasData = []; // Store canvas items
+        let insightsData = []; // Store insights
 
         try {
           while (true) {
@@ -184,6 +186,61 @@ serve(async (req) => {
                         timestamp: new Date().toISOString(),
                         tools: data.tool_calls
                       });
+                      
+                      // Process canvas data if present
+                      for (const tool of data.tool_calls) {
+                        if (tool.tool_output) {
+                          try {
+                            const output = JSON.parse(tool.tool_output);
+                            
+                            // Check for canvas data
+                            if (output.keywords) {
+                              console.log('Found keywords in tool output:', output.keywords);
+                            }
+                            
+                            if (output.keyword && output.cards) {
+                              console.log('Found canvas cards for keyword:', output.keyword, output.cards);
+                              // Transform and store canvas data
+                              const transformedCards = output.cards.map((card: any) => ({
+                                project_id,
+                                external_id: card.id,
+                                type: 'canvas',
+                                title: card.title,
+                                content: card.content || '',
+                                keyword: output.keyword,
+                                author: card.author,
+                                author_avatar: card.author_avatar,
+                                like_count: card.like_count || 0,
+                                collect_count: card.collect_count || 0,
+                                comment_count: card.comment_count || 0,
+                                share_count: card.share_count || 0,
+                                cover_url: card.cover_url,
+                                url: card.url,
+                                platform: card.platform || 'xiaohongshu',
+                                ip_location: card.ip_location,
+                                tags: card.tags || [],
+                                create_time: card.create_time
+                              }));
+                              canvasData.push(...transformedCards);
+                            }
+                            
+                            // Check for insights data
+                            if (output.insights) {
+                              console.log('Found insights in tool output:', output.insights);
+                              const transformedInsights = output.insights.map((insight: any) => ({
+                                project_id,
+                                external_id: insight.id || `insight_${Date.now()}_${Math.random()}`,
+                                type: 'insight',
+                                title: insight.title || '洞察',
+                                content: insight.text || insight.content || ''
+                              }));
+                              insightsData.push(...transformedInsights);
+                            }
+                          } catch (parseError) {
+                            console.warn('Failed to parse tool output as JSON:', parseError);
+                          }
+                        }
+                      }
                     }
                   } else if (data.event === 'agent_message' || data.event === 'message') {
                     if (data.answer) {
@@ -198,6 +255,8 @@ serve(async (req) => {
                     console.log('Total content length:', fullAiContent.length);
                     console.log('Total thoughts:', thoughts.length);
                     console.log('Total tool calls:', toolCalls.length);
+                    console.log('Total canvas items:', canvasData.length);
+                    console.log('Total insights:', insightsData.length);
                     console.log('Conversation ID:', newConversationId);
                     
                     // Process final content and handle card operations
@@ -208,6 +267,8 @@ serve(async (req) => {
                       newConversationId, 
                       conversationId, 
                       userMessage,
+                      canvasData,
+                      insightsData,
                       {
                         allEvents,
                         thoughts,
@@ -218,7 +279,9 @@ serve(async (req) => {
                             conversation_id: newConversationId,
                             total_events: allEvents.length,
                             thoughts_count: thoughts.length,
-                            tool_calls_count: toolCalls.length
+                            tool_calls_count: toolCalls.length,
+                            canvas_items_count: canvasData.length,
+                            insights_count: insightsData.length
                           }
                         }
                       }
@@ -274,12 +337,16 @@ async function processFinalContent(
   newConversationId: string, 
   conversationId: string, 
   userMessage: any,
+  canvasData: any[],
+  insightsData: any[],
   debugInfo: any
 ) {
   let associatedCardId = null;
 
   console.log('=== PROCESSING FINAL CONTENT ===');
   console.log('Content length:', fullAiContent.length);
+  console.log('Canvas items to save:', canvasData.length);
+  console.log('Insights to save:', insightsData.length);
   console.log('Debug info:', JSON.stringify(debugInfo.metadata, null, 2));
 
   // Update conversation_id if new
@@ -288,6 +355,44 @@ async function processFinalContent(
       .from('projects')
       .update({ conversation_id: newConversationId })
       .eq('id', projectId);
+  }
+
+  // Save canvas items to database
+  if (canvasData.length > 0) {
+    try {
+      console.log('Saving canvas items to database:', canvasData.length);
+      const { data: savedCanvasItems, error: canvasError } = await supabase
+        .from('canvas_items')
+        .insert(canvasData)
+        .select();
+      
+      if (canvasError) {
+        console.error('Error saving canvas items:', canvasError);
+      } else {
+        console.log('Canvas items saved successfully:', savedCanvasItems?.length);
+      }
+    } catch (error) {
+      console.error('Failed to save canvas items:', error);
+    }
+  }
+
+  // Save insights to database
+  if (insightsData.length > 0) {
+    try {
+      console.log('Saving insights to database:', insightsData.length);
+      const { data: savedInsights, error: insightsError } = await supabase
+        .from('insights')
+        .insert(insightsData)
+        .select();
+      
+      if (insightsError) {
+        console.error('Error saving insights:', insightsError);
+      } else {
+        console.log('Insights saved successfully:', savedInsights?.length);
+      }
+    } catch (error) {
+      console.error('Failed to save insights:', error);
+    }
   }
 
   // Parse XML tags and execute database operations
@@ -378,7 +483,9 @@ async function processFinalContent(
           thoughts_count: debugInfo.thoughts.length,
           tool_calls_count: debugInfo.toolCalls.length,
           conversation_id: newConversationId,
-          cards_created: associatedCardId ? 1 : 0
+          cards_created: associatedCardId ? 1 : 0,
+          canvas_items_saved: canvasData.length,
+          insights_saved: insightsData.length
         },
         complete_event_log: debugInfo.allEvents,
         thoughts_log: debugInfo.thoughts,

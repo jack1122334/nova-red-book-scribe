@@ -110,6 +110,7 @@ export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
                 </Button>
                 <CanvasArea 
                   ref={canvasAreaRef}
+                  projectId={project.id}
                   onItemSelect={onCanvasItemSelect}
                   onItemDisable={onCanvasItemDisable}
                 />

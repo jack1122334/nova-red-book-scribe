@@ -1,8 +1,9 @@
-
-import React, { useState, useImperativeHandle, forwardRef } from 'react';
+import React, { useState, useImperativeHandle, forwardRef, useEffect } from 'react';
 import { Grid3X3 } from 'lucide-react';
 import { CanvasGrid } from './CanvasArea/CanvasGrid';
 import { InsightsList } from './CanvasArea/InsightsList';
+import { canvasApi } from '@/lib/canvasApi';
+import { useToast } from '@/hooks/use-toast';
 
 export interface CanvasItem {
   id: string;
@@ -28,6 +29,7 @@ export interface CanvasItem {
 }
 
 interface CanvasAreaProps {
+  projectId: string;
   onItemSelect: (item: CanvasItem) => void;
   onItemDisable: (itemId: string) => void;
   onCanvasDataReceived?: (data: any) => void;
@@ -39,6 +41,7 @@ export interface CanvasAreaRef {
 }
 
 export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({ 
+  projectId,
   onItemSelect, 
   onItemDisable,
   onCanvasDataReceived 
@@ -48,6 +51,88 @@ export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
   const [selectedCanvasItems, setSelectedCanvasItems] = useState<Set<string>>(new Set());
   const [selectedInsights, setSelectedInsights] = useState<Set<string>>(new Set());
   const [keywords, setKeywords] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  // Load existing data on mount
+  useEffect(() => {
+    const loadExistingData = async () => {
+      if (!projectId) return;
+      
+      try {
+        setLoading(true);
+        
+        // Load canvas items
+        const canvasData = await canvasApi.getCanvasItems(projectId);
+        console.log('Loaded canvas items:', canvasData.length);
+        
+        if (canvasData.length > 0) {
+          // Extract unique keywords
+          const uniqueKeywords = Array.from(new Set(
+            canvasData.map(item => item.keyword).filter(Boolean)
+          ));
+          setKeywords(uniqueKeywords);
+          
+          // Transform database items to component format
+          const transformedItems: CanvasItem[] = canvasData.map(item => ({
+            id: item.id,
+            type: 'canvas' as const,
+            title: item.title,
+            content: item.content || '',
+            isSelected: false,
+            isDisabled: false,
+            keyword: item.keyword || '',
+            author: item.author || '',
+            author_avatar: item.author_avatar || '',
+            like_count: item.like_count || 0,
+            collect_count: item.collect_count || 0,
+            comment_count: item.comment_count || 0,
+            share_count: item.share_count || 0,
+            cover_url: item.cover_url || '',
+            url: item.url || '',
+            platform: item.platform || 'xiaohongshu',
+            ip_location: item.ip_location || '',
+            tags: item.tags || [],
+            create_time: item.create_time || '',
+            isLoading: false
+          }));
+          
+          setCanvasItems(transformedItems);
+        }
+        
+        // Load insights
+        const insightsData = await canvasApi.getInsights(projectId);
+        console.log('Loaded insights:', insightsData.length);
+        
+        if (insightsData.length > 0) {
+          // Transform database items to component format
+          const transformedInsights: CanvasItem[] = insightsData.map(item => ({
+            id: item.id,
+            type: 'insight' as const,
+            title: item.title,
+            content: item.content,
+            isSelected: false,
+            isDisabled: false,
+            isLoading: false
+          }));
+          
+          setInsights(transformedInsights);
+        }
+        
+      } catch (error) {
+        console.error('Failed to load existing canvas data:', error);
+        toast({
+          title: "加载失败",
+          description: "无法加载Canvas数据",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadExistingData();
+  }, [projectId, toast]);
 
   useImperativeHandle(ref, () => ({
     deselectItem: (itemId: string) => {
@@ -264,6 +349,19 @@ export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
       i.id === itemId ? { ...i, isDisabled: false } : i
     ));
   };
+
+  if (loading) {
+    return (
+      <div className="h-full flex flex-col bg-white border-r border-black/10">
+        <div className="p-4 border-b border-black/10">
+          <h2 className="text-lg font-semibold text-black font-serif">Canvas</h2>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="animate-spin w-6 h-6 border-2 border-black/10 border-t-black rounded-full" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full flex flex-col bg-white border-r border-black/10">
