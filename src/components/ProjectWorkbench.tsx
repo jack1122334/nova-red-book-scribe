@@ -36,18 +36,19 @@ export const ProjectWorkbench = ({
   
   const { hasCanvasData, hasDraftData, setHasDraftData } = useProjectData(activeProject?.id);
   
+  // 默认显示 Canvas 和 Chat，隐藏 Writing
   const [layoutState, setLayoutState] = useState<LayoutState>({
     showCanvas: true,
-    showWriting: true,
+    showWriting: false,
     showChat: true
   });
 
-  // 根据数据状态设置默认布局
+  // 根据数据状态设置默认布局 - 但保持默认的 Canvas + Chat 布局
   useEffect(() => {
     const defaultLayout = {
-      showCanvas: hasCanvasData,
-      showWriting: hasDraftData,
-      showChat: true // Agent 默认显示
+      showCanvas: true, // 默认显示 Canvas
+      showWriting: hasDraftData, // 只有当有草稿数据时才显示 Writing
+      showChat: true // 默认显示 Chat
     };
     
     // 至少保留一个区域
@@ -57,7 +58,7 @@ export const ProjectWorkbench = ({
     }
     
     setLayoutState(defaultLayout);
-  }, [hasCanvasData, hasDraftData]);
+  }, [hasDraftData]); // 移除了 hasCanvasData 的依赖，因为我们总是默认显示 Canvas
 
   const handlers = useProjectHandlers({
     writingAreaRef,
