@@ -4,7 +4,7 @@ import { Grid3X3 } from 'lucide-react';
 import { CanvasGrid } from './CanvasArea/CanvasGrid';
 import { InsightsList } from './CanvasArea/InsightsList';
 import { EmptyState } from './CanvasArea/EmptyState';
-import { canvasItemsApi, insightsApi } from '@/lib/api';
+import { canvasItemsApi, insightsApi } from '@/lib/canvasApi';
 
 export interface CanvasItem {
   id: string;

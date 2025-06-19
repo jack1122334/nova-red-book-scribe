@@ -40,6 +40,8 @@ serve(async (req) => {
       throw userMessageError;
     }
 
+    console.log('User message stored successfully:', userMessage.id);
+
     // Get or create conversation ID
     let conversationId = '';
     const { data: projectData } = await supabase
@@ -339,10 +341,16 @@ async function processFinalContent(
 
   // Update conversation_id if new
   if (newConversationId && newConversationId !== conversationId) {
-    await supabase
+    const { error: conversationUpdateError } = await supabase
       .from('projects')
       .update({ conversation_id: newConversationId })
       .eq('id', projectId);
+    
+    if (conversationUpdateError) {
+      console.error('Error updating conversation ID:', conversationUpdateError);
+    } else {
+      console.log('Conversation ID updated successfully');
+    }
   }
 
   // Store Canvas data
@@ -455,7 +463,7 @@ async function processFinalContent(
     .replace(/<new_xhs_card[^>]*>[\s\S]*?<\/new_xhs_card>/g, '[新卡片已创建]')
     .replace(/<update_xhs_card[^>]*>[\s\S]*?<\/update_xhs_card>/g, '[卡片已更新]');
 
-  const { error: aiMessageError } = await supabase
+  const { data: aiMessage, error: aiMessageError } = await supabase
     .from('chat_messages')
     .insert({
       project_id: projectId,
@@ -479,11 +487,13 @@ async function processFinalContent(
       },
       associated_card_id: associatedCardId,
       created_at: new Date().toISOString()
-    });
+    })
+    .select()
+    .single();
 
   if (aiMessageError) {
     console.error('Error storing AI message:', aiMessageError);
   } else {
-    console.log('AI message stored successfully with complete debug info');
+    console.log('AI message stored successfully with complete debug info:', aiMessage.id);
   }
 }
