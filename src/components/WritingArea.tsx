@@ -1,11 +1,9 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Plus, Edit3, Trash2, Save, X, Link, FileText, ChevronDown, ChevronUp } from "lucide-react";
 import { cardsApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { WritingAreaHeader } from "./WritingArea/WritingAreaHeader";
+import { WritingCardGrid } from "./WritingArea/WritingCardGrid";
+import { EmptyState } from "./WritingArea/EmptyState";
 
 interface WritingAreaProps {
   projectId: string;
@@ -120,10 +118,7 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(({
       const text = selection.toString().trim();
       setSelectedText(text);
       setSelectedCardId(cardId);
-      console.log('Text selected:', {
-        cardId,
-        text
-      });
+      console.log('Text selected:', { cardId, text });
     }
   };
 
@@ -140,7 +135,6 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(({
     };
     onAddReference(reference);
 
-    // Clear selection
     setSelectedText("");
     setSelectedCardId(null);
     window.getSelection()?.removeAllRanges();
@@ -185,7 +179,6 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(({
       });
       setCards(prev => prev.map(c => c.id === editingCard ? updatedCard : c));
 
-      // 通知父组件用户编辑了卡片
       onCardUpdate(editingCard, editContent, editTitle || undefined);
       setEditingCard(null);
       toast({
@@ -242,183 +235,30 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(({
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header */}
-      <div className="p-6 bg-white">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold font-serif text-slate-950">Draft</h2>
-          </div>
-          <Button onClick={handleCreateCard} size="sm" className="bg-black text-white hover:bg-white hover:text-black">
-            <Plus className="w-4 h-4 mr-2" />
-            新建卡片
-          </Button>
-        </div>
-      </div>
+      <WritingAreaHeader onCreateCard={handleCreateCard} />
 
-      {/* Content */}
       <div className="flex-1 overflow-hidden">
         {cards.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-white p-6 bg-white">
-            <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center mb-4">
-              <FileText className="w-8 h-8 text-black" />
-            </div>
-            <h3 className="text-lg font-medium mb-2 font-serif text-gray-950">还没有创作卡片</h3>
-            <p className="text-sm text-center max-w-md mb-6 font-serif leading-relaxed text-zinc-950">
-              卡片是您的创作素材库，可以保存草稿、想法和参考内容，方便在对话中引用。
-            </p>
-            <Button onClick={handleCreateCard} className="bg-black text-white hover:bg-white hover:text-black">
-              <Plus className="w-4 h-4 mr-2" />
-              创建第一个卡片
-            </Button>
-          </div>
+          <EmptyState onCreateCard={handleCreateCard} />
         ) : (
-          <div className="h-full overflow-y-auto p-6 bg-white">
-            <div className="columns-2 gap-4 space-y-4">
-              {cards.map(card => (
-                <Card key={card.id} className="break-inside-avoid mb-4 rounded-2xl bg-white border border-gray-200">
-                  <CardHeader className="pb-3 flex-shrink-0 bg-gray-100 rounded-t-2xl">
-                    <div className="flex items-start justify-between gap-2">
-                      {editingCard === card.id ? (
-                        <Input 
-                          value={editTitle} 
-                          onChange={e => setEditTitle(e.target.value)} 
-                          placeholder="卡片标题" 
-                          className="text-sm font-medium border-0 p-0 h-auto focus:ring-0 flex-1 bg-transparent font-serif" 
-                        />
-                      ) : (
-                        <CardTitle className="text-sm font-medium text-black flex-1 line-clamp-2 font-serif">
-                          {card.title || "未命名卡片"}
-                        </CardTitle>
-                      )}
-                      
-                      <div className="flex items-center gap-1 flex-shrink-0">
-                        {/* Reference buttons */}
-                        {editingCard !== card.id && onAddReference && (
-                          <>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => handleAddReference(card, 'full_card')} 
-                              className="h-7 w-7 p-0 text-black hover:text-white hover:bg-black rounded-lg" 
-                              title="引用整个卡片"
-                            >
-                              <Link className="w-3 h-3" />
-                            </Button>
-                            {selectedText && selectedCardId === card.id && (
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                onClick={() => handleAddReference(card, 'text_snippet')} 
-                                className="h-7 px-1.5 text-black hover:text-white hover:bg-black text-xs font-serif rounded-lg" 
-                                title="引用选中文本"
-                              >
-                                <Link className="w-2.5 h-2.5 mr-0.5" />
-                                片段
-                              </Button>
-                            )}
-                          </>
-                        )}
-                        
-                        {/* Collapse button */}
-                        {editingCard !== card.id && (
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => toggleCardCollapse(card.id)} 
-                            className="h-7 w-7 p-0 text-black hover:text-white hover:bg-black rounded-lg"
-                          >
-                            {collapsedCards.has(card.id) ? (
-                              <ChevronDown className="w-3 h-3" />
-                            ) : (
-                              <ChevronUp className="w-3 h-3" />
-                            )}
-                          </Button>
-                        )}
-                        
-                        {/* Edit/Save buttons */}
-                        {editingCard === card.id ? (
-                          <>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={handleSaveEdit} 
-                              className="h-7 w-7 p-0 text-black hover:text-white hover:bg-black rounded-lg"
-                            >
-                              <Save className="w-3 h-3" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => setEditingCard(null)} 
-                              className="h-7 w-7 p-0 text-black hover:text-white hover:bg-black rounded-lg"
-                            >
-                              <X className="w-3 h-3" />
-                            </Button>
-                          </>
-                        ) : (
-                          <>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => handleEditCard(card)} 
-                              className="h-7 w-7 p-0 text-black hover:text-white hover:bg-black rounded-lg"
-                            >
-                              <Edit3 className="w-3 h-3" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => handleDeleteCard(card.id)} 
-                              className="h-7 w-7 p-0 text-black hover:text-white hover:bg-black rounded-lg"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </CardHeader>
-                  
-                  {!collapsedCards.has(card.id) && (
-                    <CardContent className="flex-1 flex flex-col min-h-0 bg-white rounded-b-2xl">
-                      {editingCard === card.id ? (
-                        <Textarea 
-                          value={editContent} 
-                          onChange={e => setEditContent(e.target.value)} 
-                          placeholder="输入卡片内容..." 
-                          className="flex-1 resize-none text-sm font-serif leading-relaxed min-h-32" 
-                        />
-                      ) : (
-                        <div 
-                          className="flex-1 whitespace-pre-wrap text-black cursor-text leading-relaxed text-sm font-serif" 
-                          onMouseUp={() => handleTextSelection(card.id)}
-                        >
-                          {card.content || <span className="text-black/60 italic">暂无内容，点击编辑按钮开始写作</span>}
-                        </div>
-                      )}
-                      
-                      {/* Show selected text indicator */}
-                      {selectedText && selectedCardId === card.id && (
-                        <div className="mt-3">
-                          <div className="bg-black/10 border border-black/20 rounded-lg p-3">
-                            <p className="text-xs text-black font-medium mb-1 font-serif">
-                              已选中文本
-                            </p>
-                            <p className="text-xs text-black/80 mb-2 font-serif">
-                              "{selectedText.substring(0, 80)}..."
-                            </p>
-                            <p className="text-xs text-black/60 font-serif">
-                              点击"片段"按钮将此文本添加为引用
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </CardContent>
-                  )}
-                </Card>
-              ))}
-            </div>
-          </div>
+          <WritingCardGrid
+            cards={cards}
+            editingCard={editingCard}
+            editTitle={editTitle}
+            editContent={editContent}
+            selectedText={selectedText}
+            selectedCardId={selectedCardId}
+            collapsedCards={collapsedCards}
+            onEditCard={handleEditCard}
+            onSaveEdit={handleSaveEdit}
+            onCancelEdit={() => setEditingCard(null)}
+            onDeleteCard={handleDeleteCard}
+            onTextSelection={handleTextSelection}
+            onAddReference={handleAddReference}
+            onToggleCollapse={toggleCardCollapse}
+            setEditTitle={setEditTitle}
+            setEditContent={setEditContent}
+          />
         )}
       </div>
     </div>

@@ -92,7 +92,7 @@ export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
                 animate={{ width: "100%", opacity: 1 }}
                 exit={{ width: 0, opacity: 0 }}
                 transition={{ duration: 0.3 }}
-                className="h-full relative border-r border-black/10"
+                className="h-full relative"
               >
                 <Button
                   variant="ghost"
@@ -112,8 +112,9 @@ export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
           )}
         </AnimatePresence>
         
-        {layoutState.showCanvas && layoutState.showWriting && (
-          <ResizableHandle className="w-0 hover:w-1 hover:bg-black/20 transition-all duration-200 bg-transparent" />
+        {/* Resizable Handle between Canvas and Writing */}
+        {layoutState.showCanvas && (layoutState.showWriting || layoutState.showChat) && (
+          <ResizableHandle />
         )}
         
         {/* Writing Area - Middle */}
@@ -125,7 +126,7 @@ export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
                 animate={{ width: "100%", opacity: 1 }}
                 exit={{ width: 0, opacity: 0 }}
                 transition={{ duration: 0.3 }}
-                className="h-full relative border-r border-black/10"
+                className="h-full relative"
               >
                 <Button
                   variant="ghost"
@@ -148,8 +149,9 @@ export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
           )}
         </AnimatePresence>
         
+        {/* Resizable Handle between Writing and Chat */}
         {layoutState.showWriting && layoutState.showChat && (
-          <ResizableHandle className="w-0 hover:w-1 hover:bg-black/20 transition-all duration-200 bg-transparent" />
+          <ResizableHandle />
         )}
         
         {/* Chat Area - Right */}
