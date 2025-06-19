@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -153,6 +152,46 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
     }
   };
 
+  const saveUserMessage = async (content: string) => {
+    try {
+      const { data, error } = await chatApi.saveMessage(projectId, {
+        role: 'user',
+        content: content
+      });
+      
+      if (error) {
+        console.error('Failed to save user message:', error);
+        return null;
+      }
+      
+      console.log('User message saved:', data);
+      return data;
+    } catch (error) {
+      console.error('Error saving user message:', error);
+      return null;
+    }
+  };
+
+  const saveAssistantMessage = async (content: string) => {
+    try {
+      const { data, error } = await chatApi.saveMessage(projectId, {
+        role: 'assistant',
+        content: content
+      });
+      
+      if (error) {
+        console.error('Failed to save assistant message:', error);
+        return null;
+      }
+      
+      console.log('Assistant message saved:', data);
+      return data;
+    } catch (error) {
+      console.error('Error saving assistant message:', error);
+      return null;
+    }
+  };
+
   const parseXMLTags = (content: string) => {
     const newCardRegex = /<new_xhs_card(?:\s+title="([^"]*)")?>([^]*?)<\/new_xhs_card>/g;
     let match;
@@ -206,11 +245,23 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
     setInputValue("");
     setIsLoading(true);
 
+    // Save user message to database first
+    const savedUserMessage = await saveUserMessage(userMessage);
+    if (!savedUserMessage) {
+      toast({
+        title: "保存失败",
+        description: "无法保存用户消息",
+        variant: "destructive"
+      });
+      setIsLoading(false);
+      return;
+    }
+
     const tempUserMessage: StreamingMessage = {
-      id: 'temp-user-' + Date.now(),
+      id: savedUserMessage.id,
       role: 'user',
       content: userMessage,
-      created_at: new Date().toISOString()
+      created_at: savedUserMessage.created_at
     };
     setMessages(prev => [...prev, tempUserMessage]);
 
@@ -234,6 +285,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
       // Track saved data to avoid duplicates
       const savedCanvasItems = new Set<string>();
       const savedInsights = new Set<string>();
+      let fullAssistantContent = '';
 
       await bluechatApi.sendMessageStream(
         projectId,
@@ -245,6 +297,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
           
           // Handle agent_message events for UI
           if (data.event === 'agent_message' && data.answer) {
+            fullAssistantContent += data.answer;
             setMessages(prev => prev.map(msg => 
               msg.id === tempAssistantMessage.id 
                 ? { ...msg, content: msg.content + data.answer }
@@ -323,6 +376,20 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
           }
         }
       );
+
+      // Save assistant message to database after stream completes
+      if (fullAssistantContent.trim()) {
+        const savedAssistantMessage = await saveAssistantMessage(fullAssistantContent);
+        if (savedAssistantMessage) {
+          console.log('Assistant message saved with ID:', savedAssistantMessage.id);
+          // Update the temporary message with real ID
+          setMessages(prev => prev.map(msg => 
+            msg.id === tempAssistantMessage.id 
+              ? { ...msg, id: savedAssistantMessage.id, isStreaming: false }
+              : msg
+          ));
+        }
+      }
 
       // Mark streaming as complete
       setMessages(prev => prev.map(msg => 

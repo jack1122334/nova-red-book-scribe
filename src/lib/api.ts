@@ -252,6 +252,26 @@ export const chatApi = {
     return data || [];
   },
 
+  saveMessage: async (projectId: string, message: { role: string; content: string }) => {
+    const { data, error } = await supabase
+      .from('chat_messages')
+      .insert({
+        project_id: projectId,
+        role: message.role,
+        content: message.content,
+        created_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error saving message:', error);
+      return { data: null, error };
+    }
+
+    return { data, error: null };
+  },
+
   sendMessageStream: async (
     projectId: string, 
     content: string, 
