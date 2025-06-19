@@ -1,4 +1,3 @@
-
 import React, { useState, useImperativeHandle, forwardRef } from 'react';
 import { Grid3X3 } from 'lucide-react';
 import { CanvasGrid } from './CanvasArea/CanvasGrid';
@@ -42,7 +41,6 @@ export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
   const [selectedCanvasItems, setSelectedCanvasItems] = useState<Set<string>>(new Set());
   const [selectedInsights, setSelectedInsights] = useState<Set<string>>(new Set());
   const [keywords, setKeywords] = useState<string[]>([]);
-  const [keywordCardCounts, setKeywordCardCounts] = useState<{[key: string]: number}>({});
 
   useImperativeHandle(ref, () => ({
     deselectItem: (itemId: string) => {
@@ -92,23 +90,39 @@ export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
         });
         
         setCanvasItems(placeholders);
-        setKeywordCardCounts({});
       }
       
       if (data.keyword && data.cards) {
         console.log('Updating cards for keyword:', data.keyword, data.cards);
         
-        const keywordIndex = keywords.indexOf(data.keyword);
-        if (keywordIndex === -1) return;
+        // Find keyword index, handle both quoted and unquoted keywords
+        let keywordIndex = -1;
+        const cleanKeyword = data.keyword.replace(/^["']|["']$/g, ''); // Remove quotes
         
-        // Get current count for this keyword
-        const currentCount = keywordCardCounts[data.keyword] || 0;
+        keywordIndex = keywords.findIndex(keyword => {
+          const cleanExistingKeyword = keyword.replace(/^["']|["']$/g, '');
+          return cleanExistingKeyword === cleanKeyword;
+        });
+        
+        console.log('Keyword lookup:', { 
+          dataKeyword: data.keyword, 
+          cleanKeyword, 
+          keywords, 
+          keywordIndex 
+        });
+        
+        if (keywordIndex === -1) {
+          console.warn('Keyword not found in keywords array:', data.keyword);
+          return;
+        }
         
         setCanvasItems(prev => {
           const newItems = [...prev];
           
           data.cards.forEach((card: any, cardIndex: number) => {
-            const gridPosition = keywordIndex * 3 + (currentCount + cardIndex) % 3;
+            const gridPosition = keywordIndex * 3 + cardIndex;
+            
+            console.log('Placing card at position:', gridPosition, 'for keyword index:', keywordIndex, 'card index:', cardIndex);
             
             if (gridPosition < newItems.length) {
               newItems[gridPosition] = {
@@ -130,14 +144,9 @@ export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
             }
           });
           
+          console.log('Updated canvas items:', newItems);
           return newItems;
         });
-        
-        // Update keyword card count
-        setKeywordCardCounts(prev => ({
-          ...prev,
-          [data.keyword]: currentCount + data.cards.length
-        }));
       }
       
       if (data.type === 'state_info') {
