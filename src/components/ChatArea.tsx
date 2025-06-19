@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -5,7 +6,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Send, Bot, User, Link, Edit3, Check, X, Info } from "lucide-react";
 import { chatApi, bluechatApi } from "@/lib/api";
-import { canvasApi } from "@/lib/canvasApi";
 import { useToast } from "@/hooks/use-toast";
 import { MessageDetailsDialog } from "@/components/MessageDetailsDialog";
 import { ReferenceDisplay } from "@/components/ReferenceDisplay";
@@ -152,46 +152,6 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
     }
   };
 
-  const saveUserMessage = async (content: string) => {
-    try {
-      const { data, error } = await chatApi.saveMessage(projectId, {
-        role: 'user',
-        content: content
-      });
-      
-      if (error) {
-        console.error('Failed to save user message:', error);
-        return null;
-      }
-      
-      console.log('User message saved:', data);
-      return data;
-    } catch (error) {
-      console.error('Error saving user message:', error);
-      return null;
-    }
-  };
-
-  const saveAssistantMessage = async (content: string) => {
-    try {
-      const { data, error } = await chatApi.saveMessage(projectId, {
-        role: 'assistant',
-        content: content
-      });
-      
-      if (error) {
-        console.error('Failed to save assistant message:', error);
-        return null;
-      }
-      
-      console.log('Assistant message saved:', data);
-      return data;
-    } catch (error) {
-      console.error('Error saving assistant message:', error);
-      return null;
-    }
-  };
-
   const parseXMLTags = (content: string) => {
     const newCardRegex = /<new_xhs_card(?:\s+title="([^"]*)")?>([^]*?)<\/new_xhs_card>/g;
     let match;
@@ -245,23 +205,11 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
     setInputValue("");
     setIsLoading(true);
 
-    // Save user message to database first
-    const savedUserMessage = await saveUserMessage(userMessage);
-    if (!savedUserMessage) {
-      toast({
-        title: "保存失败",
-        description: "无法保存用户消息",
-        variant: "destructive"
-      });
-      setIsLoading(false);
-      return;
-    }
-
     const tempUserMessage: StreamingMessage = {
-      id: savedUserMessage.id,
+      id: 'temp-user-' + Date.now(),
       role: 'user',
       content: userMessage,
-      created_at: savedUserMessage.created_at
+      created_at: new Date().toISOString()
     };
     setMessages(prev => [...prev, tempUserMessage]);
 
@@ -282,114 +230,29 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
       const stage = canvasReferences.length > 0 ? 'STAGE_2' : 'STAGE_1';
       const selectedIds = canvasReferences.map(ref => ref.id);
 
-      // Track saved data to avoid duplicates
-      const savedCanvasItems = new Set<string>();
-      const savedInsights = new Set<string>();
-      let fullAssistantContent = '';
-
       await bluechatApi.sendMessageStream(
         projectId,
         userMessage,
         stage,
         selectedIds,
-        async (data: any) => {
+        (data: any) => {
           console.log('ChatArea: Received bluechat data:', data);
           
-          // Handle agent_message events for UI
+          // Handle agent_message events
           if (data.event === 'agent_message' && data.answer) {
-            fullAssistantContent += data.answer;
             setMessages(prev => prev.map(msg => 
               msg.id === tempAssistantMessage.id 
                 ? { ...msg, content: msg.content + data.answer }
                 : msg
             ));
           }
-
-          // Save canvas items to database
-          if (data.keyword && data.cards && Array.isArray(data.cards)) {
-            console.log('Saving canvas items for keyword:', data.keyword);
-            
-            const canvasItemsToSave = data.cards
-              .filter((card: any) => card.id && !savedCanvasItems.has(card.id))
-              .map((card: any) => ({
-                project_id: projectId,
-                external_id: card.id,
-                type: 'canvas' as const,
-                title: card.title || '',
-                content: card.content || '',
-                keyword: data.keyword,
-                author: card.author || '',
-                author_avatar: card.author_avatar || '',
-                like_count: card.like_count || 0,
-                collect_count: card.collect_count || 0,
-                comment_count: card.comment_count || 0,
-                share_count: card.share_count || 0,
-                cover_url: card.cover_url || '',
-                url: card.url || '',
-                platform: 'xiaohongshu',
-                ip_location: card.ip_location || '',
-                tags: card.tags || [],
-                create_time: card.create_time || ''
-              }));
-
-            if (canvasItemsToSave.length > 0) {
-              try {
-                await canvasApi.batchCreateCanvasItems(canvasItemsToSave);
-                // Mark as saved
-                canvasItemsToSave.forEach(item => savedCanvasItems.add(item.external_id));
-                console.log('Canvas items saved successfully');
-              } catch (error) {
-                console.error('Failed to save canvas items:', error);
-              }
-            }
-          }
-
-          // Save insights to database
-          if (data.event === 'insight_generated' && data.insights && Array.isArray(data.insights)) {
-            console.log('Saving insights:', data.insights.length);
-            
-            const insightsToSave = data.insights
-              .filter((insight: any) => insight.id && !savedInsights.has(insight.id))
-              .map((insight: any) => ({
-                project_id: projectId,
-                external_id: insight.id,
-                type: 'insight' as const,
-                title: insight.title || '',
-                content: insight.text || insight.content || ''
-              }));
-
-            if (insightsToSave.length > 0) {
-              try {
-                await canvasApi.batchCreateInsights(insightsToSave);
-                // Mark as saved
-                insightsToSave.forEach(item => savedInsights.add(item.external_id));
-                console.log('Insights saved successfully');
-              } catch (error) {
-                console.error('Failed to save insights:', error);
-              }
-            }
-          }
-
-          // Forward data to CanvasArea for UI updates
+          
+          // Forward canvas data to CanvasArea
           if (onCanvasDataReceived) {
             onCanvasDataReceived(data);
           }
         }
       );
-
-      // Save assistant message to database after stream completes
-      if (fullAssistantContent.trim()) {
-        const savedAssistantMessage = await saveAssistantMessage(fullAssistantContent);
-        if (savedAssistantMessage) {
-          console.log('Assistant message saved with ID:', savedAssistantMessage.id);
-          // Update the temporary message with real ID
-          setMessages(prev => prev.map(msg => 
-            msg.id === tempAssistantMessage.id 
-              ? { ...msg, id: savedAssistantMessage.id, isStreaming: false }
-              : msg
-          ));
-        }
-      }
 
       // Mark streaming as complete
       setMessages(prev => prev.map(msg => 
@@ -403,7 +266,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
       
       toast({
         title: "搜索完成",
-        description: "数据已保存并更新Canvas"
+        description: "Canvas 数据已更新"
       });
       
     } catch (error: any) {

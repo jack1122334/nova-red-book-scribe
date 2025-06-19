@@ -1,10 +1,9 @@
 import React, { useState, useImperativeHandle, forwardRef, useEffect } from 'react';
-import { Grid3X3, AlertCircle } from 'lucide-react';
+import { Grid3X3 } from 'lucide-react';
 import { CanvasGrid } from './CanvasArea/CanvasGrid';
 import { InsightsList } from './CanvasArea/InsightsList';
 import { canvasApi } from '@/lib/canvasApi';
 import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent } from '@/components/ui/card';
 
 export interface CanvasItem {
   id: string;
@@ -159,9 +158,8 @@ export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
     },
     
     processCanvasData: (data: any) => {
-      console.log('Processing canvas data for UI updates:', data);
+      console.log('Processing canvas data:', data);
       
-      // Handle keywords for UI placeholders
       if (data.keywords) {
         console.log('Setting keywords:', data.keywords);
         setKeywords(data.keywords);
@@ -186,95 +184,88 @@ export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
         setCanvasItems(placeholders);
       }
       
-      // Handle canvas items for UI updates (data is already saved to DB in ChatArea)
       if (data.keyword && data.cards) {
-        console.log('Updating UI for cards:', data.keyword, data.cards);
+        console.log('Updating cards for keyword:', data.keyword, data.cards);
         
+        // 标准化关键词匹配逻辑
         const normalizeKeyword = (kw: string) => {
           return kw.replace(/^["'\s]+|["'\s]+$/g, '').trim();
         };
         
         const normalizedDataKeyword = normalizeKeyword(data.keyword);
         
+        // 查找匹配的关键词索引
         let keywordIndex = keywords.findIndex(keyword => {
           const normalizedKeyword = normalizeKeyword(keyword);
+          console.log('Comparing keywords:', { normalizedDataKeyword, normalizedKeyword });
           return normalizedDataKeyword === normalizedKeyword;
         });
         
+        console.log('Keyword matching result:', { 
+          dataKeyword: data.keyword, 
+          normalizedDataKeyword,
+          keywords, 
+          keywordIndex 
+        });
+        
         if (keywordIndex === -1) {
+          console.warn('Keyword not found in keywords array:', data.keyword);
+          // 尝试模糊匹配
           keywordIndex = keywords.findIndex(keyword => {
             const normalizedKeyword = normalizeKeyword(keyword);
             return normalizedKeyword.includes(normalizedDataKeyword) || 
                    normalizedDataKeyword.includes(normalizedKeyword);
           });
+          
+          if (keywordIndex === -1) {
+            console.error('Could not match keyword even with fuzzy matching');
+            return;
+          } else {
+            console.log('Found keyword with fuzzy matching at index:', keywordIndex);
+          }
         }
         
-        if (keywordIndex !== -1) {
-          setCanvasItems(prev => {
-            const newItems = [...prev];
+        setCanvasItems(prev => {
+          const newItems = [...prev];
+          
+          data.cards.forEach((card: any, cardIndex: number) => {
+            const gridPosition = keywordIndex * 3 + cardIndex;
             
-            data.cards.forEach((card: any, cardIndex: number) => {
-              const gridPosition = keywordIndex * 3 + cardIndex;
-              
-              if (gridPosition < newItems.length) {
-                newItems[gridPosition] = {
-                  id: card.id,
-                  type: 'canvas',
-                  title: card.title,
-                  content: card.content || '',
-                  isSelected: false,
-                  isDisabled: false,
-                  keyword: data.keyword,
-                  author: card.author,
-                  like_count: card.like_count,
-                  collect_count: card.collect_count,
-                  comment_count: card.comment_count,
-                  cover_url: card.cover_url,
-                  url: card.url,
-                  isLoading: false
-                };
-              }
-            });
+            console.log('Placing card at position:', gridPosition, 'for keyword index:', keywordIndex, 'card index:', cardIndex);
             
-            return newItems;
+            if (gridPosition < newItems.length) {
+              newItems[gridPosition] = {
+                id: card.id,
+                type: 'canvas',
+                title: card.title,
+                content: card.content || '',
+                isSelected: false,
+                isDisabled: false,
+                keyword: data.keyword,
+                author: card.author,
+                like_count: card.like_count,
+                collect_count: card.collect_count,
+                comment_count: card.comment_count,
+                cover_url: card.cover_url,
+                url: card.url,
+                isLoading: false
+              };
+            }
           });
-        }
+          
+          console.log('Updated canvas items:', newItems.map(item => ({ 
+            id: item.id, 
+            title: item.title, 
+            isLoading: item.isLoading,
+            keyword: item.keyword 
+          })));
+          return newItems;
+        });
       }
       
-      // Handle insights for UI updates (data is already saved to DB in ChatArea)
-      if (data.event === 'insight_generated' && data.insights) {
-        console.log('Updating UI for insights:', data.insights);
-        
-        const newInsights: CanvasItem[] = data.insights.map((insight: any) => ({
-          id: insight.id,
-          type: 'insight',
-          title: insight.title || '',
-          content: insight.text || insight.content || '',
-          isSelected: false,
-          isDisabled: false,
-          isLoading: false
-        }));
-        
-        setInsights(prev => [...prev, ...newInsights]);
-      }
-
-      // Handle stream completion with failure detection
-      if (data.type === 'state_info' || data.event === 'stream_end') {
-        console.log('Stream completed, checking for failed keywords');
-        
-        // Check for failed keywords (still loading after stream end)
-        setCanvasItems(prev => prev.map(item => {
-          if (item.isLoading) {
-            return {
-              ...item,
-              isLoading: false,
-              title: item.keyword ? `${item.keyword} - 未找到内容` : '未找到内容',
-              content: '抱歉，未能找到相关内容。请尝试其他关键词。',
-              isDisabled: true
-            };
-          }
-          return item;
-        }));
+      if (data.type === 'state_info') {
+        console.log('Received state info:', data);
+        // Handle final state information if needed
       }
     }
   }));
@@ -358,16 +349,6 @@ export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
       i.id === itemId ? { ...i, isDisabled: false } : i
     ));
   };
-
-  const renderFailedCard = (item: CanvasItem) => (
-    <Card className="border-2 border-dashed border-red-200 bg-red-50">
-      <CardContent className="p-4 text-center">
-        <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-2" />
-        <p className="text-sm text-red-600 font-medium">{item.title}</p>
-        <p className="text-xs text-red-500 mt-1">{item.content}</p>
-      </CardContent>
-    </Card>
-  );
 
   if (loading) {
     return (
