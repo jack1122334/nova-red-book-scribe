@@ -1,14 +1,9 @@
+
 import { useState, useEffect, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, Feather, Collapse } from "lucide-react";
 import { Project } from "@/pages/Creation";
-import { WritingArea } from "@/components/WritingArea";
-import { ChatArea } from "@/components/ChatArea";
-import { CanvasArea, CanvasItem } from "@/components/CanvasArea";
-import { UserBackgroundIcon } from "@/components/UserBackgroundIcon";
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
-import { LayoutControls } from "@/components/LayoutControls";
-import { motion, AnimatePresence } from "framer-motion";
+import { CanvasItem } from "@/components/CanvasArea";
+import { WorkbenchHeader } from "@/components/WorkbenchHeader";
+import { WorkbenchContent } from "@/components/WorkbenchContent";
 
 interface ProjectWorkbenchProps {
   project: Project | null;
@@ -146,166 +141,34 @@ export const ProjectWorkbench = ({
     }
   };
 
-  const togglePanel = (panel: keyof LayoutState) => {
-    const newState = {
-      ...layoutState,
-      [panel]: !layoutState[panel]
-    };
-    
-    // 至少保留一个布局区域
-    const visiblePanels = Object.values(newState).filter(Boolean).length;
-    if (visiblePanels === 0) {
-      return;
-    }
-    
-    setLayoutState(newState);
-  };
-
-  const getVisiblePanelsCount = () => {
-    return Object.values(layoutState).filter(Boolean).length;
-  };
-
-  const getPanelSize = () => {
-    const visibleCount = getVisiblePanelsCount();
-    if (visibleCount === 1) return 100;
-    if (visibleCount === 2) return 50;
-    return 33.33;
-  };
-
   return (
     <div className="h-screen flex flex-col bg-white">
-      {/* Header */}
-      <header className="px-8 py-4 border-b border-black/10 bg-white">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-6">
-            <Button variant="ghost" size="sm" onClick={onBack} className="text-black hover:text-white hover:bg-black font-serif rounded-xl border-0 shadow-none">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              返回项目
-            </Button>
-            
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-black rounded-xl">
-                <Feather className="w-5 h-5 text-white" />
-              </div>
-              <h1 className="text-xl font-serif font-semibold text-black tracking-tight">
-                {project.title}
-              </h1>
-              <div>
-                <UserBackgroundIcon userBackground={project.user_background} />
-              </div>
-            </div>
-          </div>
-          
-          <LayoutControls layoutState={layoutState} onLayoutChange={setLayoutState} />
-        </div>
-      </header>
+      <WorkbenchHeader 
+        project={project}
+        layoutState={layoutState}
+        onBack={onBack}
+        onLayoutChange={setLayoutState}
+      />
 
-      {/* Main Content */}
-      <div className="flex-1 min-h-0">
-        <ResizablePanelGroup direction="horizontal" className="h-full">
-          {/* Canvas Area - Left */}
-          <AnimatePresence>
-            {layoutState.showCanvas && (
-              <ResizablePanel defaultSize={getPanelSize()} minSize={20} maxSize={50}>
-                <motion.div
-                  initial={{ width: 0, opacity: 0 }}
-                  animate={{ width: "100%", opacity: 1 }}
-                  exit={{ width: 0, opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="h-full relative border-r border-black/10"
-                >
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => togglePanel('showCanvas')}
-                    className="absolute top-2 right-2 z-10 h-6 w-6 p-0 text-black/40 hover:text-black"
-                  >
-                    <Collapse className="w-4 h-4" />
-                  </Button>
-                  <CanvasArea 
-                    ref={canvasAreaRef}
-                    onItemSelect={handleCanvasItemSelect}
-                    onItemDisable={handleCanvasItemDisable}
-                  />
-                </motion.div>
-              </ResizablePanel>
-            )}
-          </AnimatePresence>
-          
-          {layoutState.showCanvas && layoutState.showWriting && (
-            <ResizableHandle className="w-0 hover:w-1 hover:bg-black/20 transition-all duration-200 bg-transparent" />
-          )}
-          
-          {/* Writing Area - Middle */}
-          <AnimatePresence>
-            {layoutState.showWriting && (
-              <ResizablePanel defaultSize={getPanelSize()} minSize={30}>
-                <motion.div
-                  initial={{ width: 0, opacity: 0 }}
-                  animate={{ width: "100%", opacity: 1 }}
-                  exit={{ width: 0, opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="h-full relative border-r border-black/10"
-                >
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => togglePanel('showWriting')}
-                    className="absolute top-2 right-2 z-10 h-6 w-6 p-0 text-black/40 hover:text-black"
-                  >
-                    <Collapse className="w-4 h-4" />
-                  </Button>
-                  <WritingArea 
-                    ref={writingAreaRef} 
-                    projectId={project.id} 
-                    onCardUpdate={handleCardUpdate} 
-                    onCardCreate={handleCardCreate} 
-                    onTextSelect={handleTextSelection} 
-                    onAddReference={handleAddReference} 
-                  />
-                </motion.div>
-              </ResizablePanel>
-            )}
-          </AnimatePresence>
-          
-          {layoutState.showWriting && layoutState.showChat && (
-            <ResizableHandle className="w-0 hover:w-1 hover:bg-black/20 transition-all duration-200 bg-transparent" />
-          )}
-          
-          {/* Chat Area - Right */}
-          <AnimatePresence>
-            {layoutState.showChat && (
-              <ResizablePanel defaultSize={getPanelSize()} minSize={25} maxSize={60}>
-                <motion.div
-                  initial={{ width: 0, opacity: 0 }}
-                  animate={{ width: "100%", opacity: 1 }}
-                  exit={{ width: 0, opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="h-full relative"
-                >
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => togglePanel('showChat')}
-                    className="absolute top-2 right-2 z-10 h-6 w-6 p-0 text-black/40 hover:text-black"
-                  >
-                    <Collapse className="w-4 h-4" />
-                  </Button>
-                  <ChatArea 
-                    ref={chatAreaRef} 
-                    projectId={project.id} 
-                    initialMessage={initialMessage} 
-                    onCardCreated={handleCardCreated} 
-                    onCardUpdated={handleCardUpdated}
-                    canvasReferences={canvasReferences}
-                    onRemoveCanvasReference={handleRemoveCanvasReference}
-                  />
-                </motion.div>
-              </ResizablePanel>
-            )}
-          </AnimatePresence>
-        </ResizablePanelGroup>
-      </div>
+      <WorkbenchContent 
+        project={project}
+        layoutState={layoutState}
+        canvasReferences={canvasReferences}
+        initialMessage={initialMessage}
+        writingAreaRef={writingAreaRef}
+        chatAreaRef={chatAreaRef}
+        canvasAreaRef={canvasAreaRef}
+        onLayoutChange={setLayoutState}
+        onCardCreated={handleCardCreated}
+        onCardUpdated={handleCardUpdated}
+        onTextSelection={handleTextSelection}
+        onCardUpdate={handleCardUpdate}
+        onCardCreate={handleCardCreate}
+        onAddReference={handleAddReference}
+        onCanvasItemSelect={handleCanvasItemSelect}
+        onCanvasItemDisable={handleCanvasItemDisable}
+        onRemoveCanvasReference={handleRemoveCanvasReference}
+      />
     </div>
   );
 };
