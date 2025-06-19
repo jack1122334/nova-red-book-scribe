@@ -1,3 +1,4 @@
+
 import React, { useState, useImperativeHandle, forwardRef } from 'react';
 import { Grid3X3 } from 'lucide-react';
 import { CanvasGrid } from './CanvasArea/CanvasGrid';
@@ -95,25 +96,42 @@ export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
       if (data.keyword && data.cards) {
         console.log('Updating cards for keyword:', data.keyword, data.cards);
         
-        // Find keyword index, handle both quoted and unquoted keywords
-        let keywordIndex = -1;
-        const cleanKeyword = data.keyword.replace(/^["']|["']$/g, ''); // Remove quotes
+        // 标准化关键词匹配逻辑
+        const normalizeKeyword = (kw: string) => {
+          return kw.replace(/^["'\s]+|["'\s]+$/g, '').trim();
+        };
         
-        keywordIndex = keywords.findIndex(keyword => {
-          const cleanExistingKeyword = keyword.replace(/^["']|["']$/g, '');
-          return cleanExistingKeyword === cleanKeyword;
+        const normalizedDataKeyword = normalizeKeyword(data.keyword);
+        
+        // 查找匹配的关键词索引
+        let keywordIndex = keywords.findIndex(keyword => {
+          const normalizedKeyword = normalizeKeyword(keyword);
+          console.log('Comparing keywords:', { normalizedDataKeyword, normalizedKeyword });
+          return normalizedDataKeyword === normalizedKeyword;
         });
         
-        console.log('Keyword lookup:', { 
+        console.log('Keyword matching result:', { 
           dataKeyword: data.keyword, 
-          cleanKeyword, 
+          normalizedDataKeyword,
           keywords, 
           keywordIndex 
         });
         
         if (keywordIndex === -1) {
           console.warn('Keyword not found in keywords array:', data.keyword);
-          return;
+          // 尝试模糊匹配
+          keywordIndex = keywords.findIndex(keyword => {
+            const normalizedKeyword = normalizeKeyword(keyword);
+            return normalizedKeyword.includes(normalizedDataKeyword) || 
+                   normalizedDataKeyword.includes(normalizedKeyword);
+          });
+          
+          if (keywordIndex === -1) {
+            console.error('Could not match keyword even with fuzzy matching');
+            return;
+          } else {
+            console.log('Found keyword with fuzzy matching at index:', keywordIndex);
+          }
         }
         
         setCanvasItems(prev => {
@@ -144,7 +162,12 @@ export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
             }
           });
           
-          console.log('Updated canvas items:', newItems);
+          console.log('Updated canvas items:', newItems.map(item => ({ 
+            id: item.id, 
+            title: item.title, 
+            isLoading: item.isLoading,
+            keyword: item.keyword 
+          })));
           return newItems;
         });
       }
