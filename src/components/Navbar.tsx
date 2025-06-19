@@ -37,20 +37,6 @@ export const Navbar = () => {
             <Link to="/" className="text-xl font-serif font-bold text-stone-900">
               创作工坊
             </Link>
-            <div className="hidden md:flex space-x-4">
-              <Link 
-                to="/" 
-                className="text-stone-600 hover:text-stone-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-              >
-                项目
-              </Link>
-              <Link 
-                to="/profile" 
-                className="text-stone-600 hover:text-stone-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-              >
-                个人资料
-              </Link>
-            </div>
           </div>
 
           <div className="flex items-center space-x-4">

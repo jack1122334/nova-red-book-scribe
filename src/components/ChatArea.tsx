@@ -476,7 +476,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
   return (
     <div className="h-full flex flex-col bg-white">
       {/* Header */}
-      <div className="p-4 border-b border-black/20 bg-white">
+      <div className="p-4 py-[6px] border-b border-black/20 bg-white">
         <h2 className="text-lg font-semibold text-black">Nova</h2>
         <p className="text-sm text-black/60">小红书内容创作助手</p>
       </div>
@@ -584,12 +584,16 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
         ) : (
           <div className="p-4 space-y-6">
             {messages.map(message => (
-              <div key={message.id} className={`flex gap-4 ${message.role === 'user' ? 'justify-end' : ''}`}>
+              <div key={message.id} className={`flex flex-col gap-4 ${message.role === 'user' ? 'justify-end' : ''}`}>
                 {message.role === 'assistant' ? (
                   <>
+                  <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center flex-shrink-0">
-                      <Bot className="w-4 h-4 text-white" />
+                        <Bot className="w-4 h-4 text-white" />
                     </div>
+                    | Nova
+                  </div>
+                    
                     <div className="flex-1 min-w-0 max-w-4xl">
                       <div className="cursor-pointer group relative" onClick={() => handleMessageClick(message)}>
                         {renderStreamingContent(message)}
@@ -612,9 +616,9 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
                         </div>
                       </div>
                     </div>
-                    <div className="w-8 h-8 rounded-full bg-black/20 flex items-center justify-center flex-shrink-0">
+                    {/* <div className="w-8 h-8 rounded-full bg-black/20 flex items-center justify-center flex-shrink-0">
                       <User className="w-4 h-4 text-black/60" />
-                    </div>
+                    </div> */}
                   </>
                 )}
               </div>

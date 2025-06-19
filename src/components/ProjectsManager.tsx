@@ -93,7 +93,7 @@ export const ProjectsManager = ({
         <CardContent>
           <Button 
             onClick={() => setCreateDialogOpen(true)}
-            className="bg-slate-950 hover:bg-slate-800"
+            className="bg-slate-950 text-white hover:bg-slate-800 hover:text-white"
           >
             创建项目
           </Button>

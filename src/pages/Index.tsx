@@ -9,7 +9,7 @@ const Index = () => {
       <FloatingSidebar currentPage="home" />
       <Navbar />
       <div className="max-w-7xl mx-auto py-8 px-4">
-        <ProjectsManager />
+        home
       </div>
     </div>
   );

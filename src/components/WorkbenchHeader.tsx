@@ -31,7 +31,7 @@ export const WorkbenchHeader: React.FC<WorkbenchHeaderProps> = ({
         <div className="flex items-center space-x-6">
           <Button variant="ghost" size="sm" onClick={onBack} className="text-black hover:text-white hover:bg-black font-serif rounded-xl border-0 shadow-none">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            返回项目
+            我的项目
           </Button>
           
           <div className="flex items-center space-x-3">

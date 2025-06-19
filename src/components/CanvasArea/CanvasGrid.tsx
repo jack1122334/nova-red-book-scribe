@@ -33,7 +33,7 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
               item.isDisabled ? 'opacity-30' : ''
             }`}
           >
-            <Card className={`h-full transition-all duration-200 ${
+            <Card className={`h-full transition-all duration-200 overflow-hidden ${
               item.isSelected 
                 ? 'ring-2 ring-black bg-black/5' 
                 : 'hover:shadow-md hover:-translate-y-0.5'
@@ -59,9 +59,12 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
                     </Button>
                   )}
                 </div>
-                <div className="flex-1 flex items-center justify-center">
-                  <span className="text-sm text-center text-black font-serif">
+                <div className="flex-1 flex flex-col">
+                  <span className="text-sm text-black font-serif">
                     {item.title}
+                  </span>
+                  <span className="text-xs text-black/50 font-serif">
+                    {item.content}
                   </span>
                 </div>
               </CardContent>

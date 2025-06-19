@@ -1,10 +1,12 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useLocation } from "react-router-dom";
+import { cn } from "@/lib/utils";
 import { FloatingSidebar } from "@/components/FloatingSidebar";
 import { ProjectsManager } from "@/components/ProjectsManager";
 import { ProjectWorkbench } from "@/components/ProjectWorkbench";
 import { useProjectStore } from "@/stores/projectStore";
+import { Navbar } from "@/components/Navbar";
 
 export type CreationView = "projects" | "workbench";
 
@@ -80,15 +82,17 @@ const Creation = () => {
   return (
     <div className="min-h-screen bg-white rounded-none">
       <FloatingSidebar currentPage="creation" />
-      
-      <div className={currentView === "projects" ? "pl-20" : ""}>
+      <div className={cn("pl-20", currentView === "projects" ? "pl-20" : "")}>
         {currentView === "projects" ? (
-          <ProjectsManager onProjectSelect={handleProjectSelect} />
+          <>
+            <Navbar />
+            <ProjectsManager onProjectSelect={handleProjectSelect} />
+          </>
         ) : (
-          <ProjectWorkbench 
-            project={currentProject} 
-            onBack={handleBackToProjects} 
-            initialMessage={location.state?.initialMessage} 
+          <ProjectWorkbench
+            project={currentProject}
+            onBack={handleBackToProjects}
+            initialMessage={location.state?.initialMessage}
           />
         )}
       </div>

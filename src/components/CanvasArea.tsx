@@ -27,7 +27,7 @@ const mockCanvasItems: CanvasItem[] = Array.from({ length: 9 }, (_, index) => ({
   id: `canvas-${index + 1}`,
   type: 'canvas',
   title: `创意${index + 1}`,
-  content: `创意内容${index + 1}的详细描述`,
+  content: `创意内容${index + 1}的详细描述-的详细描述-的详细描述-的详细描述-的详细描述-的详细描述-的详细描述-的详细描述-的详细描述-的详细描述-的详细描述-的详细描述-的详细描述-的详细描述-的详细描述-`,
   isSelected: false,
   isDisabled: false,
 }));
