@@ -1,10 +1,11 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Check, X, RotateCcw } from "lucide-react";
+import { Check, X, RotateCcw, Heart, Star, MessageCircle } from "lucide-react";
 import { CanvasItem } from "../CanvasArea";
+import { CanvasItemModal } from "./CanvasItemModal";
 
 interface CanvasGridProps {
   items: CanvasItem[];
@@ -25,6 +26,8 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
   onRestore,
   keywords = []
 }) => {
+  const [selectedCard, setSelectedCard] = useState<CanvasItem | null>(null);
+
   // 按关键词分组items，每个关键词对应3个卡片
   const groupedItems = keywords.length > 0 ? 
     keywords.map((keyword, index) => ({
@@ -33,8 +36,18 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
     })) : 
     [{ keyword: '', items }];
 
-  console.log('handle groupedItems', groupedItems);
-  console.log('handle items', items);
+  const formatNumber = (num: number) => {
+    if (num >= 1000) {
+      return (num / 1000).toFixed(1) + 'k';
+    }
+    return num.toString();
+  };
+
+  const handleCardClick = (item: CanvasItem) => {
+    if (!item.isLoading && !item.isDisabled) {
+      setSelectedCard(item);
+    }
+  };
 
   return (
     <div className="relative">
@@ -44,7 +57,7 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
             {/* Keyword Label */}
             {group.keyword && (
               <div className="flex-shrink-0 w-20 flex items-center">
-                <div className="text-sm font-medium text-black/70 font-serif  px-2 py-1 rounded-md">
+                <div className="text-sm font-medium text-black/70 font-serif px-2 py-1 rounded-md">
                   {group.keyword.slice(0, 24)}
                 </div>
               </div>
@@ -59,13 +72,16 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
                     item.isDisabled ? 'opacity-30' : ''
                   }`}
                 >
-                  <Card className={`h-full transition-all duration-500 overflow-hidden ${
-                    item.isSelected 
-                      ? 'ring-2 ring-black bg-black/5' 
-                      : 'hover:shadow-md hover:-translate-y-0.5'
-                  } ${
-                    item.isLoading ? 'animate-pulse' : 'animate-fadeIn'
-                  }`}>
+                  <Card 
+                    className={`h-full transition-all duration-500 overflow-hidden cursor-pointer ${
+                      item.isSelected 
+                        ? 'ring-2 ring-black bg-black/5' 
+                        : 'hover:shadow-md hover:-translate-y-0.5'
+                    } ${
+                      item.isLoading ? 'animate-pulse' : 'animate-fadeIn'
+                    }`}
+                    onClick={() => handleCardClick(item)}
+                  >
                     <CardContent className="p-3 h-full flex flex-col">
                       <div className="flex items-start justify-between mb-2">
                         <Checkbox
@@ -75,13 +91,17 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
                           }
                           disabled={item.isDisabled || item.isLoading}
                           className="flex-shrink-0"
+                          onClick={(e) => e.stopPropagation()}
                         />
                         {item.isDisabled && (
                           <Button
                             size="sm"
                             variant="outline"
                             className="h-5 w-5 p-0 rounded-full hover:bg-green-50 hover:border-green-300"
-                            onClick={() => onRestore(item.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onRestore(item.id);
+                            }}
                           >
                             <RotateCcw className="w-3 h-3" />
                           </Button>
@@ -96,7 +116,7 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
                           </>
                         ) : (
                           <>
-                            <span className="text-sm text-black font-serif mb-1">
+                            <span className="text-sm text-black font-serif mb-1 line-clamp-2">
                               {item.title}
                             </span>
                             {item.author && (
@@ -104,15 +124,28 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
                                 作者: {item.author}
                               </span>
                             )}
-                            {(item.like_count || item.collect_count) && (
-                              <div className="text-xs text-black/40 flex gap-2">
-                                {item.like_count && <span>❤️ {item.like_count}</span>}
-                                {item.collect_count && <span>⭐ {item.collect_count}</span>}
-                              </div>
-                            )}
-                            <span className="text-xs text-black/50 font-serif flex-1">
-                              {item.content}
-                            </span>
+                            <div className="flex-1"></div>
+                            {/* 互动数据 - 固定在右下角 */}
+                            <div className="flex items-center justify-end gap-2 text-xs text-black/60 mt-auto">
+                              {item.like_count && item.like_count > 0 && (
+                                <div className="flex items-center gap-1">
+                                  <Heart className="w-3 h-3 fill-red-400 text-red-400" />
+                                  <span>{formatNumber(item.like_count)}</span>
+                                </div>
+                              )}
+                              {item.collect_count && item.collect_count > 0 && (
+                                <div className="flex items-center gap-1">
+                                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                  <span>{formatNumber(item.collect_count)}</span>
+                                </div>
+                              )}
+                              {item.comment_count && item.comment_count > 0 && (
+                                <div className="flex items-center gap-1">
+                                  <MessageCircle className="w-3 h-3 text-blue-400" />
+                                  <span>{formatNumber(item.comment_count)}</span>
+                                </div>
+                              )}
+                            </div>
                           </>
                         )}
                       </div>
@@ -146,6 +179,13 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
           </Button>
         </div>
       )}
+
+      {/* Canvas Item Modal */}
+      <CanvasItemModal
+        item={selectedCard}
+        open={!!selectedCard}
+        onClose={() => setSelectedCard(null)}
+      />
     </div>
   );
 };
