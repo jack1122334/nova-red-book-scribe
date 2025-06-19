@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -228,6 +229,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
       console.log('ChatArea: Sending message with references:', references);
       console.log('ChatArea: Pending system messages:', pendingSystemMessages);
 
+      // ChatArea 使用 chat-dify 函数进行对话
       await chatApi.sendMessageStream(
         projectId, 
         userMessage, 

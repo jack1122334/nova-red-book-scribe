@@ -1,8 +1,9 @@
+
 import React, { useState, useImperativeHandle, forwardRef, useEffect } from 'react';
 import { Grid3X3 } from 'lucide-react';
 import { CanvasGrid } from './CanvasArea/CanvasGrid';
 import { InsightsList } from './CanvasArea/InsightsList';
-import { bluechatApi as apiBluechat } from '@/lib/api';
+import { bluechatApi } from '@/lib/api';
 import { BluechatCard } from '@/lib/bluechatApi';
 
 export interface CanvasItem {
@@ -74,22 +75,23 @@ export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
   const handleSearch = async (query: string) => {
     if (!query.trim()) return;
 
-    console.log('Starting canvas search with query:', query);
+    console.log('CanvasArea: Starting canvas search with query:', query);
     setIsLoading(true);
     setCanvasItems([]);
     setKeywords([]);
     setLoadingKeywords(new Set());
 
     try {
-      await apiBluechat.searchCanvas(
+      // CanvasArea 使用 chat-bluechat 函数进行搜索
+      await bluechatApi.searchCanvas(
         query.trim(),
         projectId,
         selectedIds,
         (response) => {
-          console.log('Received response:', response);
+          console.log('CanvasArea: Received bluechat response:', response);
 
           if ('keywords' in response) {
-            console.log('Setting keywords:', response.keywords);
+            console.log('CanvasArea: Setting keywords:', response.keywords);
             setKeywords(response.keywords);
             setLoadingKeywords(new Set(response.keywords));
             
@@ -111,7 +113,7 @@ export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
             setCanvasItems(emptyItems);
           } 
           else if ('keyword' in response && 'cards' in response) {
-            console.log('Processing cards for keyword:', response.keyword);
+            console.log('CanvasArea: Processing cards for keyword:', response.keyword);
             setLoadingKeywords(prev => {
               const newSet = new Set(prev);
               newSet.delete(response.keyword);
@@ -145,13 +147,13 @@ export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
             });
           }
           else if ('type' in response && response.type === 'state_info') {
-            console.log('Received state info:', response);
+            console.log('CanvasArea: Received state info:', response);
             // 处理状态信息，可以用于更新UI状态
           }
         }
       );
     } catch (error) {
-      console.error('Error in canvas search:', error);
+      console.error('CanvasArea: Error in canvas search:', error);
     } finally {
       setIsLoading(false);
       setLoadingKeywords(new Set());
