@@ -5,9 +5,10 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/h
 
 interface UserBackgroundIconProps {
   userBackground: any;
+  size?: 'sm' | 'md' | 'lg';
 }
 
-export const UserBackgroundIcon = ({ userBackground }: UserBackgroundIconProps) => {
+export const UserBackgroundIcon = ({ userBackground, size = 'md' }: UserBackgroundIconProps) => {
   // Add debugging
   console.log('UserBackgroundIcon - userBackground:', userBackground);
   
@@ -56,11 +57,24 @@ export const UserBackgroundIcon = ({ userBackground }: UserBackgroundIconProps) 
 
   console.log('UserBackgroundIcon - Rendering with', backgroundItems.length, 'items');
 
+  // Define size classes
+  const sizeClasses = {
+    sm: 'p-2 w-5 h-5',
+    md: 'p-2 w-6 h-6', 
+    lg: 'p-3 w-7 h-7'
+  };
+
+  const iconSizeClasses = {
+    sm: 'w-4 h-4',
+    md: 'w-5 h-5',
+    lg: 'w-6 h-6'
+  };
+
   return (
     <HoverCard>
       <HoverCardTrigger asChild>
-        <div className="p-2 bg-black/10 rounded-xl cursor-pointer hover:bg-black/20 transition-colors">
-          <User className="w-5 h-5 text-black" />
+        <div className={`bg-black/10 rounded-xl cursor-pointer hover:bg-black/20 transition-colors ${sizeClasses[size]}`}>
+          <User className={`text-black ${iconSizeClasses[size]}`} />
         </div>
       </HoverCardTrigger>
       <HoverCardContent className="w-80" side="right">
