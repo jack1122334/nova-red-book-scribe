@@ -17,15 +17,13 @@ interface WorkbenchHeaderProps {
   layoutState: LayoutState;
   onBack: () => void;
   onLayoutChange: (state: LayoutState) => void;
-  onUserToggleDraft: (closed: boolean) => void;
 }
 
 export const WorkbenchHeader: React.FC<WorkbenchHeaderProps> = ({
   project,
   layoutState,
   onBack,
-  onLayoutChange,
-  onUserToggleDraft
+  onLayoutChange
 }) => {
   return (
     <header className="px-8 py-4 border-b border-black/10 bg-white">
@@ -49,11 +47,7 @@ export const WorkbenchHeader: React.FC<WorkbenchHeaderProps> = ({
           </div>
         </div>
         
-        <LayoutControls 
-          layoutState={layoutState} 
-          onLayoutChange={onLayoutChange} 
-          onUserToggleDraft={onUserToggleDraft}
-        />
+        <LayoutControls layoutState={layoutState} onLayoutChange={onLayoutChange} />
       </div>
     </header>
   );

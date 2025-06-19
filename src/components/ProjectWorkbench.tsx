@@ -29,7 +29,7 @@ export const ProjectWorkbench = ({
   const canvasAreaRef = useRef<any>(null);
   const [canvasReferences, setCanvasReferences] = useState<CanvasItem[]>([]);
   
-  const { hasCanvasData, hasDraftData, draftCount, userClosedDraft, setHasDraftData, setUserClosedDraft } = useProjectData(project?.id);
+  const { hasCanvasData, hasDraftData, setHasDraftData } = useProjectData(project?.id);
   
   const [layoutState, setLayoutState] = useState<LayoutState>({
     showCanvas: true,
@@ -37,29 +37,22 @@ export const ProjectWorkbench = ({
     showChat: true
   });
 
-  // Set default layout based on data state and user preferences
+  // 根据数据状态设置默认布局
   useEffect(() => {
     const defaultLayout = {
       showCanvas: hasCanvasData,
-      showWriting: hasDraftData && !userClosedDraft, // Respect user's manual close action
-      showChat: true // Agent always defaults to show
+      showWriting: hasDraftData,
+      showChat: true // Agent 默认显示
     };
     
-    // Ensure at least one area is visible
+    // 至少保留一个区域
     const visibleCount = Object.values(defaultLayout).filter(Boolean).length;
     if (visibleCount === 0) {
       defaultLayout.showChat = true;
     }
     
     setLayoutState(defaultLayout);
-  }, [hasCanvasData, hasDraftData, userClosedDraft]);
-
-  // When draft count increases and user hasn't manually closed it, expand draft area
-  useEffect(() => {
-    if (hasDraftData && !userClosedDraft && !layoutState.showWriting) {
-      setLayoutState(prev => ({ ...prev, showWriting: true }));
-    }
-  }, [draftCount, hasDraftData, userClosedDraft, layoutState.showWriting]);
+  }, [hasCanvasData, hasDraftData]);
 
   const handlers = useProjectHandlers({
     writingAreaRef,
@@ -69,8 +62,7 @@ export const ProjectWorkbench = ({
     setLayoutState,
     setHasDraftData,
     canvasReferences,
-    setCanvasReferences,
-    setUserClosedDraft
+    setCanvasReferences
   });
 
   if (!project) return null;
@@ -82,7 +74,6 @@ export const ProjectWorkbench = ({
         layoutState={layoutState}
         onBack={onBack}
         onLayoutChange={setLayoutState}
-        onUserToggleDraft={setUserClosedDraft}
       />
 
       <WorkbenchContent 
@@ -94,16 +85,7 @@ export const ProjectWorkbench = ({
         chatAreaRef={chatAreaRef}
         canvasAreaRef={canvasAreaRef}
         onLayoutChange={setLayoutState}
-        onCardCreated={handlers.handleCardCreated}
-        onCardUpdated={handlers.handleCardUpdated}
-        onTextSelection={handlers.handleTextSelection}
-        onCardUpdate={handlers.handleCardUpdate}
-        onCardCreate={handlers.handleCardCreate}
-        onAddReference={handlers.handleAddReference}
-        onCanvasItemSelect={handlers.handleCanvasItemSelect}
-        onCanvasItemDisable={handlers.handleCanvasItemDisable}
-        onRemoveCanvasReference={handlers.handleRemoveCanvasReference}
-        onUserToggleDraft={setUserClosedDraft}
+        {...handlers}
       />
     </div>
   );

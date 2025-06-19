@@ -33,7 +33,6 @@ interface WorkbenchContentProps {
   onCanvasItemSelect: (item: CanvasItem) => void;
   onCanvasItemDisable: (itemId: string) => void;
   onRemoveCanvasReference: (itemId: string) => void;
-  onUserToggleDraft: (closed: boolean) => void;
 }
 
 export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
@@ -53,8 +52,7 @@ export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
   onAddReference,
   onCanvasItemSelect,
   onCanvasItemDisable,
-  onRemoveCanvasReference,
-  onUserToggleDraft
+  onRemoveCanvasReference
 }) => {
   const togglePanel = (panel: keyof LayoutState) => {
     const newState = {
@@ -66,11 +64,6 @@ export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
     const visiblePanels = Object.values(newState).filter(Boolean).length;
     if (visiblePanels === 0) {
       return;
-    }
-    
-    // Track when user manually closes the draft area
-    if (panel === 'showWriting') {
-      onUserToggleDraft(!newState.showWriting);
     }
     
     onLayoutChange(newState);
@@ -87,126 +80,111 @@ export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
     return 33.33;
   };
 
-  // Create an array of visible panels to ensure proper resizable handle placement
-  const visiblePanels = [];
-  
-  if (layoutState.showCanvas) {
-    visiblePanels.push({
-      key: 'canvas',
-      component: (
-        <motion.div
-          key="canvas"
-          initial={{ width: 0, opacity: 0 }}
-          animate={{ width: "100%", opacity: 1 }}
-          exit={{ width: 0, opacity: 0 }}
-          transition={{ duration: 0.3 }}
-          className="h-full relative"
-        >
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => togglePanel('showCanvas')}
-            className="absolute top-2 right-2 z-10 h-6 w-6 p-0 text-black/40 hover:text-black"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          <CanvasArea 
-            ref={canvasAreaRef}
-            onItemSelect={onCanvasItemSelect}
-            onItemDisable={onCanvasItemDisable}
-          />
-        </motion.div>
-      )
-    });
-  }
-
-  if (layoutState.showWriting) {
-    visiblePanels.push({
-      key: 'writing',
-      component: (
-        <motion.div
-          key="writing"
-          initial={{ width: 0, opacity: 0 }}
-          animate={{ width: "100%", opacity: 1 }}
-          exit={{ width: 0, opacity: 0 }}
-          transition={{ duration: 0.3 }}
-          className="h-full relative"
-        >
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => togglePanel('showWriting')}
-            className="absolute top-2 right-2 z-10 h-6 w-6 p-0 text-black/40 hover:text-black"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          <WritingArea 
-            ref={writingAreaRef} 
-            projectId={project.id} 
-            onCardUpdate={onCardUpdate} 
-            onCardCreate={onCardCreate} 
-            onTextSelect={onTextSelection} 
-            onAddReference={onAddReference} 
-          />
-        </motion.div>
-      )
-    });
-  }
-
-  if (layoutState.showChat) {
-    visiblePanels.push({
-      key: 'chat',
-      component: (
-        <motion.div
-          key="chat"
-          initial={{ width: 0, opacity: 0 }}
-          animate={{ width: "100%", opacity: 1 }}
-          exit={{ width: 0, opacity: 0 }}
-          transition={{ duration: 0.3 }}
-          className="h-full relative"
-        >
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => togglePanel('showChat')}
-            className="absolute top-2 right-2 z-10 h-6 w-6 p-0 text-black/40 hover:text-black"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          <ChatArea 
-            ref={chatAreaRef} 
-            projectId={project.id} 
-            initialMessage={initialMessage} 
-            onCardCreated={onCardCreated} 
-            onCardUpdated={onCardUpdated}
-            canvasReferences={canvasReferences}
-            onRemoveCanvasReference={onRemoveCanvasReference}
-          />
-        </motion.div>
-      )
-    });
-  }
-
   return (
     <div className="flex-1 min-h-0">
       <ResizablePanelGroup direction="horizontal" className="h-full">
-        <AnimatePresence mode="wait">
-          {visiblePanels.map((panel, index) => (
-            <React.Fragment key={panel.key}>
-              <ResizablePanel 
-                defaultSize={getPanelSize()} 
-                minSize={20} 
-                maxSize={index === 0 ? 50 : (index === visiblePanels.length - 1 ? 60 : undefined)}
+        {/* Canvas Area - Left */}
+        <AnimatePresence>
+          {layoutState.showCanvas && (
+            <ResizablePanel defaultSize={getPanelSize()} minSize={20} maxSize={50}>
+              <motion.div
+                initial={{ width: 0, opacity: 0 }}
+                animate={{ width: "100%", opacity: 1 }}
+                exit={{ width: 0, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="h-full relative"
               >
-                {panel.component}
-              </ResizablePanel>
-              
-              {/* Add resizable handle between panels, but not after the last one */}
-              {index < visiblePanels.length - 1 && (
-                <ResizableHandle />
-              )}
-            </React.Fragment>
-          ))}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => togglePanel('showCanvas')}
+                  className="absolute top-2 right-2 z-10 h-6 w-6 p-0 text-black/40 hover:text-black"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <CanvasArea 
+                  ref={canvasAreaRef}
+                  onItemSelect={onCanvasItemSelect}
+                  onItemDisable={onCanvasItemDisable}
+                />
+              </motion.div>
+            </ResizablePanel>
+          )}
+        </AnimatePresence>
+        
+        {/* Resizable Handle between Canvas and Writing */}
+        {layoutState.showCanvas && (layoutState.showWriting || layoutState.showChat) && (
+          <ResizableHandle />
+        )}
+        
+        {/* Writing Area - Middle */}
+        <AnimatePresence>
+          {layoutState.showWriting && (
+            <ResizablePanel defaultSize={getPanelSize()} minSize={30}>
+              <motion.div
+                initial={{ width: 0, opacity: 0 }}
+                animate={{ width: "100%", opacity: 1 }}
+                exit={{ width: 0, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="h-full relative"
+              >
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => togglePanel('showWriting')}
+                  className="absolute top-2 right-2 z-10 h-6 w-6 p-0 text-black/40 hover:text-black"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <WritingArea 
+                  ref={writingAreaRef} 
+                  projectId={project.id} 
+                  onCardUpdate={onCardUpdate} 
+                  onCardCreate={onCardCreate} 
+                  onTextSelect={onTextSelection} 
+                  onAddReference={onAddReference} 
+                />
+              </motion.div>
+            </ResizablePanel>
+          )}
+        </AnimatePresence>
+        
+        {/* Resizable Handle between Writing and Chat */}
+        {layoutState.showWriting && layoutState.showChat && (
+          <ResizableHandle />
+        )}
+        
+        {/* Chat Area - Right */}
+        <AnimatePresence>
+          {layoutState.showChat && (
+            <ResizablePanel defaultSize={getPanelSize()} minSize={25} maxSize={60}>
+              <motion.div
+                initial={{ width: 0, opacity: 0 }}
+                animate={{ width: "100%", opacity: 1 }}
+                exit={{ width: 0, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="h-full relative"
+              >
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => togglePanel('showChat')}
+                  className="absolute top-2 right-2 z-10 h-6 w-6 p-0 text-black/40 hover:text-black"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <ChatArea 
+                  ref={chatAreaRef} 
+                  projectId={project.id} 
+                  initialMessage={initialMessage} 
+                  onCardCreated={onCardCreated} 
+                  onCardUpdated={onCardUpdated}
+                  canvasReferences={canvasReferences}
+                  onRemoveCanvasReference={onRemoveCanvasReference}
+                />
+              </motion.div>
+            </ResizablePanel>
+          )}
         </AnimatePresence>
       </ResizablePanelGroup>
     </div>
