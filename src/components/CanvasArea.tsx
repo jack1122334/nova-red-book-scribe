@@ -242,11 +242,11 @@ export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
             <h3 className="font-medium text-black font-serif">Canvas</h3>
             {keywords.length > 0 && (
               <span className="text-xs text-black/50">
-                ({keywords.join(', ')})
+                ({keywords.map((keyword) => keyword.slice(0, 24)).join(", ")})
               </span>
             )}
           </div>
-          
+
           <CanvasGrid
             items={canvasItems}
             selectedItems={selectedCanvasItems}
@@ -254,13 +254,14 @@ export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
             onBatchSelect={handleCanvasBatchSelect}
             onBatchDisable={handleCanvasBatchDisable}
             onRestore={handleCanvasRestore}
+            keywords={keywords}
           />
         </div>
 
         {/* Insights Section */}
         <div>
           <h3 className="font-medium text-black font-serif mb-4">Insights</h3>
-          
+
           <InsightsList
             insights={insights}
             selectedInsights={selectedInsights}

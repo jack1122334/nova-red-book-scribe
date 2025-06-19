@@ -8,6 +8,13 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    proxy: {
+      '/api/bluechat': {
+        target: 'http://172.22.45.74:8000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/bluechat/, '/api/v1/bluechat'),
+      },
+    },
   },
   plugins: [
     react(),

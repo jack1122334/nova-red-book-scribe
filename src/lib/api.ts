@@ -1,10 +1,14 @@
 import { supabase } from '@/integrations/supabase/client';
-import { Database } from '@/integrations/supabase/types';
+import { Database, Json } from '@/integrations/supabase/types';
 
 type Project = Database['public']['Tables']['projects']['Row'];
 type Card = Database['public']['Tables']['cards']['Row'];
 type ChatMessage = Database['public']['Tables']['chat_messages']['Row'];
 type UserBackgroundCard = Database['public']['Tables']['user_background_cards']['Row'];
+
+// 定义更具体的类型
+type Reference = Record<string, unknown>;
+type StreamEvent = Record<string, unknown>;
 
 export const projectsApi = {
   async list(): Promise<Project[]> {
@@ -38,7 +42,7 @@ export const projectsApi = {
     return data;
   },
 
-  async create(project: { title: string; user_background?: any }): Promise<Project> {
+  async create(project: { title: string; user_background?: Json }): Promise<Project> {
     console.log('API: Creating project:', project);
     const user = await supabase.auth.getUser();
     if (!user.data.user) {
@@ -63,7 +67,7 @@ export const projectsApi = {
     return data;
   },
 
-  async update(id: string, updates: { title?: string; user_background?: any }): Promise<Project> {
+  async update(id: string, updates: { title?: string; user_background?: Json }): Promise<Project> {
     console.log('API: Updating project:', id, updates);
     const { data, error } = await supabase
       .from('projects')
@@ -210,9 +214,9 @@ export const chatApi = {
   sendMessageStream: async (
     projectId: string, 
     content: string, 
-    references: any[] = [], 
+    references: Reference[] = [], 
     systemMessages: string[] = [],
-    onEvent: (event: any) => void
+    onEvent: (event: StreamEvent) => void
   ) => {
     console.log('API: Starting stream request to chat-dify function');
     
@@ -274,7 +278,7 @@ export const chatApi = {
     }
   },
 
-  sendMessage: async (projectId: string, content: string, references: any[] = [], systemMessages: string[] = []) => {
+  sendMessage: async (projectId: string, content: string, references: Reference[] = [], systemMessages: string[] = []) => {
     const { data, error } = await supabase.functions.invoke('chat-dify', {
       body: {
         project_id: projectId,
@@ -295,18 +299,32 @@ export const bluechatApi = {
     query: string,
     stage: 'STAGE_1' | 'STAGE_2',
     selectedIds: string[] = [],
-    onEvent: (event: any) => void
+    onEvent: (event: StreamEvent) => void
   ) => {
     console.log('API: Starting bluechat stream request');
     
-    const response = await fetch(`https://evpczvwygelrvxzfdcgv.supabase.co/functions/v1/chat-bluechat`, {
+    // 在开发环境使用代理，生产环境使用Supabase Edge Function
+    const isDevelopment = import.meta.env.DEV;
+    const apiUrl = isDevelopment 
+      ? '/api/bluechat'
+      : 'https://evpczvwygelrvxzfdcgv.supabase.co/functions/v1/chat-bluechat';
+    
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'accept': 'application/json',
         'Content-Type': 'application/json',
         'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2cGN6dnd5Z2VscnZ4emZkY2d2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk4OTU3ODUsImV4cCI6MjA2NTQ3MTc4NX0.y7uP6NVj48UAKnMWcB_5LltTVCVFuSeo7xmrCEHlp1I`,
       },
-      body: JSON.stringify({
+      body: JSON.stringify(isDevelopment ? {
+        stage,
+        query,
+        user_id: "123",
+        session_id: projectId,
+        limit: 3,
+        ids: selectedIds,
+        count: 6
+      } : {
         project_id: projectId,
         query,
         stage,
