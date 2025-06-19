@@ -10,6 +10,47 @@ type UserBackgroundCard = Database['public']['Tables']['user_background_cards'][
 type Reference = Record<string, unknown>;
 type StreamEvent = Record<string, unknown>;
 
+// 辅助函数：处理缓存的数据行
+const processBufferLines = (buffer: string, onEvent: (event: StreamEvent) => void) => {
+  const lines = buffer.split('\n');
+  for (const line of lines) {
+    if (line.startsWith('data: ')) {
+      try {
+        const eventData = JSON.parse(line.slice(6));
+        console.log('API: Received buffered event:', eventData.event, eventData);
+        onEvent(eventData);
+      } catch (parseError) {
+        console.warn('API: Failed to parse buffered event:', line, parseError);
+      }
+    }
+  }
+};
+
+// 辅助函数：处理bluechat缓存的数据行
+const processBluechatBufferLines = (buffer: string, onEvent: (event: StreamEvent) => void) => {
+  const lines = buffer.split('\n');
+  for (const line of lines) {
+    if (line.startsWith('data: ')) {
+      const dataContent = line.slice(6).trim();
+      if (dataContent === '[DONE]') {
+        console.log('API: Stream completed');
+        continue;
+      }
+      if (dataContent === '') {
+        continue;
+      }
+      
+      try {
+        const eventData = JSON.parse(dataContent);
+        console.log('API: Received buffered bluechat event:', eventData);
+        onEvent(eventData);
+      } catch (parseError) {
+        console.warn('API: Failed to parse buffered bluechat event:', line, parseError);
+      }
+    }
+  }
+};
+
 export const projectsApi = {
   async list(): Promise<Project[]> {
     console.log('API: Fetching projects...');
@@ -246,18 +287,28 @@ export const chatApi = {
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
+    let buffer = ''; // 用于缓存不完整的数据
 
     try {
       while (true) {
         const { done, value } = await reader.read();
         if (done) {
           console.log('API: Stream reading completed');
+          // 处理剩余的buffer数据
+          if (buffer.trim()) {
+            processBufferLines(buffer, onEvent);
+          }
           break;
         }
 
         const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
+        buffer += chunk; // 将新数据添加到buffer
 
+        // 按行分割，但保留最后一行（可能不完整）
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || ''; // 保留最后一行作为buffer
+
+        // 处理完整的行
         for (const line of lines) {
           if (line.startsWith('data: ')) {
             try {
@@ -344,18 +395,28 @@ export const bluechatApi = {
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
+    let buffer = ''; // 用于缓存不完整的数据
 
     try {
       while (true) {
         const { done, value } = await reader.read();
         if (done) {
           console.log('API: Bluechat stream reading completed');
+          // 处理剩余的buffer数据
+          if (buffer.trim()) {
+            processBluechatBufferLines(buffer, onEvent);
+          }
           break;
         }
 
         const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
+        buffer += chunk; // 将新数据添加到buffer
 
+        // 按行分割，但保留最后一行（可能不完整）
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || ''; // 保留最后一行作为buffer
+
+        // 处理完整的行
         for (const line of lines) {
           if (line.startsWith('data: ')) {
             const dataContent = line.slice(6).trim();
