@@ -18,6 +18,7 @@ interface ChatAreaProps {
   onCardUpdated: (cardTitle: string, content: string) => Promise<void>;
   canvasReferences?: CanvasItem[];
   onRemoveCanvasReference?: (itemId: string) => void;
+  onCanvasDataReceived?: (data: any) => void;
 }
 
 interface ChatMessage {
@@ -77,7 +78,8 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
   onCardCreated,
   onCardUpdated,
   canvasReferences = [],
-  onRemoveCanvasReference
+  onRemoveCanvasReference,
+  onCanvasDataReceived
 }, ref) => {
   const [messages, setMessages] = useState<StreamingMessage[]>([]);
   const [inputValue, setInputValue] = useState("");
@@ -226,9 +228,9 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
           console.log('ChatArea: Received bluechat data:', data);
           
           // Forward canvas data to CanvasArea
-          // if (onCanvasDataReceived) {
-          //   onCanvasDataReceived(data);
-          // }
+          if (onCanvasDataReceived) {
+            onCanvasDataReceived(data);
+          }
         }
       );
 
