@@ -33,10 +33,12 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
               item.isDisabled ? 'opacity-30' : ''
             }`}
           >
-            <Card className={`h-full transition-all duration-200 overflow-hidden ${
+            <Card className={`h-full transition-all duration-500 overflow-hidden ${
               item.isSelected 
                 ? 'ring-2 ring-black bg-black/5' 
                 : 'hover:shadow-md hover:-translate-y-0.5'
+            } ${
+              item.isLoading ? 'animate-pulse' : 'animate-fadeIn'
             }`}>
               <CardContent className="p-3 h-full flex flex-col">
                 <div className="flex items-start justify-between mb-2">
@@ -45,7 +47,7 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
                     onCheckedChange={(checked) => 
                       onCheckboxChange(item.id, checked as boolean)
                     }
-                    disabled={item.isDisabled}
+                    disabled={item.isDisabled || item.isLoading}
                     className="flex-shrink-0"
                   />
                   {item.isDisabled && (
@@ -59,13 +61,34 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
                     </Button>
                   )}
                 </div>
+                
                 <div className="flex-1 flex flex-col">
-                  <span className="text-sm text-black font-serif">
-                    {item.title}
-                  </span>
-                  <span className="text-xs text-black/50 font-serif">
-                    {item.content}
-                  </span>
+                  {item.isLoading ? (
+                    <>
+                      <div className="h-4 bg-gray-200 rounded animate-pulse mb-2"></div>
+                      <div className="h-3 bg-gray-100 rounded animate-pulse"></div>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-sm text-black font-serif mb-1">
+                        {item.title}
+                      </span>
+                      {item.author && (
+                        <span className="text-xs text-black/50 font-serif mb-1">
+                          作者: {item.author}
+                        </span>
+                      )}
+                      {(item.like_count || item.collect_count) && (
+                        <div className="text-xs text-black/40 flex gap-2">
+                          {item.like_count && <span>❤️ {item.like_count}</span>}
+                          {item.collect_count && <span>⭐ {item.collect_count}</span>}
+                        </div>
+                      )}
+                      <span className="text-xs text-black/50 font-serif flex-1">
+                        {item.content}
+                      </span>
+                    </>
+                  )}
                 </div>
               </CardContent>
             </Card>

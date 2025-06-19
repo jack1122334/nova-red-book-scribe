@@ -4,7 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Send, Bot, User, Link, Edit3, Check, X, Info } from "lucide-react";
-import { chatApi } from "@/lib/api";
+import { chatApi, bluechatApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { MessageDetailsDialog } from "@/components/MessageDetailsDialog";
 import { ReferenceDisplay } from "@/components/ReferenceDisplay";
@@ -210,99 +210,25 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
     };
     setMessages(prev => [...prev, tempUserMessage]);
 
-    const streamingAssistantMessage: StreamingMessage = {
-      id: 'temp-assistant-' + Date.now(),
-      role: 'assistant',
-      content: '',
-      thoughts: [],
-      toolCalls: [],
-      isStreaming: true,
-      created_at: new Date().toISOString()
-    };
-    
-    setMessages(prev => [...prev, streamingAssistantMessage]);
-
     try {
-      console.log('ChatArea: Sending message with references:', references);
-      console.log('ChatArea: Pending system messages:', pendingSystemMessages);
+      console.log('ChatArea: Sending message to bluechat');
 
-      await chatApi.sendMessageStream(
-        projectId, 
-        userMessage, 
-        references, 
-        pendingSystemMessages,
-        (event: StreamingEvent) => {
-          console.log('ChatArea: Received streaming event:', event.event, event);
+      // Determine stage based on references
+      const stage = canvasReferences.length > 0 ? 'STAGE_2' : 'STAGE_1';
+      const selectedIds = canvasReferences.map(ref => ref.id);
+
+      await bluechatApi.sendMessageStream(
+        projectId,
+        userMessage,
+        stage,
+        selectedIds,
+        (data: any) => {
+          console.log('ChatArea: Received bluechat data:', data);
           
-          setMessages(prev => prev.map(msg => {
-            if (msg.id === streamingAssistantMessage.id) {
-              const updated = { ...msg };
-              
-              switch (event.event) {
-                case 'agent_thought':
-                  if (event.thought) {
-                    console.log('ChatArea: Adding Dify thought:', event.thought);
-                    updated.thoughts = [...(updated.thoughts || []), event.thought];
-                  }
-                  
-                  if (event.tool && event.tool_input) {
-                    console.log('ChatArea: Processing tool call:', {
-                      id: event.id,
-                      tool: event.tool,
-                      tool_input: event.tool_input,
-                      observation: event.observation,
-                      position: event.position
-                    });
-
-                    const existingToolCalls = updated.toolCalls || [];
-                    const toolCallIndex = existingToolCalls.findIndex(tc => tc.id === event.id);
-                    
-                    const toolCall: DifyToolCall = {
-                      id: event.id,
-                      tool: event.tool,
-                      tool_input: event.tool_input,
-                      tool_labels: event.tool_labels || {},
-                      observation: event.observation,
-                      position: event.position
-                    };
-
-                    if (toolCallIndex >= 0) {
-                      updated.toolCalls = existingToolCalls.map((tc, index) => 
-                        index === toolCallIndex ? { ...tc, ...toolCall } : tc
-                      );
-                    } else {
-                      updated.toolCalls = [...existingToolCalls, toolCall];
-                    }
-                  }
-                  
-                  if (event.observation && event.id && !event.tool) {
-                    console.log('ChatArea: Updating tool call observation:', event.id, event.observation);
-                    const existingToolCalls = updated.toolCalls || [];
-                    updated.toolCalls = existingToolCalls.map(tc => 
-                      tc.id === event.id ? { ...tc, observation: event.observation } : tc
-                    );
-                  }
-                  break;
-                  
-                case 'agent_message':
-                case 'message':
-                  if (event.answer) {
-                    console.log('ChatArea: Adding answer chunk:', event.answer);
-                    updated.content += event.answer;
-                  }
-                  break;
-                  
-                case 'message_end':
-                  console.log('ChatArea: Message ended, cleaning up XML tags');
-                  updated.isStreaming = false;
-                  updated.content = parseXMLTags(updated.content);
-                  break;
-              }
-              
-              return updated;
-            }
-            return msg;
-          }));
+          // Forward canvas data to CanvasArea
+          // if (onCanvasDataReceived) {
+          //   onCanvasDataReceived(data);
+          // }
         }
       );
 
@@ -310,8 +236,8 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
       setPendingSystemMessages([]);
       
       toast({
-        title: "消息发送成功",
-        description: "AI 已回复您的消息"
+        title: "搜索完成",
+        description: "Canvas 数据已更新"
       });
       
     } catch (error: any) {
@@ -321,7 +247,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
         description: error.message || "无法发送消息，请重试",
         variant: "destructive"
       });
-      setMessages(prev => prev.slice(0, -2));
+      setMessages(prev => prev.slice(0, -1));
     } finally {
       setIsLoading(false);
     }

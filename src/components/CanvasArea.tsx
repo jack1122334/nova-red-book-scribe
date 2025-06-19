@@ -11,68 +11,38 @@ export interface CanvasItem {
   content?: string;
   isSelected: boolean;
   isDisabled: boolean;
+  keyword?: string;
+  author?: string;
+  like_count?: number;
+  collect_count?: number;
+  comment_count?: number;
+  cover_url?: string;
+  url?: string;
+  isLoading?: boolean;
 }
 
 interface CanvasAreaProps {
   onItemSelect: (item: CanvasItem) => void;
   onItemDisable: (itemId: string) => void;
+  onCanvasDataReceived?: (data: any) => void;
 }
 
 export interface CanvasAreaRef {
   deselectItem: (itemId: string) => void;
+  processCanvasData: (data: any) => void;
 }
 
-// Mock data for canvas grid (9 items, expandable to 25)
-const mockCanvasItems: CanvasItem[] = Array.from({ length: 9 }, (_, index) => ({
-  id: `canvas-${index + 1}`,
-  type: 'canvas',
-  title: `创意${index + 1}`,
-  content: `创意内容${index + 1}的详细描述-的详细描述-的详细描述-的详细描述-的详细描述-的详细描述-的详细描述-的详细描述-的详细描述-的详细描述-的详细描述-的详细描述-的详细描述-的详细描述-的详细描述-`,
-  isSelected: false,
-  isDisabled: false,
-}));
-
-// Mock data for insights
-const mockInsights: CanvasItem[] = [
-  {
-    id: 'insight-1',
-    type: 'insight',
-    title: '用户画像分析',
-    content: '目标用户主要为25-35岁的都市白领女性',
-    isSelected: false,
-    isDisabled: false,
-  },
-  {
-    id: 'insight-2',
-    type: 'insight',
-    title: '内容偏好洞察',
-    content: '用户更偏爱实用性强的生活技巧类内容',
-    isSelected: false,
-    isDisabled: false,
-  },
-  {
-    id: 'insight-3',
-    type: 'insight',
-    title: '发布时间优化',
-    content: '晚上8-10点发布效果最佳',
-    isSelected: false,
-    isDisabled: false,
-  },
-  {
-    id: 'insight-4',
-    type: 'insight',
-    title: '标签策略建议',
-    content: '建议使用长尾关键词提高曝光',
-    isSelected: false,
-    isDisabled: false,
-  },
-];
-
-export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({ onItemSelect, onItemDisable }, ref) => {
-  const [canvasItems, setCanvasItems] = useState<CanvasItem[]>(mockCanvasItems);
-  const [insights, setInsights] = useState<CanvasItem[]>(mockInsights);
+export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({ 
+  onItemSelect, 
+  onItemDisable,
+  onCanvasDataReceived 
+}, ref) => {
+  const [canvasItems, setCanvasItems] = useState<CanvasItem[]>([]);
+  const [insights, setInsights] = useState<CanvasItem[]>([]);
   const [selectedCanvasItems, setSelectedCanvasItems] = useState<Set<string>>(new Set());
   const [selectedInsights, setSelectedInsights] = useState<Set<string>>(new Set());
+  const [keywords, setKeywords] = useState<string[]>([]);
+  const [keywordCardCounts, setKeywordCardCounts] = useState<{[key: string]: number}>({});
 
   useImperativeHandle(ref, () => ({
     deselectItem: (itemId: string) => {
@@ -95,6 +65,85 @@ export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({ onItemSe
         newSet.delete(itemId);
         return newSet;
       });
+    },
+    
+    processCanvasData: (data: any) => {
+      console.log('Processing canvas data:', data);
+      
+      if (data.keywords) {
+        console.log('Setting keywords:', data.keywords);
+        setKeywords(data.keywords);
+        
+        // Initialize loading placeholders for each keyword (3x3 grid)
+        const placeholders: CanvasItem[] = [];
+        data.keywords.forEach((keyword: string, keywordIndex: number) => {
+          for (let i = 0; i < 3; i++) {
+            placeholders.push({
+              id: `placeholder-${keywordIndex}-${i}`,
+              type: 'canvas',
+              title: `${keyword} - 加载中...`,
+              content: '',
+              isSelected: false,
+              isDisabled: false,
+              keyword,
+              isLoading: true
+            });
+          }
+        });
+        
+        setCanvasItems(placeholders);
+        setKeywordCardCounts({});
+      }
+      
+      if (data.keyword && data.cards) {
+        console.log('Updating cards for keyword:', data.keyword, data.cards);
+        
+        const keywordIndex = keywords.indexOf(data.keyword);
+        if (keywordIndex === -1) return;
+        
+        // Get current count for this keyword
+        const currentCount = keywordCardCounts[data.keyword] || 0;
+        
+        setCanvasItems(prev => {
+          const newItems = [...prev];
+          
+          data.cards.forEach((card: any, cardIndex: number) => {
+            const gridPosition = keywordIndex * 3 + (currentCount + cardIndex) % 3;
+            
+            if (gridPosition < newItems.length) {
+              newItems[gridPosition] = {
+                id: card.id,
+                type: 'canvas',
+                title: card.title,
+                content: card.content || '',
+                isSelected: false,
+                isDisabled: false,
+                keyword: data.keyword,
+                author: card.author,
+                like_count: card.like_count,
+                collect_count: card.collect_count,
+                comment_count: card.comment_count,
+                cover_url: card.cover_url,
+                url: card.url,
+                isLoading: false
+              };
+            }
+          });
+          
+          return newItems;
+        });
+        
+        // Update keyword card count
+        setKeywordCardCounts(prev => ({
+          ...prev,
+          [data.keyword]: currentCount + data.cards.length
+        }));
+      }
+      
+      if (data.type === 'state_info') {
+        console.log('Received state info:', data);
+        // Handle final state information if needed
+      }
     }
   }));
 
@@ -191,6 +240,11 @@ export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({ onItemSe
           <div className="flex items-center gap-2 mb-4">
             <Grid3X3 className="w-5 h-5 text-black" />
             <h3 className="font-medium text-black font-serif">Canvas</h3>
+            {keywords.length > 0 && (
+              <span className="text-xs text-black/50">
+                ({keywords.join(', ')})
+              </span>
+            )}
           </div>
           
           <CanvasGrid

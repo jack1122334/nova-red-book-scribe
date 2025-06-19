@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
@@ -80,6 +79,12 @@ export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
     return 33.33;
   };
 
+  const handleCanvasDataReceived = (data: any) => {
+    if (canvasAreaRef.current?.processCanvasData) {
+      canvasAreaRef.current.processCanvasData(data);
+    }
+  };
+
   return (
     <div className="flex-1 min-h-0 pl-0 md:pl-16">
       <ResizablePanelGroup direction="horizontal" className="h-full">
@@ -106,6 +111,7 @@ export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
                   ref={canvasAreaRef}
                   onItemSelect={onCanvasItemSelect}
                   onItemDisable={onCanvasItemDisable}
+                  onCanvasDataReceived={handleCanvasDataReceived}
                 />
               </motion.div>
             </ResizablePanel>
@@ -181,6 +187,7 @@ export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
                   onCardUpdated={onCardUpdated}
                   canvasReferences={canvasReferences}
                   onRemoveCanvasReference={onRemoveCanvasReference}
+                  onCanvasDataReceived={handleCanvasDataReceived}
                 />
               </motion.div>
             </ResizablePanel>
