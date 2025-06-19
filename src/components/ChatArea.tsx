@@ -561,7 +561,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
                   </>
                 ) : (
                   <>
-                    <div className="flex-1 flex justify-end min-w-0 max-w-xl">
+                    <div className="flex-1 flex justify-end min-w-0">
                       <div 
                         onClick={() => handleMessageClick(message)} 
                         className="whitespace-pre-wrap text-white leading-relaxed p-4 rounded-2xl transition-colors cursor-pointer group relative bg-black hover:bg-black/80 max-w-md"
