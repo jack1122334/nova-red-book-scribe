@@ -299,32 +299,18 @@ export const bluechatApi = {
   ) => {
     console.log('API: Starting bluechat stream request');
     
-    // const response = await fetch(`https://evpczvwygelrvxzfdcgv.supabase.co/functions/v1/chat-bluechat`, {
-    const response = await fetch(`http://172.22.45.74:8000/api/v1/bluechat`, {
+    const response = await fetch(`https://evpczvwygelrvxzfdcgv.supabase.co/functions/v1/chat-bluechat`, {
       method: 'POST',
       headers: {
         'accept': 'application/json',
         'Content-Type': 'application/json',
         'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2cGN6dnd5Z2VscnZ4emZkY2d2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk4OTU3ODUsImV4cCI6MjA2NTQ3MTc4NX0.y7uP6NVj48UAKnMWcB_5LltTVCVFuSeo7xmrCEHlp1I`,
       },
-      // body: JSON.stringify({
-      //   project_id: projectId,
-      //   query,
-      //   stage,
-      //   selected_ids: selectedIds
-      // })
       body: JSON.stringify({
-        // project_id: projectId,
-        // query,
-        // stage,
-        // selected_ids: selectedIds
-        "stage": stage,
-        "query": query,
-        "user_id": "123",
-        "session_id": projectId,
-        "limit": 3,
-        "ids": selectedIds,
-        "count": 6
+        project_id: projectId,
+        query,
+        stage,
+        selected_ids: selectedIds
       })
     });
 
