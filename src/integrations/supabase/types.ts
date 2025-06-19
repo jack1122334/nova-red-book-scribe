@@ -9,86 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      canvas_items: {
-        Row: {
-          author: string | null
-          author_avatar: string | null
-          collect_count: number | null
-          comment_count: number | null
-          content: string | null
-          cover_url: string | null
-          create_time: string | null
-          created_at: string
-          external_id: string
-          id: string
-          ip_location: string | null
-          keyword: string | null
-          like_count: number | null
-          platform: string | null
-          project_id: string
-          share_count: number | null
-          tags: string[] | null
-          title: string
-          type: string
-          updated_at: string
-          url: string | null
-        }
-        Insert: {
-          author?: string | null
-          author_avatar?: string | null
-          collect_count?: number | null
-          comment_count?: number | null
-          content?: string | null
-          cover_url?: string | null
-          create_time?: string | null
-          created_at?: string
-          external_id: string
-          id?: string
-          ip_location?: string | null
-          keyword?: string | null
-          like_count?: number | null
-          platform?: string | null
-          project_id: string
-          share_count?: number | null
-          tags?: string[] | null
-          title: string
-          type?: string
-          updated_at?: string
-          url?: string | null
-        }
-        Update: {
-          author?: string | null
-          author_avatar?: string | null
-          collect_count?: number | null
-          comment_count?: number | null
-          content?: string | null
-          cover_url?: string | null
-          create_time?: string | null
-          created_at?: string
-          external_id?: string
-          id?: string
-          ip_location?: string | null
-          keyword?: string | null
-          like_count?: number | null
-          platform?: string | null
-          project_id?: string
-          share_count?: number | null
-          tags?: string[] | null
-          title?: string
-          type?: string
-          updated_at?: string
-          url?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "canvas_items_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       cards: {
         Row: {
           card_order: number
@@ -165,47 +85,6 @@ export type Database = {
           },
           {
             foreignKeyName: "chat_messages_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      insights: {
-        Row: {
-          content: string
-          created_at: string
-          external_id: string
-          id: string
-          project_id: string
-          title: string
-          type: string
-          updated_at: string
-        }
-        Insert: {
-          content: string
-          created_at?: string
-          external_id: string
-          id?: string
-          project_id: string
-          title?: string
-          type?: string
-          updated_at?: string
-        }
-        Update: {
-          content?: string
-          created_at?: string
-          external_id?: string
-          id?: string
-          project_id?: string
-          title?: string
-          type?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "insights_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
