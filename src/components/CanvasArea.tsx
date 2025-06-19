@@ -1,8 +1,8 @@
-
 import React, { useState, useImperativeHandle, forwardRef } from 'react';
 import { Grid3X3 } from 'lucide-react';
 import { CanvasGrid } from './CanvasArea/CanvasGrid';
 import { InsightsList } from './CanvasArea/InsightsList';
+import { EmptyState } from './CanvasArea/EmptyState';
 
 export interface CanvasItem {
   id: string;
@@ -285,29 +285,37 @@ export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
             )}
           </div>
 
-          <CanvasGrid
-            items={canvasItems}
-            selectedItems={selectedCanvasItems}
-            onCheckboxChange={handleCanvasCheckboxChange}
-            onBatchSelect={handleCanvasBatchSelect}
-            onBatchDisable={handleCanvasBatchDisable}
-            onRestore={handleCanvasRestore}
-            keywords={keywords}
-          />
+          {canvasItems.length > 0 ? (
+            <CanvasGrid
+              items={canvasItems}
+              selectedItems={selectedCanvasItems}
+              onCheckboxChange={handleCanvasCheckboxChange}
+              onBatchSelect={handleCanvasBatchSelect}
+              onBatchDisable={handleCanvasBatchDisable}
+              onRestore={handleCanvasRestore}
+              keywords={keywords}
+            />
+          ) : (
+            <EmptyState type="canvas" />
+          )}
         </div>
 
         {/* Insights Section */}
         <div>
           <h3 className="font-medium text-black font-serif mb-4">Insights</h3>
 
-          <InsightsList
-            insights={insights}
-            selectedInsights={selectedInsights}
-            onCheckboxChange={handleInsightCheckboxChange}
-            onBatchSelect={handleInsightBatchSelect}
-            onBatchDisable={handleInsightBatchDisable}
-            onRestore={handleInsightRestore}
-          />
+          {insights.length > 0 ? (
+            <InsightsList
+              insights={insights}
+              selectedInsights={selectedInsights}
+              onCheckboxChange={handleInsightCheckboxChange}
+              onBatchSelect={handleInsightBatchSelect}
+              onBatchDisable={handleInsightBatchDisable}
+              onRestore={handleInsightRestore}
+            />
+          ) : (
+            <EmptyState type="insights" />
+          )}
         </div>
       </div>
     </div>

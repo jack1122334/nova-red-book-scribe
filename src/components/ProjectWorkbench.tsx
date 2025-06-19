@@ -45,7 +45,7 @@ export const ProjectWorkbench = ({
   // 根据数据状态设置默认布局
   useEffect(() => {
     const defaultLayout = {
-      showCanvas: hasCanvasData,
+      showCanvas: hasDraftData, // 只有当有draft数据时才默认显示Canvas
       showWriting: hasDraftData,
       showChat: true // Agent 默认显示
     };
@@ -57,7 +57,7 @@ export const ProjectWorkbench = ({
     }
     
     setLayoutState(defaultLayout);
-  }, [hasCanvasData, hasDraftData]);
+  }, [hasDraftData]);
 
   const handlers = useProjectHandlers({
     writingAreaRef,

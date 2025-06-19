@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { cardsApi } from "@/lib/api";
 
 export const useProjectData = (projectId?: string) => {
-  const [hasCanvasData, setHasCanvasData] = useState(true);
+  const [hasCanvasData, setHasCanvasData] = useState(false);
   const [hasDraftData, setHasDraftData] = useState(false);
 
   useEffect(() => {
