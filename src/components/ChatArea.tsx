@@ -18,6 +18,7 @@ interface ChatAreaProps {
   onCardUpdated: (cardTitle: string, content: string) => Promise<void>;
   canvasReferences?: CanvasItem[];
   onRemoveCanvasReference?: (itemId: string) => void;
+  onCanvasSearch?: (query: string) => void;
 }
 
 interface ChatMessage {
@@ -77,7 +78,8 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
   onCardCreated,
   onCardUpdated,
   canvasReferences = [],
-  onRemoveCanvasReference
+  onRemoveCanvasReference,
+  onCanvasSearch
 }, ref) => {
   const [messages, setMessages] = useState<StreamingMessage[]>([]);
   const [inputValue, setInputValue] = useState("");
