@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { projectsApi, userBackgroundCardsApi } from '@/lib/api';
@@ -23,12 +22,14 @@ interface CreateProjectDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onProjectCreated?: (project: Project) => void;
+  defaultTitle?: string;
 }
 
 export const CreateProjectDialog: React.FC<CreateProjectDialogProps> = ({
   open,
   onOpenChange,
   onProjectCreated,
+  defaultTitle = '',
 }) => {
   const [projectTitle, setProjectTitle] = useState('');
   const [selectedIntention, setSelectedIntention] = useState('');
@@ -52,14 +53,14 @@ export const CreateProjectDialog: React.FC<CreateProjectDialogProps> = ({
 
   useEffect(() => {
     if (open) {
-      // 重置表单
-      setProjectTitle('');
+      // 重置表单，使用默认标题
+      setProjectTitle(defaultTitle);
       setSelectedIntention('');
       setCustomIntention('');
       setSelectedAccountStyle('');
       setCustomAccountStyle('');
     }
-  }, [open]);
+  }, [open, defaultTitle]);
 
   const handleCreate = async () => {
     if (!projectTitle.trim()) {
