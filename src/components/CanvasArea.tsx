@@ -3,6 +3,7 @@ import { Grid3X3 } from 'lucide-react';
 import { CanvasGrid } from './CanvasArea/CanvasGrid';
 import { InsightsList } from './CanvasArea/InsightsList';
 import { bluechatApi as apiBluechat } from '@/lib/api';
+import { BluechatCard } from '@/lib/bluechatApi';
 
 export interface CanvasItem {
   id: string;
