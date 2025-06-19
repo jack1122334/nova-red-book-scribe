@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useParams, useLocation } from "react-router-dom";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { FloatingSidebar } from "@/components/FloatingSidebar";
 import { ProjectsManager } from "@/components/ProjectsManager";
@@ -22,6 +22,7 @@ export interface Project {
 const Creation = () => {
   const { projectId } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const [currentView, setCurrentView] = useState<CreationView>("projects");
   const { currentProject, fetchProject, setCurrentProject } = useProjectStore();
   const [isLoading, setIsLoading] = useState(false);
@@ -69,6 +70,8 @@ const Creation = () => {
   const handleBackToProjects = () => {
     setCurrentView("projects");
     setCurrentProject(null);
+    // 导航到干净的 /creation 路由，清除所有URL参数
+    navigate('/creation', { replace: true });
   };
 
   if (isLoading) {
