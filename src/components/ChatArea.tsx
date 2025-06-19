@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Send, Bot, User, Link, Edit3, Check, X, Info } from "lucide-react";
 import { chatApi, bluechatApi } from "@/lib/api";
+import { canvasApi } from "@/lib/canvasApi";
 import { useToast } from "@/hooks/use-toast";
 import { MessageDetailsDialog } from "@/components/MessageDetailsDialog";
 import { ReferenceDisplay } from "@/components/ReferenceDisplay";
@@ -230,15 +231,19 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
       const stage = canvasReferences.length > 0 ? 'STAGE_2' : 'STAGE_1';
       const selectedIds = canvasReferences.map(ref => ref.id);
 
+      // Track saved data to avoid duplicates
+      const savedCanvasItems = new Set<string>();
+      const savedInsights = new Set<string>();
+
       await bluechatApi.sendMessageStream(
         projectId,
         userMessage,
         stage,
         selectedIds,
-        (data: any) => {
+        async (data: any) => {
           console.log('ChatArea: Received bluechat data:', data);
           
-          // Handle agent_message events
+          // Handle agent_message events for UI
           if (data.event === 'agent_message' && data.answer) {
             setMessages(prev => prev.map(msg => 
               msg.id === tempAssistantMessage.id 
@@ -246,8 +251,73 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
                 : msg
             ));
           }
-          
-          // Forward canvas data to CanvasArea
+
+          // Save canvas items to database
+          if (data.keyword && data.cards && Array.isArray(data.cards)) {
+            console.log('Saving canvas items for keyword:', data.keyword);
+            
+            const canvasItemsToSave = data.cards
+              .filter((card: any) => card.id && !savedCanvasItems.has(card.id))
+              .map((card: any) => ({
+                project_id: projectId,
+                external_id: card.id,
+                type: 'canvas' as const,
+                title: card.title || '',
+                content: card.content || '',
+                keyword: data.keyword,
+                author: card.author || '',
+                author_avatar: card.author_avatar || '',
+                like_count: card.like_count || 0,
+                collect_count: card.collect_count || 0,
+                comment_count: card.comment_count || 0,
+                share_count: card.share_count || 0,
+                cover_url: card.cover_url || '',
+                url: card.url || '',
+                platform: 'xiaohongshu',
+                ip_location: card.ip_location || '',
+                tags: card.tags || [],
+                create_time: card.create_time || ''
+              }));
+
+            if (canvasItemsToSave.length > 0) {
+              try {
+                await canvasApi.batchCreateCanvasItems(canvasItemsToSave);
+                // Mark as saved
+                canvasItemsToSave.forEach(item => savedCanvasItems.add(item.external_id));
+                console.log('Canvas items saved successfully');
+              } catch (error) {
+                console.error('Failed to save canvas items:', error);
+              }
+            }
+          }
+
+          // Save insights to database
+          if (data.event === 'insight_generated' && data.insights && Array.isArray(data.insights)) {
+            console.log('Saving insights:', data.insights.length);
+            
+            const insightsToSave = data.insights
+              .filter((insight: any) => insight.id && !savedInsights.has(insight.id))
+              .map((insight: any) => ({
+                project_id: projectId,
+                external_id: insight.id,
+                type: 'insight' as const,
+                title: insight.title || '',
+                content: insight.text || insight.content || ''
+              }));
+
+            if (insightsToSave.length > 0) {
+              try {
+                await canvasApi.batchCreateInsights(insightsToSave);
+                // Mark as saved
+                insightsToSave.forEach(item => savedInsights.add(item.external_id));
+                console.log('Insights saved successfully');
+              } catch (error) {
+                console.error('Failed to save insights:', error);
+              }
+            }
+          }
+
+          // Forward data to CanvasArea for UI updates
           if (onCanvasDataReceived) {
             onCanvasDataReceived(data);
           }
@@ -266,7 +336,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
       
       toast({
         title: "搜索完成",
-        description: "Canvas 数据已更新"
+        description: "数据已保存并更新Canvas"
       });
       
     } catch (error: any) {
