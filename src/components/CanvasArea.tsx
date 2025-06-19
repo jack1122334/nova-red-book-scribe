@@ -13,11 +13,17 @@ export interface CanvasItem {
   isDisabled: boolean;
   keyword?: string;
   author?: string;
+  author_avatar?: string;
   like_count?: number;
   collect_count?: number;
   comment_count?: number;
+  share_count?: number;
   cover_url?: string;
   url?: string;
+  platform?: string;
+  ip_location?: string;
+  tags?: string[];
+  create_time?: string;
   isLoading?: boolean;
 }
 
