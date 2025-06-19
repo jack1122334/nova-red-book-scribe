@@ -153,6 +153,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
   };
 
   const saveUserMessage = async (content: string) => {
+    return true
     try {
       const { data, error } = await chatApi.saveMessage(projectId, {
         role: 'user',
@@ -334,7 +335,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
 
             if (canvasItemsToSave.length > 0) {
               try {
-                await canvasApi.batchCreateCanvasItems(canvasItemsToSave);
+                // await canvasApi.batchCreateCanvasItems(canvasItemsToSave);
                 // Mark as saved
                 canvasItemsToSave.forEach(item => savedCanvasItems.add(item.external_id));
                 console.log('Canvas items saved successfully');
