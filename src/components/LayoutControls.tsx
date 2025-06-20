@@ -46,11 +46,11 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
         showWriting: true,
       });
       hasAutoExpandedRef.current = true;
+      setTimeout(() => {
+        loadProjectCards(currentProjectId)
+      },200)
     }
     
-    setTimeout(() => {
-      loadProjectCards(currentProjectId)
-    },200)
     // 更新之前的数量
     prevCountRef.current = currentCount;
   }, [xiaohongshuCardsCount, layoutState, onLayoutChange]);
