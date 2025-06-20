@@ -1,44 +1,63 @@
-
-import React, { useRef, useState, useEffect } from "react";
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
-import { CanvasArea } from "./CanvasArea";
-import { WritingArea } from "./WritingArea";
-import { ChatArea } from "./ChatArea";
-import { WorkbenchHeader } from "./WorkbenchHeader";
-import { LayoutControls } from "./LayoutControls";
+import { useState, useEffect, useRef } from "react";
+import { Project } from "@/pages/Creation";
+import { WorkbenchHeader } from "@/components/WorkbenchHeader";
+import { WorkbenchContent } from "@/components/WorkbenchContent";
+import { useProjectData } from "@/hooks/useProjectData";
 import { useProjectHandlers } from "@/hooks/useProjectHandlers";
+import { useProjectStore } from "@/stores/projectStore";
 
 interface ProjectWorkbenchProps {
-  projectId: string;
+  project: Project | null;
+  onBack: () => void;
   initialMessage?: string;
 }
 
-export const ProjectWorkbench: React.FC<ProjectWorkbenchProps> = ({
-  projectId,
+interface LayoutState {
+  showCanvas: boolean;
+  showWriting: boolean;
+  showChat: boolean;
+}
+
+export const ProjectWorkbench = ({
+  project,
+  onBack,
   initialMessage
-}) => {
-  const writingAreaRef = useRef(null);
-  const chatAreaRef = useRef(null);
-  const canvasAreaRef = useRef(null);
+}: ProjectWorkbenchProps) => {
+  const writingAreaRef = useRef<any>(null);
+  const chatAreaRef = useRef<any>(null);
+  const canvasAreaRef = useRef<any>(null);
+  const { currentProject } = useProjectStore();
   
-  const [hasDraftData, setHasDraftData] = useState(false);
-  const [layoutState, setLayoutState] = useState({
+  // 使用传入的 project 或者从状态管理获取的 currentProject
+  const activeProject = project || currentProject;
+  
+  const { hasCanvasData, hasDraftData, setHasDraftData } = useProjectData(activeProject?.id);
+  
+  // 默认显示 Canvas 和 Chat，隐藏 Writing
+  const [layoutState, setLayoutState] = useState<LayoutState>({
     showCanvas: true,
-    showWriting: hasDraftData,
+    showWriting: false,
     showChat: true
   });
 
-  const {
-    handleCardCreated,
-    handleCardUpdated,
-    handleTextSelection,
-    handleCardUpdate,
-    handleCardCreate,
-    handleAddReference,
-    handleCanvasItemSelect,
-    handleCanvasItemDisable,
-    handleCanvasDataReceived
-  } = useProjectHandlers({
+  // 根据数据状态设置默认布局 - 但保持默认的 Canvas + Chat 布局
+  useEffect(() => {
+    const defaultLayout = {
+      showCanvas: true, // 默认显示 Canvas
+      showWriting: hasDraftData, // 只有当有草稿数据时才显示 Writing
+      showChat: true // 默认显示 Chat
+    };
+    
+    // 至少保留一个区域
+    const visibleCount = Object.values(defaultLayout).filter(Boolean).length;
+    if (visibleCount === 0) {
+      defaultLayout.showChat = true;
+    }
+    
+    setLayoutState(defaultLayout);
+  }, [hasDraftData]); // 移除了 hasCanvasData 的依赖，因为我们总是默认显示 Canvas
+
+  const handlers = useProjectHandlers({
     writingAreaRef,
     chatAreaRef,
     canvasAreaRef,
@@ -47,99 +66,34 @@ export const ProjectWorkbench: React.FC<ProjectWorkbenchProps> = ({
     setHasDraftData
   });
 
-  const visiblePanels = [
-    layoutState.showCanvas && 'canvas',
-    layoutState.showWriting && 'writing',
-    layoutState.showChat && 'chat'
-  ].filter(Boolean);
-
-  const panelCount = visiblePanels.length;
+  if (!activeProject) return null;
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
+    <div className="h-screen flex flex-col bg-white">
       <WorkbenchHeader 
-        project={{ 
-          id: projectId, 
-          title: "项目工作台", 
-          createdAt: new Date().toISOString(), 
-          updatedAt: new Date().toISOString() 
-        }} 
+        project={activeProject}
         layoutState={layoutState}
-        onBack={() => {}}
+        onBack={onBack}
         onLayoutChange={setLayoutState}
-        hasDraftData={hasDraftData}
       />
-      
-      <div className="flex-1 flex flex-col">
-        <LayoutControls 
-          layoutState={layoutState}
-          onLayoutChange={setLayoutState}
-          hasDraftData={hasDraftData}
-        />
 
-        <div className="flex-1">
-          <ResizablePanelGroup direction="horizontal" className="h-full">
-            {layoutState.showCanvas && (
-              <>
-                <ResizablePanel 
-                  defaultSize={panelCount === 3 ? 25 : panelCount === 2 ? 40 : 100}
-                  minSize={20}
-                  className="bg-white"
-                >
-                  <CanvasArea
-                    ref={canvasAreaRef}
-                    projectId={projectId}
-                    onItemSelect={handleCanvasItemSelect}
-                    onItemDisable={handleCanvasItemDisable}
-                    onCanvasDataReceived={handleCanvasDataReceived}
-                  />
-                </ResizablePanel>
-                {(layoutState.showWriting || layoutState.showChat) && (
-                  <ResizableHandle withHandle />
-                )}
-              </>
-            )}
-
-            {layoutState.showWriting && (
-              <>
-                <ResizablePanel 
-                  defaultSize={panelCount === 3 ? 35 : panelCount === 2 ? 60 : 100}
-                  minSize={20}
-                  className="bg-gray-50"
-                >
-                  <WritingArea
-                    ref={writingAreaRef}
-                    projectId={projectId}
-                    onCardUpdate={handleCardUpdate}
-                    onCardCreate={handleCardCreate}
-                    onTextSelect={handleTextSelection}
-                    onAddReference={handleAddReference}
-                  />
-                </ResizablePanel>
-                {layoutState.showChat && <ResizableHandle withHandle />}
-              </>
-            )}
-
-            {layoutState.showChat && (
-              <ResizablePanel 
-                defaultSize={panelCount === 3 ? 40 : panelCount === 2 ? 60 : 100}
-                minSize={20}
-                className="bg-white"
-              >
-                <ChatArea
-                  ref={chatAreaRef}
-                  projectId={projectId}
-                  initialMessage={initialMessage}
-                  onCardCreated={handleCardCreated}
-                  onCardUpdated={handleCardUpdated}
-                  onCanvasDataReceived={handleCanvasDataReceived}
-                  writingAreaRef={writingAreaRef}
-                />
-              </ResizablePanel>
-            )}
-          </ResizablePanelGroup>
-        </div>
-      </div>
+      <WorkbenchContent 
+        project={activeProject}
+        layoutState={layoutState}
+        initialMessage={initialMessage}
+        writingAreaRef={writingAreaRef}
+        chatAreaRef={chatAreaRef}
+        canvasAreaRef={canvasAreaRef}
+        onLayoutChange={setLayoutState}
+        onCardCreated={handlers.handleCardCreated}
+        onCardUpdated={handlers.handleCardUpdated}
+        onTextSelection={handlers.handleTextSelection}
+        onCardUpdate={handlers.handleCardUpdate}
+        onCardCreate={handlers.handleCardCreate}
+        onAddReference={handlers.handleAddReference}
+        onCanvasItemSelect={handlers.handleCanvasItemSelect}
+        onCanvasItemDisable={handlers.handleCanvasItemDisable}
+      />
     </div>
   );
 };

@@ -21,7 +21,6 @@ interface ChatAreaProps {
   onCardCreated: (cardId: string, title: string, content: string) => Promise<void>;
   onCardUpdated: (cardTitle: string, content: string) => Promise<void>;
   onCanvasDataReceived?: (data: Record<string, unknown>) => void;
-  writingAreaRef?: React.RefObject<any>;
 }
 
 interface ChatMessage {
@@ -68,19 +67,6 @@ interface Reference {
   snippet_content?: string;
 }
 
-// Define the stream data interface
-interface BluechatStreamData extends Record<string, unknown> {
-  event?: string;
-  id?: string;
-  title?: string;
-  content?: string;
-  type?: string;
-  keyword?: string;
-  answer?: string;
-  answerText?: string;
-  cards?: any[];
-}
-
 export interface ChatAreaRef {
   addReference: (reference: Reference) => void;
   clearReferences: () => void;
@@ -93,8 +79,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
   initialMessage,
   onCardCreated,
   onCardUpdated,
-  onCanvasDataReceived,
-  writingAreaRef
+  onCanvasDataReceived
 }, ref) => {
   const { user } = useAuthStore();
   const { currentProject } = useProjectStore();
@@ -284,11 +269,11 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
       const selectedIds = canvasReferences.map((item) => item.external_id);
 
       const userBackground = `
-        intentions:${currentProject?.user_background?.intentions?.content || ''} 
+        intentions:${currentProject.user_background.intentions.content} 
         --
-        resources:${currentProject?.user_background?.resources?.content || ''} 
+        resources:${currentProject.user_background.resources.content} 
         --
-        personalities:${currentProject?.user_background?.personalities?.content || ''}
+        personalities:${currentProject.user_background.personalities.content}
         `;
 
       await bluechatApi.sendMessageStream(
@@ -311,41 +296,6 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
                   : msg
               )
             );
-          }
-
-          // Handle xiaohongshu_content type - create new card in WritingArea
-          if (data.type === "xiaohongshu_content" && data.title && data.content) {
-            console.log("ChatArea: Processing xiaohongshu_content:", data.title);
-            
-            // Create card in WritingArea through ref
-            if (writingAreaRef?.current?.addCardFromAgent) {
-              try {
-                await writingAreaRef.current.addCardFromAgent(data.title, data.content);
-                console.log("ChatArea: Card created in WritingArea successfully");
-                
-                // Show layout if not visible
-                if (onCanvasDataReceived) {
-                  onCanvasDataReceived({
-                    type: 'show_writing_area',
-                    message: '已创建新卡片到写作区'
-                  });
-                }
-                
-                toast({
-                  title: "新卡片已创建",
-                  description: `AI 创建了新卡片"${data.title}"`,
-                });
-              } catch (error) {
-                console.error("ChatArea: Failed to create card in WritingArea:", error);
-                toast({
-                  title: "创建卡片失败",
-                  description: "无法在写作区创建新卡片",
-                  variant: "destructive"
-                });
-              }
-            } else {
-              console.warn("ChatArea: WritingArea ref not available");
-            }
           }
 
           // Collect canvas data for database storage

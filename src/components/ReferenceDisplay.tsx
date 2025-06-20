@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { X, Grid3X3, Lightbulb } from 'lucide-react';
-import { CanvasItem } from '@/stores/canvasStore';
+import { CanvasItem } from './CanvasArea';
 
 interface ReferenceDisplayProps {
   references: CanvasItem[];

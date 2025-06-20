@@ -1,12 +1,10 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 import { Project } from "@/pages/Creation";
 import { WritingArea } from "@/components/WritingArea";
 import { ChatArea } from "@/components/ChatArea";
-import { CanvasArea } from "@/components/CanvasArea";
-import { CanvasItem } from "@/stores/canvasStore";
+import { CanvasArea, CanvasItem } from "@/components/CanvasArea";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { motion, AnimatePresence } from "framer-motion";
 

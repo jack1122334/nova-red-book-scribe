@@ -1,4 +1,3 @@
-
 import { CanvasItem } from "@/stores/canvasStore";
 
 interface LayoutState {
@@ -25,17 +24,11 @@ export const useProjectHandlers = ({
   setHasDraftData
 }: UseProjectHandlersProps) => {
   const handleCardCreated = async (cardId: string, title: string, content: string) => {
-    console.log('handleCardCreated called:', { cardId, title, content: content.substring(0, 100) });
-    
     if (writingAreaRef.current?.addCardFromAgent) {
       await writingAreaRef.current.addCardFromAgent(title, content);
-      console.log('Card added to writing area successfully');
-    } else {
-      console.warn('WritingArea ref or addCardFromAgent method not available');
     }
     
     if (!layoutState.showWriting) {
-      console.log('Enabling writing area');
       setLayoutState(prev => ({ ...prev, showWriting: true }));
       setHasDraftData(true);
     }
@@ -86,24 +79,6 @@ export const useProjectHandlers = ({
     }
   };
 
-  // 新增处理流数据接收的方法
-  const handleCanvasDataReceived = (data: Record<string, unknown>) => {
-    console.log('Canvas data received:', data);
-    
-    // Handle special messages from ChatArea
-    if (data.type === 'show_writing_area') {
-      console.log('Received request to show writing area');
-      if (!layoutState.showWriting) {
-        setLayoutState(prev => ({ ...prev, showWriting: true }));
-        setHasDraftData(true);
-      }
-    }
-    
-    if (canvasAreaRef.current?.processCanvasData) {
-      canvasAreaRef.current.processCanvasData(data);
-    }
-  };
-
   return {
     handleCardCreated,
     handleCardUpdated,
@@ -112,7 +87,6 @@ export const useProjectHandlers = ({
     handleCardCreate,
     handleAddReference,
     handleCanvasItemSelect,
-    handleCanvasItemDisable,
-    handleCanvasDataReceived
+    handleCanvasItemDisable
   };
 };

@@ -93,7 +93,8 @@ const Creation = () => {
           </>
         ) : (
           <ProjectWorkbench
-            projectId={currentProject?.id || ''}
+            project={currentProject}
+            onBack={handleBackToProjects}
             initialMessage={location.state?.initialMessage}
           />
         )}
