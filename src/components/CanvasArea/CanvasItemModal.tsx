@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
   Dialog,
@@ -20,6 +19,7 @@ import {
 } from "lucide-react";
 import { CanvasItem } from "../CanvasArea";
 import { imageProxyApi } from "@/lib/api";
+import { motion } from "framer-motion";
 
 interface CanvasItemModalProps {
   item: CanvasItem | null;
@@ -52,7 +52,9 @@ export const CanvasItemModal: React.FC<CanvasItemModalProps> = ({
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-serif text-black">
-            {item.title}
+            <motion.span layoutId={`canvas-title-${item.id}`}>
+              {item.title}
+            </motion.span>
           </DialogTitle>
         </DialogHeader>
 
@@ -60,12 +62,13 @@ export const CanvasItemModal: React.FC<CanvasItemModalProps> = ({
           <div className="flex flex-row gap-4">
             {/* Cover Image */}
             {item.cover_url && (
-              <div className="relative w-1/3 min-w-[200px] max-h-[400px] aspect-[3/4] rounded-lg overflow-hidden bg-gray-100">
-                <img
+              <div className="relative w-1/3 min-w-[200px] max-h-[400px] aspect-[3/4] rounded-lg bg-gray-100">
+                <motion.img
+                  layoutId={`canvas-image-${item.id}`}
                   referrerPolicy="no-referrer"
                   src={imageProxyApi.getProxiedImageUrl(item.cover_url)}
                   alt={item.title}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover rounded-lg"
                   onError={(e) => {
                     // 如果代理失败，尝试使用原始URL
                     const currentSrc = e.currentTarget.src;
@@ -102,9 +105,12 @@ export const CanvasItemModal: React.FC<CanvasItemModalProps> = ({
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">
-              <div className="font-medium text-black font-serif">
+              <motion.div 
+                // layoutId={`canvas-author-${item.id}`}
+                className="font-medium text-black font-serif"
+              >
                 {item.author}
-              </div>
+              </motion.div>
               {item.ip_location && (
                 <div className="flex items-center gap-1 text-sm text-black/60">
                   <MapPin className="w-3 h-3" />
@@ -150,13 +156,16 @@ export const CanvasItemModal: React.FC<CanvasItemModalProps> = ({
                 </div>
               )}
               {item.comment_count && item.comment_count > 0 && (
-                <div className="flex items-center gap-2 text-sm">
+                <motion.div 
+                  layoutId={`canvas-comment-${item.id}`}
+                  className="flex items-center gap-2 text-sm"
+                >
                   <MessageCircle className="w-4 h-4 text-blue-400" />
                   <span className="font-medium">
                     {formatNumber(item.comment_count)}
                   </span>
                   <span className="text-black/60">评论</span>
-                </div>
+                </motion.div>
               )}
               {item.share_count && item.share_count > 0 && (
                 <div className="flex items-center gap-2 text-sm">

@@ -6,6 +6,7 @@ import { Check, X, RotateCcw, Heart, Star, MessageCircle, Grid3X3, Sparkles } fr
 import { CanvasItem } from "../CanvasArea";
 import { CanvasItemModal } from "./CanvasItemModal";
 import { imageProxyApi } from "@/lib/api";
+import { motion } from "framer-motion";
 
 interface CanvasGridProps {
   items: CanvasItem[];
@@ -105,11 +106,12 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
                     {/* Background Image */}
                     {item.cover_url && (
                       <div className="absolute inset-0 opacity-20 hover:opacity-40 transition-opacity duration-300">
-                        <img
+                        <motion.img
+                          layoutId={`canvas-image-${item.id}`}
                           referrerPolicy="no-referrer"
                           src={imageProxyApi.getProxiedImageUrl(item.cover_url)}
                           alt={item.title}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover rounded-sm"
                           onError={(e) => {
                             // 如果代理失败，尝试使用原始URL
                             const currentSrc = e.currentTarget.src;
@@ -124,7 +126,10 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
                     )}
                     <CardContent className="p-3 h-full flex flex-col relative z-10 backdrop-blur-[1px] hover:backdrop-blur-[0px]">
                       <div className="flex items-start justify-between mb-2">
-                        <span className="text-sm text-black font-serif mb-1 line-clamp-2">
+                        <motion.span 
+                          layoutId={`canvas-title-${item.id}`}
+                          className="text-sm text-black font-serif mb-1 line-clamp-2"
+                        >
                           {item.isDisabled ? (
                             <Button
                               size="sm"
@@ -149,7 +154,7 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
                             />
                           )}
                           {item.title}
-                        </span>
+                        </motion.span>
                       </div>
 
                       <div className="flex-1 flex flex-col">
@@ -161,9 +166,12 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
                         ) : (
                           <>
                             {item.author && (
-                              <span className="text-xs text-black/50 font-serif mb-1">
+                              <motion.span 
+                                layoutId={`canvas-author-${item.id}`}
+                                className="text-xs text-black/50 font-serif mb-1"
+                              >
                                 作者: {item.author}
-                              </span>
+                              </motion.span>
                             )}
                             <div className="flex-1"></div>
                             {/* 互动数据 - 固定在右下角 */}
