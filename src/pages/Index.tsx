@@ -35,7 +35,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-100">
       <FloatingSidebar currentPage="home" />
       <Navbar />
       
@@ -43,10 +43,10 @@ const Index = () => {
       <div className="max-w-6xl mx-auto py-12 px-4">
         {/* 欢迎标题 */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-serif font-bold text-gray-900 mb-4 tracking-tight">
+          <h1 className="text-4xl font-serif font-bold text-amber-900 mb-4 tracking-tight">
             Good {getTimeOfDay()}, Creator.
           </h1>
-          <p className="text-lg text-gray-600 font-serif">
+          <p className="text-lg text-amber-700 font-serif">
             请输入您的创作主题，开始新的创作之旅
           </p>
         </div>
@@ -63,7 +63,7 @@ const Index = () => {
         {/* 项目展示区域 */}
         {projects.length > 0 && (
           <div className="mb-8 md:px-20">
-            <h2 className="text-2xl font-serif font-semibold text-gray-900 mb-6">
+            <h2 className="text-2xl font-serif font-semibold text-amber-900 mb-6">
               我的项目
             </h2>
             <ProjectGrid projects={projects} />

@@ -38,7 +38,7 @@ export const FloatingSidebar = ({ currentPage }: FloatingSidebarProps) => {
     <div className="fixed left-4 top-1/2 transform -translate-y-1/2 z-50 hidden md:block">
       <div
         className={cn(
-          "notion-floating transition-all duration-300 bg-white rounded-3xl",
+          "notion-floating transition-all duration-300 bg-white/95 backdrop-blur-sm rounded-3xl border border-amber-200/50",
           isExpanded ? "w-48 p-4" : "w-14 p-3"
         )}
       >
@@ -47,7 +47,7 @@ export const FloatingSidebar = ({ currentPage }: FloatingSidebarProps) => {
           variant="ghost"
           size="sm"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full mb-3 transition-colors rounded-xl shadow-none hover:shadow-sm p-2"
+          className="w-full mb-3 transition-colors rounded-xl shadow-none hover:shadow-sm p-2 text-amber-800 hover:text-amber-900"
         >
           {isExpanded ? (
             <X className="w-4 h-4" />
@@ -67,8 +67,8 @@ export const FloatingSidebar = ({ currentPage }: FloatingSidebarProps) => {
               className={cn(
                 "w-full justify-start transition-all duration-200 font-serif text-sm rounded-xl p-2",
                 currentPage === item.id
-                  ? "bg-gray-900 text-white hover:bg-gray-800 shadow-sm"
-                  : "shadow-none hover:shadow-sm",
+                  ? "bg-amber-600 text-white hover:bg-amber-700 shadow-sm"
+                  : "text-amber-800 hover:text-amber-900 shadow-none hover:shadow-sm hover:bg-amber-50",
                 !isExpanded && "justify-center"
               )}
             >
