@@ -277,7 +277,9 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
         stage = "STAGE_1";
       }
 
-      const selectedIds = canvasReferences.map((item) => item.external_id);
+      const selectedIds = canvasReferences.map((item) =>
+        item?.id.includes("stage") ? item.id : item.external_id
+      );
 
       const userBackground = `
         intentions:${currentProject.user_background.intentions.content} 
@@ -637,8 +639,8 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
               {/* 流式传输光标 - 更显眼的动画效果 */}
               {message.isStreaming && (
                 <div className="flex items-center mt-4 gap-2">
-                  <div className="w-3 h-5 bg-blue-500 animate-pulse rounded-sm"></div>
-                  <span className="text-xs text-blue-600 font-medium animate-pulse">正在输入...</span>
+                  <div className="w-3 h-5 b animate-pulse rounded-sm"></div>
+                  <span className="text-xs  font-medium animate-pulse">正在输入...</span>
                 </div>
               )}
             </CardContent>

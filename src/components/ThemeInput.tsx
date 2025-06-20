@@ -24,7 +24,7 @@ export const ThemeInput: React.FC<ThemeInputProps> = ({
   return (
     <div className="max-w-2xl mx-auto">
       <div className="relative bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-xl focus-within:shadow-xl focus-within:ring-2 focus-within:ring-black focus-within:ring-opacity-10">
-        <div className="flex items-center p-2">
+        <div className="flex items-center p-2 gap-2">
           <Input
             value={value}
             onChange={(e) => onChange(e.target.value)}
@@ -35,7 +35,7 @@ export const ThemeInput: React.FC<ThemeInputProps> = ({
           <Button
             onClick={onSubmit}
             disabled={!value.trim()}
-            className="mr-2 bg-black text-white hover:bg-gray-800 disabled:bg-gray-300 rounded-xl px-6 py-3 transition-all duration-200"
+            className="mr-2 bg-black text-white hover:bg-gray-800 hover:text-white disabled:bg-gray-300 rounded-xl px-6 py-3 transition-all duration-200"
           >
             <Send className="w-5 h-5" />
           </Button>
