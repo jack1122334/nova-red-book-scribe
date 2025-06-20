@@ -1,4 +1,4 @@
-import React, { useState, useEffect, forwardRef, useImperativeHandle } from "react";
+import React, { useState, useEffect, forwardRef, useImperativeHandle, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
@@ -112,6 +112,29 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
   const [selectedMessage, setSelectedMessage] = useState<StreamingMessage | null>(null);
   const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
   const { toast } = useToast();
+
+  // 添加滚动容器的 ref
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+
+  // 自动滚动到底部的函数
+  const scrollToBottom = () => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
+  };
+
+  // 监听消息变化，自动滚动到底部
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  // 监听流式消息内容变化，自动滚动到底部
+  useEffect(() => {
+    const hasStreamingMessage = messages.some(msg => msg.isStreaming);
+    if (hasStreamingMessage) {
+      scrollToBottom();
+    }
+  }, [messages.map(msg => msg.content).join('')]);
 
   useImperativeHandle(ref, () => ({
     addReference: (reference: Reference) => {
@@ -760,7 +783,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-auto bg-white">
+      <div ref={messagesContainerRef} className="flex-1 overflow-auto bg-white">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-black/50 p-8">
             <div className="w-16 h-16 rounded-full bg-black/10 flex items-center justify-center mb-4">
