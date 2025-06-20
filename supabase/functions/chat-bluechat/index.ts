@@ -64,8 +64,7 @@ serve(async (req) => {
     console.log('Calling external API with:', requestBody);
 
     // Call external API
-    // const response = await fetch('https://loomi.live:8088/api/v1/bluechat', {
-    const response = await fetch('https://47.84.70.98:8443/api/v1/bluechat', {
+    const response = await fetch('http://loomi.live:8088/api/v1/bluechat', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
@@ -87,40 +86,69 @@ serve(async (req) => {
       throw new Error('No response body from external API');
     }
 
-    if (!response.ok) {
-      console.error('External API error:', response.status, response.statusText);
-      throw new Error(`External API error: ${response.status}`);
-    }
-
-    if (!response.body) {
-      throw new Error('No response body from external API');
-    }
-
-    // Create a readable stream to forward the response
-    const readable = new ReadableStream({
-      start(controller) {
-        const reader = response.body!.getReader();
-        const decoder = new TextDecoder();
-
-        function pump(): Promise<void> {
-          return reader.read().then(({ done, value }) => {
-            if (done) {
-              controller.close();
-              return;
-            }
-
-            const chunk = decoder.decode(value, { stream: true });
-            console.log('Forwarding chunk:', chunk);
-            controller.enqueue(new TextEncoder().encode(chunk));
-            return pump();
-          });
+    // Create streaming response
+    const stream = new ReadableStream({
+      async start(controller) {
+        const reader = response.body?.getReader();
+        if (!reader) {
+          throw new Error('Failed to get response reader');
         }
 
-        return pump();
+        const decoder = new TextDecoder();
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value);
+            const lines = chunk.split('\n');
+
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const dataContent = line.slice(6).trim();
+                
+                // Check for stream completion
+                if (dataContent === '[DONE]') {
+                  console.log('=== BLUECHAT RESPONSE COMPLETED ===');
+
+                  break;
+                }
+                
+                if (dataContent === '') {
+                  continue;
+                }
+                
+                try {
+                  const data = JSON.parse(dataContent);
+                  
+                  
+                  console.log('=== BLUECHAT EVENT ===');
+                  console.log('Event type:', data.type || 'unknown');
+                  console.log('Full event data:', JSON.stringify(data, null, 2));
+                  
+                  // Forward the event to frontend for streaming display
+                  const eventData = `data: ${JSON.stringify(data)}\n\n`;
+                  controller.enqueue(new TextEncoder().encode(eventData));
+                  
+                } catch (parseError) {
+                  console.warn('Failed to parse SSE data:', line);
+                  console.warn('Parse error:', parseError);
+                }
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error reading stream:', error);
+          throw error;
+        } finally {
+          console.log('=== STREAM COMPLETED ===');
+          controller.close();
+        }
       }
     });
 
-    return new Response(readable, {
+    return new Response(stream, {
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/event-stream',
