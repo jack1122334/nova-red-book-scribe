@@ -1,7 +1,5 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Project } from "@/pages/Creation";
-import { CanvasItem } from "@/components/CanvasArea";
 import { WorkbenchHeader } from "@/components/WorkbenchHeader";
 import { WorkbenchContent } from "@/components/WorkbenchContent";
 import { useProjectData } from "@/hooks/useProjectData";
@@ -28,7 +26,6 @@ export const ProjectWorkbench = ({
   const writingAreaRef = useRef<any>(null);
   const chatAreaRef = useRef<any>(null);
   const canvasAreaRef = useRef<any>(null);
-  const [canvasReferences, setCanvasReferences] = useState<CanvasItem[]>([]);
   const { currentProject } = useProjectStore();
   
   // 使用传入的 project 或者从状态管理获取的 currentProject
@@ -66,9 +63,7 @@ export const ProjectWorkbench = ({
     canvasAreaRef,
     layoutState,
     setLayoutState,
-    setHasDraftData,
-    canvasReferences,
-    setCanvasReferences
+    setHasDraftData
   });
 
   if (!activeProject) return null;
@@ -85,7 +80,6 @@ export const ProjectWorkbench = ({
       <WorkbenchContent 
         project={activeProject}
         layoutState={layoutState}
-        canvasReferences={canvasReferences}
         initialMessage={initialMessage}
         writingAreaRef={writingAreaRef}
         chatAreaRef={chatAreaRef}
@@ -99,7 +93,6 @@ export const ProjectWorkbench = ({
         onAddReference={handlers.handleAddReference}
         onCanvasItemSelect={handlers.handleCanvasItemSelect}
         onCanvasItemDisable={handlers.handleCanvasItemDisable}
-        onRemoveCanvasReference={handlers.handleRemoveCanvasReference}
       />
     </div>
   );

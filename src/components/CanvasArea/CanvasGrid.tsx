@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Check, X, RotateCcw, Heart, Star, MessageCircle, Grid3X3, Sparkles } from "lucide-react";
-import { CanvasItem } from "../CanvasArea";
+import { CanvasItem } from "@/stores/canvasStore";
 import { CanvasItemModal } from "./CanvasItemModal";
 import { imageProxyApi } from "@/lib/api";
 import { motion } from "framer-motion";
@@ -11,6 +11,7 @@ import { motion } from "framer-motion";
 interface CanvasGridProps {
   items: CanvasItem[];
   selectedItems: Set<string>;
+  canvasReferences: CanvasItem[];
   onCheckboxChange: (itemId: string, checked: boolean) => void;
   onBatchSelect: () => void;
   onBatchDisable: () => void;
@@ -21,6 +22,7 @@ interface CanvasGridProps {
 export const CanvasGrid: React.FC<CanvasGridProps> = ({
   items,
   selectedItems,
+  canvasReferences,
   onCheckboxChange,
   onBatchSelect,
   onBatchDisable,
@@ -72,6 +74,11 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
     }
   };
 
+  // 检查item是否在canvasReferences中
+  const isInReferences = (itemId: string) => {
+    return canvasReferences.some(ref => ref.id === itemId);
+  };
+
   return (
     <div className="relative">
       <div className="space-y-1 mb-4">
@@ -97,8 +104,10 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
                 >
                   <Card
                     className={`h-full !rounded-sm transition-all duration-500 overflow-hidden cursor-pointer relative ${
-                      item.isSelected
+                      isInReferences(item.id)
                         ? "ring-2 ring-black bg-black/5"
+                        : item.isSelected
+                        ? "ring-2 ring-gray-400 bg-gray-50"
                         : "hover:shadow-md hover:-translate-y-0.5"
                     } ${item.isLoading ? "animate-pulse" : "animate-fadeIn"}`}
                     onClick={() => handleCardClick(item)}

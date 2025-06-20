@@ -3,11 +3,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Check, X, RotateCcw, Lightbulb, Sparkles } from "lucide-react";
-import { CanvasItem } from "../CanvasArea";
+import { CanvasItem } from "@/stores/canvasStore";
 
 interface InsightsListProps {
   insights: CanvasItem[];
   selectedInsights: Set<string>;
+  canvasReferences: CanvasItem[];
   onCheckboxChange: (itemId: string, checked: boolean) => void;
   onBatchSelect: () => void;
   onBatchDisable: () => void;
@@ -17,11 +18,17 @@ interface InsightsListProps {
 export const InsightsList: React.FC<InsightsListProps> = ({
   insights,
   selectedInsights,
+  canvasReferences,
   onCheckboxChange,
   onBatchSelect,
   onBatchDisable,
   onRestore
 }) => {
+  // 检查item是否在canvasReferences中
+  const isInReferences = (itemId: string) => {
+    return canvasReferences.some(ref => ref.id === itemId);
+  };
+
   // 如果没有insights，显示空状态
   if (insights.length === 0) {
     return (
@@ -55,8 +62,10 @@ export const InsightsList: React.FC<InsightsListProps> = ({
             }`}
           >
             <Card className={`transition-all duration-200 ${
-              insight.isSelected 
-                ? 'ring-2 ring-black bg-black/5' 
+              isInReferences(insight.id)
+                ? 'ring-2 ring-black bg-black/5'
+                : insight.isSelected 
+                ? 'ring-2 ring-gray-400 bg-gray-50' 
                 : 'hover:shadow-md hover:-translate-y-0.5'
             }`}>
               <CardContent className="p-3">

@@ -17,7 +17,7 @@ import {
   MapPin,
   Calendar
 } from "lucide-react";
-import { CanvasItem } from "../CanvasArea";
+import { CanvasItem } from "@/stores/canvasStore";
 import { imageProxyApi } from "@/lib/api";
 import { motion } from "framer-motion";
 

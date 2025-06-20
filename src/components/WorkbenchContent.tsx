@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
@@ -18,7 +17,6 @@ interface LayoutState {
 interface WorkbenchContentProps {
   project: Project;
   layoutState: LayoutState;
-  canvasReferences: CanvasItem[];
   initialMessage?: string;
   writingAreaRef: React.RefObject<any>;
   chatAreaRef: React.RefObject<any>;
@@ -32,13 +30,11 @@ interface WorkbenchContentProps {
   onAddReference: (reference: any) => void;
   onCanvasItemSelect: (item: CanvasItem) => void;
   onCanvasItemDisable: (itemId: string) => void;
-  onRemoveCanvasReference: (itemId: string) => void;
 }
 
 export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
   project,
   layoutState,
-  canvasReferences,
   initialMessage,
   writingAreaRef,
   chatAreaRef,
@@ -51,8 +47,7 @@ export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
   onCardCreate,
   onAddReference,
   onCanvasItemSelect,
-  onCanvasItemDisable,
-  onRemoveCanvasReference
+  onCanvasItemDisable
 }) => {
   const togglePanel = (panel: keyof LayoutState) => {
     const newState = {
@@ -80,7 +75,7 @@ export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
     return 33.33;
   };
 
-  const handleCanvasDataReceived = (data: any) => {
+  const handleCanvasDataReceived = (data: Record<string, unknown>) => {
     if (canvasAreaRef.current?.processCanvasData) {
       canvasAreaRef.current.processCanvasData(data);
     }
@@ -186,8 +181,6 @@ export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
                   initialMessage={initialMessage} 
                   onCardCreated={onCardCreated} 
                   onCardUpdated={onCardUpdated}
-                  canvasReferences={canvasReferences}
-                  onRemoveCanvasReference={onRemoveCanvasReference}
                   onCanvasDataReceived={handleCanvasDataReceived}
                 />
               </motion.div>

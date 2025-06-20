@@ -404,7 +404,7 @@ export const bluechatApi = {
   sendMessageStream: async (
     projectId: string,
     query: string,
-    stage: 'STAGE_1' | 'STAGE_2',
+    stage: 'STAGE_1' | 'STAGE_2' | 'STAGE_3',
     selectedIds: string[] = [],
     userId: string,
     onEvent: (event: StreamEvent) => void

@@ -1,5 +1,4 @@
-
-import { CanvasItem } from "@/components/CanvasArea";
+import { CanvasItem } from "@/stores/canvasStore";
 
 interface LayoutState {
   showCanvas: boolean;
@@ -14,8 +13,6 @@ interface UseProjectHandlersProps {
   layoutState: LayoutState;
   setLayoutState: React.Dispatch<React.SetStateAction<LayoutState>>;
   setHasDraftData: React.Dispatch<React.SetStateAction<boolean>>;
-  canvasReferences: CanvasItem[];
-  setCanvasReferences: React.Dispatch<React.SetStateAction<CanvasItem[]>>;
 }
 
 export const useProjectHandlers = ({
@@ -24,9 +21,7 @@ export const useProjectHandlers = ({
   canvasAreaRef,
   layoutState,
   setLayoutState,
-  setHasDraftData,
-  canvasReferences,
-  setCanvasReferences
+  setHasDraftData
 }: UseProjectHandlersProps) => {
   const handleCardCreated = async (cardId: string, title: string, content: string) => {
     if (writingAreaRef.current?.addCardFromAgent) {
@@ -71,20 +66,14 @@ export const useProjectHandlers = ({
 
   const handleCanvasItemSelect = (item: CanvasItem) => {
     console.log('Canvas item selected:', item);
-    if (item.isSelected) {
-      setCanvasReferences(prev => [...prev, item]);
-    } else {
-      setCanvasReferences(prev => prev.filter(ref => ref.id !== item.id));
-    }
+    // Canvas 选择状态现在由 Canvas Store 管理
+    // 这里只需要记录日志，实际的选择状态由 store 处理
   };
 
   const handleCanvasItemDisable = (itemId: string) => {
     console.log('Canvas item disabled:', itemId);
-    setCanvasReferences(prev => prev.filter(ref => ref.id !== itemId));
-  };
-
-  const handleRemoveCanvasReference = (itemId: string) => {
-    setCanvasReferences(prev => prev.filter(ref => ref.id !== itemId));
+    // Canvas 禁用状态现在由 Canvas Store 管理
+    // 如果需要取消选择，可以通过 CanvasArea ref 来处理
     if (canvasAreaRef.current?.deselectItem) {
       canvasAreaRef.current.deselectItem(itemId);
     }
@@ -98,7 +87,6 @@ export const useProjectHandlers = ({
     handleCardCreate,
     handleAddReference,
     handleCanvasItemSelect,
-    handleCanvasItemDisable,
-    handleRemoveCanvasReference
+    handleCanvasItemDisable
   };
 };

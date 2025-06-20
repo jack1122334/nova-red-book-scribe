@@ -1,43 +1,20 @@
-import React, { useState, useImperativeHandle, forwardRef, useEffect } from 'react';
+import React, { useImperativeHandle, forwardRef, useEffect } from 'react';
 import { Grid3X3, Lightbulb } from 'lucide-react';
 import { CanvasGrid } from './CanvasArea/CanvasGrid';
 import { InsightsList } from './CanvasArea/InsightsList';
-import { canvasApi } from '@/lib/canvasApi';
 import { useToast } from '@/hooks/use-toast';
-
-export interface CanvasItem {
-  id: string;
-  type: 'canvas' | 'insight';
-  title: string;
-  content?: string;
-  isSelected: boolean;
-  isDisabled: boolean;
-  keyword?: string;
-  author?: string;
-  author_avatar?: string;
-  like_count?: number;
-  collect_count?: number;
-  comment_count?: number;
-  share_count?: number;
-  cover_url?: string;
-  url?: string;
-  platform?: string;
-  ip_location?: string;
-  tags?: string[];
-  create_time?: string;
-  isLoading?: boolean;
-}
+import { useCanvasStore, type CanvasItem } from '@/stores/canvasStore';
 
 interface CanvasAreaProps {
   projectId: string;
   onItemSelect: (item: CanvasItem) => void;
   onItemDisable: (itemId: string) => void;
-  onCanvasDataReceived?: (data: any) => void;
+  onCanvasDataReceived?: (data: Record<string, unknown>) => void;
 }
 
 export interface CanvasAreaRef {
   deselectItem: (itemId: string) => void;
-  processCanvasData: (data: any) => void;
+  processCanvasData: (data: Record<string, unknown>) => void;
 }
 
 export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({ 
@@ -46,308 +23,128 @@ export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
   onItemDisable,
   onCanvasDataReceived 
 }, ref) => {
-  const [canvasItems, setCanvasItems] = useState<CanvasItem[]>([]);
-  const [insights, setInsights] = useState<CanvasItem[]>([]);
-  const [selectedCanvasItems, setSelectedCanvasItems] = useState<Set<string>>(new Set());
-  const [selectedInsights, setSelectedInsights] = useState<Set<string>>(new Set());
-  const [keywords, setKeywords] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  
+  // 使用Zustand store
+  const {
+    canvasItems,
+    insights,
+    keywords,
+    loading,
+    selectedCanvasItems,
+    selectedInsights,
+    canvasReferences,
+    loadProjectData,
+    processStreamData,
+    toggleCanvasSelection,
+    toggleInsightSelection,
+    batchSelectCanvas,
+    batchDisableCanvas,
+    batchSelectInsights,
+    batchDisableInsights,
+    restoreCanvasItem,
+    restoreInsight,
+    addToCanvasReferences,
+    removeFromCanvasReferences,
+    reset,
+    setCurrentProject
+  } = useCanvasStore();
 
   // Load existing data on mount
   useEffect(() => {
-    const loadExistingData = async () => {
-      if (!projectId) return;
-      
+    if (!projectId) return;
+    
+    const loadData = async () => {
       try {
-        setLoading(true);
-        
-        // Load canvas items
-        const canvasData = await canvasApi.getCanvasItems(projectId);
-        console.log('Loaded canvas items:', canvasData.length);
-        
-        if (canvasData.length > 0) {
-          // Extract unique keywords
-          const uniqueKeywords = Array.from(new Set(
-            canvasData.map(item => item.keyword).filter(Boolean)
-          ));
-          setKeywords(uniqueKeywords);
-          
-          // Transform database items to component format
-          const transformedItems: CanvasItem[] = canvasData.map(item => ({
-            id: item.id,
-            type: 'canvas' as const,
-            title: item.title,
-            content: item.content || '',
-            isSelected: false,
-            isDisabled: false,
-            keyword: item.keyword || '',
-            author: item.author || '',
-            author_avatar: item.author_avatar || '',
-            like_count: item.like_count || 0,
-            collect_count: item.collect_count || 0,
-            comment_count: item.comment_count || 0,
-            share_count: item.share_count || 0,
-            cover_url: item.cover_url || '',
-            url: item.url || '',
-            platform: item.platform || 'xiaohongshu',
-            ip_location: item.ip_location || '',
-            tags: item.tags || [],
-            create_time: item.create_time || '',
-            isLoading: false
-          }));
-          
-          setCanvasItems(transformedItems);
-        }
-        
-        // Load insights
-        const insightsData = await canvasApi.getInsights(projectId);
-        console.log('Loaded insights:', insightsData.length);
-        
-        if (insightsData.length > 0) {
-          // Transform database items to component format
-          const transformedInsights: CanvasItem[] = insightsData.map(item => ({
-            id: item.id,
-            type: 'insight' as const,
-            title: item.title,
-            content: item.content,
-            isSelected: false,
-            isDisabled: false,
-            isLoading: false
-          }));
-          
-          setInsights(transformedInsights);
-        }
-        
+        setCurrentProject(projectId);
+        await loadProjectData(projectId);
       } catch (error) {
-        console.error('Failed to load existing canvas data:', error);
+        console.error('Failed to load canvas data:', error);
         toast({
           title: "加载失败",
           description: "无法加载Canvas数据",
           variant: "destructive"
         });
-      } finally {
-        setLoading(false);
       }
     };
 
-    loadExistingData();
-  }, [projectId, toast]);
+    loadData();
+  }, [projectId, setCurrentProject, loadProjectData, toast]);
 
   useImperativeHandle(ref, () => ({
     deselectItem: (itemId: string) => {
-      setCanvasItems(prev => prev.map(item => 
-        item.id === itemId ? { ...item, isSelected: false } : item
-      ));
+      // 通过store方法来取消选择
+      const canvasItem = canvasItems.find(item => item.id === itemId);
+      const insightItem = insights.find(item => item.id === itemId);
       
-      setInsights(prev => prev.map(item => 
-        item.id === itemId ? { ...item, isSelected: false } : item
-      ));
-      
-      setSelectedCanvasItems(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(itemId);
-        return newSet;
-      });
-      
-      setSelectedInsights(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(itemId);
-        return newSet;
-      });
+      if (canvasItem && canvasItem.isSelected) {
+        toggleCanvasSelection(itemId);
+      }
+      if (insightItem && insightItem.isSelected) {
+        toggleInsightSelection(itemId);
+      }
     },
     
-    processCanvasData: (data: any) => {
-      console.log('Processing canvas data:', data);
-      
-      if (data.keywords) {
-        console.log('Setting keywords:', data.keywords);
-        setKeywords(data.keywords);
-        
-        // Initialize loading placeholders for each keyword (3x3 grid)
-        const placeholders: CanvasItem[] = [];
-        data.keywords.forEach((keyword: string, keywordIndex: number) => {
-          for (let i = 0; i < 3; i++) {
-            placeholders.push({
-              id: `placeholder-${keywordIndex}-${i}`,
-              type: 'canvas',
-              title: `${keyword} - 加载中...`,
-              content: '',
-              isSelected: false,
-              isDisabled: false,
-              keyword,
-              isLoading: true
-            });
-          }
-        });
-        
-        setCanvasItems(placeholders);
-      }
-      
-      if (data.keyword && data.cards) {
-        console.log('Updating cards for keyword:', data.keyword, data.cards);
-        
-        // 标准化关键词匹配逻辑
-        const normalizeKeyword = (kw: string) => {
-          return kw.replace(/^["'\s]+|["'\s]+$/g, '').trim();
-        };
-        
-        const normalizedDataKeyword = normalizeKeyword(data.keyword);
-        
-        // 查找匹配的关键词索引
-        let keywordIndex = keywords.findIndex(keyword => {
-          const normalizedKeyword = normalizeKeyword(keyword);
-          console.log('Comparing keywords:', { normalizedDataKeyword, normalizedKeyword });
-          return normalizedDataKeyword === normalizedKeyword;
-        });
-        
-        console.log('Keyword matching result:', { 
-          dataKeyword: data.keyword, 
-          normalizedDataKeyword,
-          keywords, 
-          keywordIndex 
-        });
-        
-        if (keywordIndex === -1) {
-          console.warn('Keyword not found in keywords array:', data.keyword);
-          // 尝试模糊匹配
-          keywordIndex = keywords.findIndex(keyword => {
-            const normalizedKeyword = normalizeKeyword(keyword);
-            return normalizedKeyword.includes(normalizedDataKeyword) || 
-                   normalizedDataKeyword.includes(normalizedKeyword);
-          });
-          
-          if (keywordIndex === -1) {
-            console.error('Could not match keyword even with fuzzy matching');
-            return;
-          } else {
-            console.log('Found keyword with fuzzy matching at index:', keywordIndex);
-          }
-        }
-        
-        setCanvasItems(prev => {
-          const newItems = [...prev];
-          
-          data.cards.forEach((card: any, cardIndex: number) => {
-            const gridPosition = keywordIndex * 3 + cardIndex;
-            
-            console.log('Placing card at position:', gridPosition, 'for keyword index:', keywordIndex, 'card index:', cardIndex);
-            
-            if (gridPosition < newItems.length) {
-              newItems[gridPosition] = {
-                id: card.id,
-                type: 'canvas',
-                title: card.title,
-                content: card.content || '',
-                isSelected: false,
-                isDisabled: false,
-                keyword: data.keyword,
-                author: card.author,
-                like_count: card.like_count,
-                collect_count: card.collect_count,
-                comment_count: card.comment_count,
-                cover_url: card.cover_url,
-                url: card.url,
-                isLoading: false
-              };
-            }
-          });
-          
-          console.log('Updated canvas items:', newItems.map(item => ({ 
-            id: item.id, 
-            title: item.title, 
-            isLoading: item.isLoading,
-            keyword: item.keyword 
-          })));
-          return newItems;
-        });
-      }
-      
-      if (data.type === 'state_info') {
-        console.log('Received state info:', data);
-        // Handle final state information if needed
-      }
+    processCanvasData: (data: Record<string, unknown>) => {
+      console.log('Processing canvas data via store:', data);
+      processStreamData(data);
     }
   }));
 
   const handleCanvasCheckboxChange = (itemId: string, checked: boolean) => {
-    const newSelected = new Set(selectedCanvasItems);
-    if (checked) {
-      newSelected.add(itemId);
-    } else {
-      newSelected.delete(itemId);
-    }
-    setSelectedCanvasItems(newSelected);
+    toggleCanvasSelection(itemId);
   };
 
   const handleInsightCheckboxChange = (itemId: string, checked: boolean) => {
-    const newSelected = new Set(selectedInsights);
-    if (checked) {
-      newSelected.add(itemId);
-    } else {
-      newSelected.delete(itemId);
-    }
-    setSelectedInsights(newSelected);
+    toggleInsightSelection(itemId);
   };
 
   const handleCanvasBatchSelect = () => {
-    selectedCanvasItems.forEach(itemId => {
+    const selectedIds = Array.from(selectedCanvasItems);
+    selectedIds.forEach(itemId => {
       const item = canvasItems.find(i => i.id === itemId);
       if (item && !item.isDisabled) {
-        const updatedItem = { ...item, isSelected: true };
-        onItemSelect(updatedItem);
-        setCanvasItems(prev => prev.map(i => 
-          i.id === itemId ? updatedItem : i
-        ));
+        addToCanvasReferences(item);
       }
     });
-    setSelectedCanvasItems(new Set());
+    // 清空勾选状态
+    batchSelectCanvas(selectedIds);
   };
 
   const handleCanvasBatchDisable = () => {
-    selectedCanvasItems.forEach(itemId => {
-      onItemDisable(itemId);
-      setCanvasItems(prev => prev.map(i => 
-        i.id === itemId ? { ...i, isDisabled: true, isSelected: false } : i
-      ));
+    const selectedIds = Array.from(selectedCanvasItems);
+    selectedIds.forEach(itemId => {
+      removeFromCanvasReferences(itemId);
     });
-    setSelectedCanvasItems(new Set());
+    batchDisableCanvas(selectedIds);
   };
 
   const handleInsightBatchSelect = () => {
-    selectedInsights.forEach(itemId => {
+    const selectedIds = Array.from(selectedInsights);
+    selectedIds.forEach(itemId => {
       const item = insights.find(i => i.id === itemId);
       if (item && !item.isDisabled) {
-        const updatedItem = { ...item, isSelected: true };
-        onItemSelect(updatedItem);
-        setInsights(prev => prev.map(i => 
-          i.id === itemId ? updatedItem : i
-        ));
+        addToCanvasReferences(item);
       }
     });
-    setSelectedInsights(new Set());
+    // 清空勾选状态
+    batchSelectInsights(selectedIds);
   };
 
   const handleInsightBatchDisable = () => {
-    selectedInsights.forEach(itemId => {
-      onItemDisable(itemId);
-      setInsights(prev => prev.map(i => 
-        i.id === itemId ? { ...i, isDisabled: true, isSelected: false } : i
-      ));
+    const selectedIds = Array.from(selectedInsights);
+    selectedIds.forEach(itemId => {
+      removeFromCanvasReferences(itemId);
     });
-    setSelectedInsights(new Set());
+    batchDisableInsights(selectedIds);
   };
 
   const handleCanvasRestore = (itemId: string) => {
-    setCanvasItems(prev => prev.map(i => 
-      i.id === itemId ? { ...i, isDisabled: false } : i
-    ));
+    restoreCanvasItem(itemId);
   };
 
   const handleInsightRestore = (itemId: string) => {
-    setInsights(prev => prev.map(i => 
-      i.id === itemId ? { ...i, isDisabled: false } : i
-    ));
+    restoreInsight(itemId);
   };
 
   if (loading) {
@@ -386,6 +183,7 @@ export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
           <CanvasGrid
             items={canvasItems}
             selectedItems={selectedCanvasItems}
+            canvasReferences={canvasReferences}
             onCheckboxChange={handleCanvasCheckboxChange}
             onBatchSelect={handleCanvasBatchSelect}
             onBatchDisable={handleCanvasBatchDisable}
@@ -404,6 +202,7 @@ export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
           <InsightsList
             insights={insights}
             selectedInsights={selectedInsights}
+            canvasReferences={canvasReferences}
             onCheckboxChange={handleInsightCheckboxChange}
             onBatchSelect={handleInsightBatchSelect}
             onBatchDisable={handleInsightBatchDisable}

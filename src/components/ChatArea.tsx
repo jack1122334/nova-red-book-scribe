@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,18 +8,18 @@ import { chatApi, bluechatApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { MessageDetailsDialog } from "@/components/MessageDetailsDialog";
 import { ReferenceDisplay } from "@/components/ReferenceDisplay";
-import { CanvasItem } from "@/components/CanvasArea";
+import { CanvasItem } from "@/stores/canvasStore";
 import ReactMarkdown from 'react-markdown';
 import { useAuthStore } from "@/stores/authStore";
+import { useCanvasStore } from "@/stores/canvasStore";
+import { CanvasReferenceDisplay } from "@/components/CanvasReferenceDisplay";
 
 interface ChatAreaProps {
   projectId: string;
   initialMessage?: string;
   onCardCreated: (cardId: string, title: string, content: string) => Promise<void>;
   onCardUpdated: (cardTitle: string, content: string) => Promise<void>;
-  canvasReferences?: CanvasItem[];
-  onRemoveCanvasReference?: (itemId: string) => void;
-  onCanvasDataReceived?: (data: any) => void;
+  onCanvasDataReceived?: (data: Record<string, unknown>) => void;
 }
 
 interface ChatMessage {
@@ -79,11 +78,16 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
   initialMessage,
   onCardCreated,
   onCardUpdated,
-  canvasReferences = [],
-  onRemoveCanvasReference,
   onCanvasDataReceived
 }, ref) => {
   const { user } = useAuthStore();
+  const {
+    canvasItems,
+    insights,
+    canvasReferences,
+    saveCanvasData,
+    saveInsightsData,
+  } = useCanvasStore();
 
   const [messages, setMessages] = useState<StreamingMessage[]>([]);
   const [inputValue, setInputValue] = useState("");
@@ -231,22 +235,36 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
     const insightsDataToSave: any[] = [];
 
     try {
-      console.log('ChatArea: Sending message to bluechat');
+      console.log("ChatArea: Sending message to bluechat");
 
       // 1. 先保存用户消息到数据库
-      const savedUserMessage = await chatApi.saveMessage(projectId, 'user', userMessage);
-      console.log('ChatArea: User message saved:', savedUserMessage.id);
+      const savedUserMessage = await chatApi.saveMessage(
+        projectId,
+        "user",
+        userMessage
+      );
+      console.log("ChatArea: User message saved:", savedUserMessage.id);
 
       // Update temp user message with real ID
-      setMessages(prev => prev.map(msg => 
-        msg.id === tempUserMessage.id 
-          ? { ...msg, id: savedUserMessage.id }
-          : msg
-      ));
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === tempUserMessage.id
+            ? { ...msg, id: savedUserMessage.id }
+            : msg
+        )
+      );
 
-      // Determine stage based on references
-      const stage = canvasReferences.length > 0 ? 'STAGE_2' : 'STAGE_1';
-      const selectedIds = canvasReferences.map(ref => ref.id);
+      // Determine stage based on selected items
+      let stage: "STAGE_1" | "STAGE_2" | "STAGE_3" = "STAGE_1";
+      if (canvasItems.length > 0 && insights.length > 0) {
+        stage = "STAGE_3";
+      } else if (canvasItems.length > 0) {
+        stage = "STAGE_2";
+      } else {
+        stage = "STAGE_1";
+      }
+
+      const selectedIds = canvasReferences.map((item) => item.id);
 
       await bluechatApi.sendMessageStream(
         projectId,
@@ -271,40 +289,47 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
 
           // Collect canvas data for database storage
           if (data.keyword && data.cards) {
-            console.log('ChatArea: Collecting canvas data for storage:', data.keyword, data.cards.length);
+            console.log(
+              "ChatArea: Collecting canvas data for storage:",
+              data.keyword,
+              data.cards.length
+            );
             data.cards.forEach((card: any) => {
               canvasDataToSave.push({
                 project_id: projectId,
                 external_id: card.id,
-                type: 'canvas',
+                type: "canvas",
                 title: card.title,
-                content: card.content || '',
+                content: card.content || "",
                 keyword: data.keyword,
-                author: card.author || '',
-                author_avatar: card.author_avatar || '',
+                author: card.author || "",
+                author_avatar: card.author_avatar || "",
                 like_count: card.like_count || 0,
                 collect_count: card.collect_count || 0,
                 comment_count: card.comment_count || 0,
                 share_count: card.share_count || 0,
-                cover_url: card.cover_url || '',
-                url: card.url || '',
-                platform: card.platform || 'xiaohongshu',
-                ip_location: card.ip_location || '',
+                cover_url: card.cover_url || "",
+                url: card.url || "",
+                platform: card.platform || "xiaohongshu",
+                ip_location: card.ip_location || "",
                 tags: card.tags || [],
-                create_time: card.create_time || ''
+                create_time: card.create_time || "",
               });
             });
           }
 
           // Collect insights data for database storage
-          if (data.type === 'insight' && data.text) {
-            console.log('ChatArea: Collecting insight data for storage:', data.text.substring(0, 100));
+          if (data.type === "insight" && data.text) {
+            console.log(
+              "ChatArea: Collecting insight data for storage:",
+              data.text.substring(0, 100)
+            );
             insightsDataToSave.push({
               project_id: projectId,
               external_id: data.id || `insight-${Date.now()}`,
-              type: 'insight',
-              title: data.title || '',
-              content: data.text
+              type: "insight",
+              title: data.title || "",
+              content: data.text,
             });
           }
 
@@ -318,15 +343,18 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
       // 2. 保存canvas数据到数据库
       if (canvasDataToSave.length > 0) {
         try {
-          console.log('ChatArea: Saving canvas data to database:', canvasDataToSave.length);
-          await chatApi.batchSaveCanvasItems(canvasDataToSave);
-          console.log('ChatArea: Canvas data saved successfully');
+          console.log(
+            "ChatArea: Saving canvas data to database:",
+            canvasDataToSave.length
+          );
+          await saveCanvasData(projectId, canvasDataToSave);
+          console.log("ChatArea: Canvas data saved successfully");
         } catch (canvasError) {
-          console.error('ChatArea: Failed to save canvas data:', canvasError);
+          console.error("ChatArea: Failed to save canvas data:", canvasError);
           toast({
             title: "Canvas数据保存失败",
             description: "Canvas数据未能保存到数据库",
-            variant: "destructive"
+            variant: "destructive",
           });
         }
       }
@@ -334,47 +362,63 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
       // 3. 保存insights数据到数据库
       if (insightsDataToSave.length > 0) {
         try {
-          console.log('ChatArea: Saving insights data to database:', insightsDataToSave.length);
-          await chatApi.batchSaveInsights(insightsDataToSave);
-          console.log('ChatArea: Insights data saved successfully');
+          console.log(
+            "ChatArea: Saving insights data to database:",
+            insightsDataToSave.length
+          );
+          await saveInsightsData(projectId, insightsDataToSave);
+          console.log("ChatArea: Insights data saved successfully");
         } catch (insightsError) {
-          console.error('ChatArea: Failed to save insights data:', insightsError);
+          console.error(
+            "ChatArea: Failed to save insights data:",
+            insightsError
+          );
           toast({
             title: "Insights数据保存失败",
             description: "Insights数据未能保存到数据库",
-            variant: "destructive"
+            variant: "destructive",
           });
         }
       }
 
       // 4. 保存助手消息到数据库
       if (finalAssistantContent.trim()) {
-        const savedAssistantMessage = await chatApi.saveMessage(projectId, 'assistant', finalAssistantContent);
-        console.log('ChatArea: Assistant message saved:', savedAssistantMessage.id);
+        const savedAssistantMessage = await chatApi.saveMessage(
+          projectId,
+          "assistant",
+          finalAssistantContent
+        );
+        console.log(
+          "ChatArea: Assistant message saved:",
+          savedAssistantMessage.id
+        );
 
         // Update temp assistant message with real ID and mark as complete
-        setMessages(prev => prev.map(msg => 
-          msg.id === tempAssistantMessage.id 
-            ? { ...msg, id: savedAssistantMessage.id, isStreaming: false }
-            : msg
-        ));
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === tempAssistantMessage.id
+              ? { ...msg, id: savedAssistantMessage.id, isStreaming: false }
+              : msg
+          )
+        );
       } else {
         // Mark streaming as complete even if no content
-        setMessages(prev => prev.map(msg => 
-          msg.id === tempAssistantMessage.id 
-            ? { ...msg, isStreaming: false }
-            : msg
-        ));
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === tempAssistantMessage.id
+              ? { ...msg, isStreaming: false }
+              : msg
+          )
+        );
       }
 
       setReferences([]);
       setPendingSystemMessages([]);
-      
+
       toast({
         title: "搜索完成",
-        description: "Canvas 数据已更新"
+        description: "Canvas 数据已更新",
       });
-      
     } catch (error: any) {
       console.error('ChatArea: Failed to send message:', error);
       toast({
@@ -561,7 +605,10 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
           </h3>
           <div className="space-y-3">
             {references.map((ref, index) => (
-              <div key={index} className="rounded-lg border border-black/20 p-3 text-sm bg-gray-100">
+              <div
+                key={index}
+                className="rounded-lg border border-black/20 p-3 text-sm bg-gray-100"
+              >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2">
@@ -569,25 +616,34 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
                         {ref.card_friendly_title}
                       </span>
                       <span className="text-xs text-black/50 bg-black/10 px-2 py-1 rounded">
-                        {ref.type === 'full_card' ? '整个卡片' : '文本片段'}
+                        {ref.type === "full_card" ? "整个卡片" : "文本片段"}
                       </span>
                     </div>
-                    
+
                     {editingRemark === index ? (
                       <div className="space-y-2">
-                        <Input 
-                          value={editRemarkText} 
-                          onChange={e => setEditRemarkText(e.target.value)} 
-                          placeholder="添加备注说明..." 
-                          className="text-sm" 
-                          autoFocus 
+                        <Input
+                          value={editRemarkText}
+                          onChange={(e) => setEditRemarkText(e.target.value)}
+                          placeholder="添加备注说明..."
+                          className="text-sm"
+                          autoFocus
                         />
                         <div className="flex gap-2">
-                          <Button size="sm" onClick={() => saveRemark(index)} className="h-7 text-xs">
+                          <Button
+                            size="sm"
+                            onClick={() => saveRemark(index)}
+                            className="h-7 text-xs"
+                          >
                             <Check className="w-3 h-3 mr-1" />
                             保存
                           </Button>
-                          <Button variant="ghost" size="sm" onClick={cancelEditRemark} className="h-7 text-xs">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={cancelEditRemark}
+                            className="h-7 text-xs"
+                          >
                             <X className="w-3 h-3 mr-1" />
                             取消
                           </Button>
@@ -598,28 +654,30 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
                         <p className="text-black/60 text-xs flex-1">
                           {ref.user_remark || "暂无备注"}
                         </p>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => startEditingRemark(index, ref.user_remark)} 
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            startEditingRemark(index, ref.user_remark)
+                          }
                           className="h-6 w-6 p-0 text-black/40 hover:text-black/60"
                         >
                           <Edit3 className="w-3 h-3" />
                         </Button>
                       </div>
                     )}
-                    
+
                     {ref.snippet_content && (
                       <div className="mt-2 p-2 bg-black/5 rounded text-xs text-black/60 border-l-2 border-black/20">
                         "{ref.snippet_content.substring(0, 100)}..."
                       </div>
                     )}
                   </div>
-                  
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => removeReference(index)} 
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeReference(index)}
                     className="h-6 w-6 p-0 text-black/40 hover:text-black flex-shrink-0"
                   >
                     <X className="w-3 h-3" />
@@ -638,26 +696,36 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
             <div className="w-16 h-16 rounded-full bg-black/10 flex items-center justify-center mb-4">
               <Bot className="w-8 h-8 text-black/40" />
             </div>
-            <h3 className="text-lg font-medium text-black mb-2">开始与 Nova 对话</h3>
+            <h3 className="text-lg font-medium text-black mb-2">
+              开始与 Nova 对话
+            </h3>
             <p className="text-sm text-center max-w-md">
               我是您的小红书内容创作助手，可以帮您撰写、优化和完善各种类型的小红书笔记内容。
             </p>
           </div>
         ) : (
           <div className="p-4 space-y-6">
-            {messages.map(message => (
-              <div key={message.id} className={`flex flex-col gap-4 ${message.role === 'user' ? 'justify-end' : ''}`}>
-                {message.role === 'assistant' ? (
+            {messages.map((message) => (
+              <div
+                key={message.id}
+                className={`flex flex-col gap-4 ${
+                  message.role === "user" ? "justify-end" : ""
+                }`}
+              >
+                {message.role === "assistant" ? (
                   <>
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center flex-shrink-0">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center flex-shrink-0">
                         <Bot className="w-4 h-4 text-white" />
+                      </div>
+                      | Nova
                     </div>
-                    | Nova
-                  </div>
-                    
+
                     <div className="flex-1 min-w-0 max-w-4xl">
-                      <div className="cursor-pointer group relative" onClick={() => handleMessageClick(message)}>
+                      <div
+                        className="cursor-pointer group relative"
+                        onClick={() => handleMessageClick(message)}
+                      >
                         {renderStreamingContent(message)}
                         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <Info className="w-4 h-4 text-black/40" />
@@ -668,8 +736,8 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
                 ) : (
                   <>
                     <div className="flex-1 flex justify-end min-w-0">
-                      <div 
-                        onClick={() => handleMessageClick(message)} 
+                      <div
+                        onClick={() => handleMessageClick(message)}
                         className="whitespace-pre-wrap text-white leading-relaxed p-4 rounded-2xl transition-colors cursor-pointer group relative bg-black hover:bg-black/80 max-w-md"
                       >
                         {message.content}
@@ -688,34 +756,31 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
 
       {/* Input Area */}
       <div className="border-t border-black/20 p-4 bg-white">
-
         {/* Canvas References Display */}
-        {canvasReferences.length > 0 && onRemoveCanvasReference && (
-          <ReferenceDisplay 
-            references={canvasReferences} 
-            onRemoveReference={onRemoveCanvasReference} 
-          />
-        )}
-        
+        <CanvasReferenceDisplay />
+
         <div className="flex gap-3 items-end">
           <div className="flex-1">
-            <Textarea 
-              value={inputValue} 
-              onChange={e => setInputValue(e.target.value)} 
-              onKeyDown={handleKeyPress} 
-              placeholder="输入消息..." 
-              disabled={isLoading} 
-              className="min-h-[44px] max-h-[200px] resize-none bg-gray-100 py-4 rounded-2xl my-0" 
+            <Textarea
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={handleKeyPress}
+              placeholder="输入消息..."
+              disabled={isLoading}
+              className="min-h-[44px] max-h-[200px] resize-none bg-gray-100 py-4 rounded-2xl my-0"
             />
-            {(references.length > 0 || pendingSystemMessages.length > 0 || canvasReferences.length > 0) && (
+            {(references.length > 0 || pendingSystemMessages.length > 0) && (
               <p className="text-xs text-black/50 mt-2">
-                将发送 {references.length + canvasReferences.length} 个引用{pendingSystemMessages.length > 0 && ` 和 ${pendingSystemMessages.length} 个编辑通知`} 给 AI
+                将发送 {references.length} 个引用
+                {pendingSystemMessages.length > 0 &&
+                  ` 和 ${pendingSystemMessages.length} 个编辑通知`}{" "}
+                给 AI
               </p>
             )}
           </div>
-          <Button 
-            onClick={handleSendMessage} 
-            disabled={!inputValue.trim() || isLoading} 
+          <Button
+            onClick={handleSendMessage}
+            disabled={!inputValue.trim() || isLoading}
             className="h-11 w-11 p-0 bg-black hover:bg-black/80 disabled:bg-black/30 rounded-xl text-left text-white font-normal text-base px-[3px] py-[3px] my-0"
           >
             <Send className="w-4 h-4" />
@@ -724,10 +789,10 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
       </div>
 
       {/* Message Details Dialog */}
-      <MessageDetailsDialog 
-        message={selectedMessage} 
-        isOpen={isMessageDialogOpen} 
-        onClose={closeMessageDialog} 
+      <MessageDetailsDialog
+        message={selectedMessage}
+        isOpen={isMessageDialogOpen}
+        onClose={closeMessageDialog}
       />
     </div>
   );
