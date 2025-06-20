@@ -61,6 +61,7 @@ export const CanvasItemModal: React.FC<CanvasItemModalProps> = ({
           {item.cover_url && (
             <div className="relative w-full h-64 rounded-lg overflow-hidden bg-gray-100">
               <img
+                referrerPolicy="no-referrer"
                 src={imageProxyApi.getProxiedImageUrl(item.cover_url)}
                 alt={item.title}
                 className="w-full h-full object-cover"
