@@ -184,7 +184,7 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
                             )}
                             <div className="flex-1"></div>
                             {/* 互动数据 - 固定在右下角 */}
-                            <div className="w-full absolute bg-white/60 backdrop-blur-sm rounded-sm bottom-0 right-0 flex items-center justify-end gap-1 text-xs text-black/60 mt-auto">
+                            <div className="w-full absolute bg-white/60 backdrop-blur-sm bottom-0 right-0 flex items-center justify-end gap-1 text-xs text-black/60 mt-auto">
                               {item.like_count && item.like_count > 0 ? (
                                 <div className="flex items-center gap-[1px]">
                                   <Heart className="w-3 h-3 fill-red-400 text-red-400" />

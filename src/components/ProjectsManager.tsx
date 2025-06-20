@@ -17,6 +17,7 @@ import { projectsApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { CreateProjectDialog } from "./CreateProjectDialog";
+import { UserBackgroundIcon } from "./UserBackgroundIcon";
 
 interface ProjectsManagerProps {
   onProjectSelect?: (project: Project) => void;
@@ -47,6 +48,7 @@ export const ProjectsManager = ({
       const formattedProjects: Project[] = data.map(proj => ({
         id: proj.id,
         title: proj.title,
+        user_background: proj.user_background,
         createdAt: proj.created_at.split('T')[0],
         updatedAt: proj.updated_at.split('T')[0]
       }));
@@ -116,24 +118,18 @@ export const ProjectsManager = ({
       </div>;
   }
 
-  return <div className="p-8 md:px-20 max-w-6xl mx-auto">
+  return (
+    <div className="p-8 md:px-20 max-w-6xl mx-auto">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-800 mb-2">我的项目</h1>
-        <p className="text-gray-600">管理你的小红书创作项目</p>
       </div>
 
       {/* Create New Project */}
-      <Card className="mb-8 bg-white/70 backdrop-blur-sm border-purple-200">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-slate-950">
-            <Plus className="w-5 h-5" />
-            创建新项目
-          </CardTitle>
-        </CardHeader>
+      <Card className="my-8 bg-white/70 backdrop-blur-sm">
         <CardContent>
-          <Button 
+          <Button
             onClick={() => setCreateDialogOpen(true)}
-            className="bg-slate-950 text-white hover:bg-slate-800 hover:text-white"
+            className="mt-6 bg-slate-950 text-white hover:bg-slate-800 hover:text-white"
           >
             创建项目
           </Button>
@@ -142,24 +138,33 @@ export const ProjectsManager = ({
 
       {/* Projects Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {projects.map(project => (
-          <Card 
-            key={project.id} 
-            className="group cursor-pointer hover:shadow-lg transition-all duration-200 bg-white/60 backdrop-blur-sm border-gray-200 hover:border-purple-300 relative" 
+        {projects.map((project) => (
+          <Card
+            key={project.id}
+            className="group cursor-pointer hover:shadow-lg transition-all duration-200 bg-white/60 backdrop-blur-sm border-gray-200  relative"
             onClick={() => handleProjectClick(project)}
           >
             {/* 删除按钮 - 只在hover时显示 */}
             <Button
               variant="ghost"
               size="sm"
-              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-100 hover:text-red-600 z-10"
+              className="absolute top-5 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-white hover:bg-red-100 hover:text-red-600 z-10"
               onClick={(e) => handleDeleteClick(e, project)}
             >
               <Trash2 className="w-4 h-4" />
             </Button>
-            
-            <CardHeader>
-              <CardTitle className="text-lg text-gray-800 pr-8">{project.title}</CardTitle>
+
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-lg text-gray-800 pr-8">
+                {project.title}
+              </CardTitle>
+              {project.user_background && (
+                <UserBackgroundIcon
+                  noHover={true}
+                  userBackground={project.user_background}
+                  size="sm"
+                />
+              )}
             </CardHeader>
             <CardContent>
               <div className="space-y-2 text-sm text-gray-600">
@@ -177,13 +182,15 @@ export const ProjectsManager = ({
         ))}
       </div>
 
-      {projects.length === 0 && <div className="text-center py-12 text-gray-500">
+      {projects.length === 0 && (
+        <div className="text-center py-12 text-gray-500">
           <MessageSquare className="w-16 h-16 mx-auto mb-4 opacity-30" />
           <p>还没有项目</p>
           <p className="text-sm">创建你的第一个小红书创作项目吧</p>
-        </div>}
+        </div>
+      )}
 
-      <CreateProjectDialog 
+      <CreateProjectDialog
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
         onProjectCreated={handleProjectCreated}
@@ -195,12 +202,13 @@ export const ProjectsManager = ({
           <AlertDialogHeader>
             <AlertDialogTitle>确认删除项目</AlertDialogTitle>
             <AlertDialogDescription>
-              你确定要删除项目"{projectToDelete?.title}"吗？此操作无法撤销，项目中的所有内容都将被永久删除。
+              你确定要删除项目"{projectToDelete?.title}
+              "吗？此操作无法撤销，项目中的所有内容都将被永久删除。
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>取消</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleDeleteProject}
               className="bg-red-600 hover:bg-red-700"
             >
@@ -209,5 +217,6 @@ export const ProjectsManager = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>;
+    </div>
+  );
 };

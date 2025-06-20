@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Check, X, RotateCcw, Lightbulb, Sparkles } from "lucide-react";
 import { CanvasItem } from "@/stores/canvasStore";
+import { InsightsModal } from "./InsightsModal";
 
 interface InsightsListProps {
   insights: CanvasItem[];
@@ -24,6 +25,18 @@ export const InsightsList: React.FC<InsightsListProps> = ({
   onBatchDisable,
   onRestore
 }) => {
+  const [selectedInsight, setSelectedInsight] = React.useState<CanvasItem | null>(null);
+  const [isModalOpen, setIsModalOpen] = React.useState(false);
+
+  const handleInsightClick = (insight: CanvasItem) => {
+    setSelectedInsight(insight);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedInsight(null);
+  };
   // 检查item是否在canvasReferences中
   const isInReferences = (itemId: string) => {
     return canvasReferences.some(ref => ref.id === itemId);
@@ -57,33 +70,39 @@ export const InsightsList: React.FC<InsightsListProps> = ({
         {insights.map((insight) => (
           <div
             key={insight.id}
-            className={`relative ${
-              insight.isDisabled ? 'opacity-30' : ''
-            }`}
+            className={`relative ${insight.isDisabled ? "opacity-30" : ""}`}
           >
-            <Card className={`transition-all duration-200 ${
-              isInReferences(insight.id)
-                ? 'ring-2 ring-black bg-black/5'
-                : insight.isSelected 
-                ? 'ring-2 ring-gray-400 bg-gray-50' 
-                : 'hover:shadow-md hover:-translate-y-0.5'
-            }`}>
+            <Card
+              className={`transition-all duration-200 cursor-pointer ${
+                isInReferences(insight.id)
+                  ? "ring-2 ring-black bg-black/5"
+                  : insight.isSelected
+                  ? "ring-2 ring-gray-400 bg-gray-50"
+                  : "hover:shadow-md hover:-translate-y-0.5"
+              }`}
+            >
               <CardContent className="p-3">
                 <div className="flex items-start gap-3">
                   <Checkbox
                     checked={selectedInsights.has(insight.id)}
-                    onCheckedChange={(checked) => 
+                    onCheckedChange={(checked) =>
                       onCheckboxChange(insight.id, checked as boolean)
                     }
                     disabled={insight.isDisabled}
                     className="flex-shrink-0 mt-0.5"
+                    onClick={(e) => e.stopPropagation()}
                   />
-                  <div className="flex-1 min-w-0">
-                    <h4 className="text-sm font-medium text-black font-serif mb-1">
+                  <div 
+                    className="flex-1 min-w-0"
+                    onClick={() => handleInsightClick(insight)}
+                  >
+                    <h4 className="text-sm font-medium text-black font-serif mb-1 hover:text-amber-700 transition-colors">
                       {insight.title}
                     </h4>
                     <p className="text-xs text-black/60 leading-relaxed">
-                      {insight.content}
+                      {insight.content && insight.content.length > 40
+                        ? `${insight.content.substring(0, 40)}...`
+                        : insight.content || "无内容"}
                     </p>
                   </div>
                   {insight.isDisabled && (
@@ -91,7 +110,10 @@ export const InsightsList: React.FC<InsightsListProps> = ({
                       size="sm"
                       variant="outline"
                       className="h-6 w-6 p-0 rounded-full hover:bg-green-50 hover:border-green-300 flex-shrink-0"
-                      onClick={() => onRestore(insight.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onRestore(insight.id);
+                      }}
                     >
                       <RotateCcw className="w-3 h-3" />
                     </Button>
@@ -124,6 +146,13 @@ export const InsightsList: React.FC<InsightsListProps> = ({
           </Button>
         </div>
       )}
+
+      {/* Insights Modal */}
+      <InsightsModal
+        item={selectedInsight}
+        open={isModalOpen}
+        onClose={closeModal}
+      />
     </div>
   );
 };

@@ -318,18 +318,21 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
             });
           }
 
-          // Collect insights data for database storage
-          if (data.type === "insight" && data.text) {
+          // Collect keyword_insight data for database storage
+          if (
+            (data.answerText && data.type === "keyword_insight") ||
+            (data.answerText && data.type === "comprehensive_insight")
+          ) {
             console.log(
-              "ChatArea: Collecting insight data for storage:",
-              data.text.substring(0, 100)
+              "ChatArea: Collecting keyword insight data for storage:",
+              data.answerText.substring(0, 100)
             );
             insightsDataToSave.push({
               project_id: projectId,
               external_id: data.id || `insight-${Date.now()}`,
-              type: "insight",
-              title: data.title || "",
-              content: data.text,
+              type: "keyword_insight",
+              title: data.keyword ? `关键词洞察: ${data.keyword}` : "全面洞察",
+              content: data.answerText,
             });
           }
 

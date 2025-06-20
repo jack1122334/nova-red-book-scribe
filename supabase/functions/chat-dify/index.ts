@@ -236,6 +236,19 @@ serve(async (req) => {
                               }));
                               insightsData.push(...transformedInsights);
                             }
+
+                            // Check for keyword_insight data (单个对象)
+                            if (output.type === 'keyword_insight' && output.answerText) {
+                              console.log('Found keyword insight in tool output:', output.keyword, output.answerText.substring(0, 100));
+                              const transformedInsight = {
+                                project_id,
+                                external_id: output.id || `keyword_insight_${Date.now()}_${Math.random()}`,
+                                type: 'keyword_insight',
+                                title: output.keyword ? `关键词洞察: ${output.keyword}` : '关键词洞察',
+                                content: output.answerText
+                              };
+                              insightsData.push(transformedInsight);
+                            }
                           } catch (parseError) {
                             console.warn('Failed to parse tool output as JSON:', parseError);
                           }
@@ -249,6 +262,17 @@ serve(async (req) => {
                     if (data.conversation_id && !newConversationId) {
                       newConversationId = data.conversation_id;
                     }
+                  } else if (data.type === 'keyword_insight' && data.answerText) {
+                    // Handle direct keyword_insight data in the stream
+                    console.log('Found direct keyword insight in stream:', data.keyword, data.answerText.substring(0, 100));
+                    const transformedInsight = {
+                      project_id,
+                      external_id: data.id || `keyword_insight_${Date.now()}_${Math.random()}`,
+                      type: 'keyword_insight',
+                      title: data.keyword ? `关键词洞察: ${data.keyword}` : '关键词洞察',
+                      content: data.answerText
+                    };
+                    insightsData.push(transformedInsight);
                   } else if (data.event === 'message_end') {
                     newConversationId = data.conversation_id;
                     console.log('=== DIFY RESPONSE COMPLETED ===');

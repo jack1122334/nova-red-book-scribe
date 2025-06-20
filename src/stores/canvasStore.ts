@@ -365,6 +365,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       get().updateCanvasCards(data.keyword, data.cards);
     }
 
+    // 处理 insight 类型的数据
     if (data.type === 'insight' && data.text) {
       console.log('Canvas Store: Adding insight:', data.text.substring(0, 100));
       const newInsight: CanvasItem = {
@@ -372,6 +373,22 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
         type: 'insight',
         title: data.title || '洞察',
         content: data.text,
+        isSelected: false,
+        isDisabled: false,
+        isLoading: false
+      };
+      get().addInsights([newInsight]);
+    }
+
+    // 处理 keyword_insight 类型的数据
+    if (data.type === 'keyword_insight' && data.answerText) {
+      console.log('Canvas Store: Adding keyword insight:', data.answerText.substring(0, 100));
+      const newInsight: CanvasItem = {
+        id: data.id || `insight-${Date.now()}`,
+        type: 'insight',
+        title: data.keyword ? `关键词洞察: ${data.keyword}` : '关键词洞察',
+        content: data.answerText,
+        keyword: data.keyword,
         isSelected: false,
         isDisabled: false,
         isLoading: false

@@ -28,7 +28,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
             <Feather className="w-5 h-5 text-white" />
           </div>
           {project.user_background && (
-            <UserBackgroundIcon userBackground={project.user_background} size="sm" />
+            <UserBackgroundIcon noHover={true} userBackground={project.user_background} size="sm" />
           )}
         </div>
         
@@ -41,7 +41,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
       <div className="px-6 pb-6">
         <div className="flex items-center text-sm text-gray-500">
           <Calendar className="w-4 h-4 mr-2" />
-          <span>{project.updatedAt}</span>
+          <span>最后更新 {project.updatedAt.split('T')[0]}</span>
         </div>
       </div>
       
