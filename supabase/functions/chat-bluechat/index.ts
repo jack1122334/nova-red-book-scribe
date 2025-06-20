@@ -1,4 +1,6 @@
-
+/**
+ * 2025年06月21日01:14:17 修改 这个版本能用
+ */
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -24,12 +26,12 @@ serve(async (req) => {
 
   try {
     const { project_id, query, stage, selected_ids = [], user_id, user_background }: BluechatRequest = await req.json();
-    
+
     console.log('Bluechat request:', { project_id, query, stage, selected_ids, user_id });
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    
+
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Store user message
@@ -75,7 +77,7 @@ serve(async (req) => {
     });
 
     console.log('External API response status:', response.status);
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error('External API error details:', errorText);
@@ -91,60 +93,106 @@ serve(async (req) => {
       async start(controller) {
         const reader = response.body?.getReader();
         if (!reader) {
-          throw new Error('Failed to get response reader');
+          controller.error(new Error('No response body reader available'));
+          return;
         }
 
         const decoder = new TextDecoder();
+        let buffer = ''; // 添加缓冲区来处理被截断的数据
 
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
+        async function pump(): Promise<void> {
+          try {
+            const { done, value } = await reader!.read();
 
-            const chunk = decoder.decode(value);
-            const lines = chunk.split('\n');
-
-            for (const line of lines) {
-              if (line.startsWith('data: ')) {
-                const dataContent = line.slice(6).trim();
-                
-                // Check for stream completion
-                if (dataContent === '[DONE]') {
-                  console.log('=== BLUECHAT RESPONSE COMPLETED ===');
-
-                  break;
-                }
-                
-                if (dataContent === '') {
-                  continue;
-                }
-                
-                try {
-                  const data = JSON.parse(dataContent);
-                  
-                  
-                  console.log('=== BLUECHAT EVENT ===');
-                  console.log('Event type:', data.type || 'unknown');
-                  console.log('Full event data:', JSON.stringify(data, null, 2));
-                  
-                  // Forward the event to frontend for streaming display
-                  const eventData = `data: ${JSON.stringify(data)}\n\n`;
-                  controller.enqueue(new TextEncoder().encode(eventData));
-                  
-                } catch (parseError) {
-                  console.warn('Failed to parse SSE data:', line);
-                  console.warn('Parse error:', parseError);
-                }
+            if (done) {
+              // 处理缓冲区中剩余的数据
+              if (buffer.trim()) {
+                processBuffer(buffer);
               }
+              console.log('=== STREAM COMPLETED ===');
+              controller.close();
+              return;
             }
+
+            const chunk = decoder.decode(value, { stream: true });
+            buffer += chunk; // 将新数据添加到缓冲区
+
+            // 按行分割并处理完整的行
+            const lines = buffer.split('\n');
+
+            // 保留最后一行（可能不完整）在缓冲区中
+            buffer = lines.pop() || '';
+
+            // 处理完整的行
+            for (const line of lines) {
+              processLine(line);
+            }
+
+            return pump();
+          } catch (error) {
+            console.error('Error in stream pump:', error);
+            controller.error(error);
           }
-        } catch (error) {
-          console.error('Error reading stream:', error);
-          throw error;
-        } finally {
-          console.log('=== STREAM COMPLETED ===');
-          controller.close();
         }
+
+        function processBuffer(remainingBuffer: string) {
+          const lines = remainingBuffer.split('\n');
+          for (const line of lines) {
+            processLine(line);
+          }
+        }
+
+        function processLine(line: string) {
+          const trimmedLine = line.trim();
+
+          if (trimmedLine && trimmedLine.startsWith('data: ')) {
+            const dataContent = trimmedLine.slice(6).trim();
+
+            // Check for stream completion
+            if (dataContent === '[DONE]') {
+              console.log('=== BLUECHAT RESPONSE COMPLETED ===');
+              controller.enqueue(
+                new TextEncoder().encode('data: [DONE]\n\n')
+              );
+              return;
+            }
+
+            if (dataContent === '') {
+              return;
+            }
+
+            try {
+              const data = JSON.parse(dataContent);
+
+              console.log('=== BLUECHAT EVENT ===');
+              console.log('Event type:', data.type || 'unknown');
+              console.log('Full event data:', JSON.stringify(data, null, 2));
+
+              // Forward the event to frontend for streaming display
+              const eventData = `data: ${JSON.stringify(data)}\n\n`;
+              controller.enqueue(new TextEncoder().encode(eventData));
+
+            } catch (parseError) {
+              console.warn('Failed to parse SSE data:', parseError, 'Line:', trimmedLine);
+              // 对于无法解析的数据，直接转发
+              controller.enqueue(
+                new TextEncoder().encode(`${line}\n`)
+              );
+            }
+          } else if (trimmedLine.startsWith('event: ') || trimmedLine.startsWith('id: ')) {
+            // 转发其他 SSE 字段
+            controller.enqueue(
+              new TextEncoder().encode(`${line}\n`)
+            );
+          } else {
+            // 转发其他 SSE 字段
+            controller.enqueue(
+              new TextEncoder().encode(`${line}\n`)
+            );
+          }
+        }
+
+        pump();
       }
     });
 
@@ -161,12 +209,12 @@ serve(async (req) => {
     console.error('Error in chat-bluechat function:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      { 
-        status: 500, 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        } 
+      {
+        status: 500,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
       }
     );
   }
