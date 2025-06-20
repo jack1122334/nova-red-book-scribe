@@ -356,11 +356,15 @@ export const bluechatApi = {
     
     // 在开发环境使用代理，生产环境使用Supabase Edge Function
     const isDevelopment = import.meta.env.DEV;
-    const apiUrl = isDevelopment 
-      ? '/api/bluechat'
-      : 'https://evpczvwygelrvxzfdcgv.supabase.co/functions/v1/chat-bluechat';
+    // const apiUrl = isDevelopment 
+    //   ? '/api/bluechat'
+    //   : 'https://evpczvwygelrvxzfdcgv.supabase.co/functions/v1/chat-bluechat';
     
-    const response = await fetch(apiUrl, {
+    const apiUrl = "/api/bluechat"
+    // const apiUrl = "https://evpczvwygelrvxzfdcgv.supabase.co/functions/v1/chat-bluechat"
+
+    
+      const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'accept': 'application/json',
