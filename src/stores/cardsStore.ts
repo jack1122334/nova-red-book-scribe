@@ -177,4 +177,4 @@ export const useCardsStore = create<CardsState>((set, get) => ({
   }),
 
   setCurrentProject: (projectId) => set({ currentProjectId: projectId })
-})); 
+}));
