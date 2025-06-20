@@ -1,7 +1,16 @@
-
 import { create } from 'zustand';
 import { Project } from '@/pages/Creation';
 import { projectsApi } from '@/lib/api';
+import { UserBackgroundData } from '@/types/userBackground';
+import { Json } from '@/integrations/supabase/types';
+
+// 类型转换辅助函数
+const convertJsonToUserBackground = (json: Json | null): UserBackgroundData | undefined => {
+  if (!json || typeof json !== 'object' || Array.isArray(json)) {
+    return undefined;
+  }
+  return json as UserBackgroundData;
+};
 
 interface ProjectState {
   projects: Project[];
@@ -16,8 +25,8 @@ interface ProjectState {
   
   fetchProjects: () => Promise<void>;
   fetchProject: (id: string) => Promise<Project | null>;
-  createProject: (projectData: { title: string; user_background?: any }) => Promise<Project>;
-  updateProject: (id: string, updates: { title?: string; user_background?: any }) => Promise<Project>;
+  createProject: (projectData: { title: string; user_background?: UserBackgroundData }) => Promise<Project>;
+  updateProject: (id: string, updates: { title?: string; user_background?: UserBackgroundData }) => Promise<Project>;
   deleteProject: (id: string) => Promise<void>;
 }
 
@@ -41,7 +50,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
         title: p.title,
         createdAt: p.created_at,
         updatedAt: p.updated_at,
-        user_background: p.user_background
+        user_background: convertJsonToUserBackground(p.user_background)
       }));
       set({ projects: formattedProjects });
     } catch (error) {
@@ -61,7 +70,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
         title: project.title,
         createdAt: project.created_at,
         updatedAt: project.updated_at,
-        user_background: project.user_background
+        user_background: convertJsonToUserBackground(project.user_background)
       };
       set({ currentProject: formattedProject });
       return formattedProject;
@@ -83,7 +92,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
         title: project.title,
         createdAt: project.created_at,
         updatedAt: project.updated_at,
-        user_background: project.user_background
+        user_background: convertJsonToUserBackground(project.user_background)
       };
       
       const { projects } = get();
@@ -107,7 +116,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
         title: project.title,
         createdAt: project.created_at,
         updatedAt: project.updated_at,
-        user_background: project.user_background
+        user_background: convertJsonToUserBackground(project.user_background)
       };
       
       const { projects, currentProject } = get();

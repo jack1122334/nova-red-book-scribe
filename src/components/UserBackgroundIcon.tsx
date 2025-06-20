@@ -1,9 +1,10 @@
 import React from "react";
 import { User, BookOpen, Package } from "lucide-react";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { UserBackgroundData } from "@/types/userBackground";
 
 interface UserBackgroundIconProps {
-  userBackground: any;
+  userBackground: UserBackgroundData | null | undefined;
   size?: 'sm' | 'md' | 'lg';
   noHover?: boolean;
 }

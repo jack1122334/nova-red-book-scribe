@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -7,6 +6,9 @@ import { ProjectsManager } from "@/components/ProjectsManager";
 import { ProjectWorkbench } from "@/components/ProjectWorkbench";
 import { useProjectStore } from "@/stores/projectStore";
 import { Navbar } from "@/components/Navbar";
+import { UserBackgroundData } from "@/types/userBackground";
+import { useCanvasStore } from "@/stores/canvasStore";
+import { useCardsStore } from "@/stores/cardsStore";
 
 export type CreationView = "projects" | "workbench";
 
@@ -16,16 +18,30 @@ export interface Project {
   createdAt: string;
   updatedAt: string;
   initialMessage?: string;
-  user_background?: any;
+  user_background?: UserBackgroundData;
 }
 
 const Creation = () => {
   const { projectId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const [currentView, setCurrentView] = useState<CreationView>("projects");
   const { currentProject, fetchProject, setCurrentProject } = useProjectStore();
+  const { reset: resetCanvas } = useCanvasStore();
+  const { reset: resetXiaohongshuCards } = useCardsStore();
+
+  const [currentView, setCurrentView] = useState<CreationView>("projects");
   const [isLoading, setIsLoading] = useState(false);
+
+  // 清除上一次的项目状态，避免显示上一次的项目详情
+  useEffect(() => {
+    // 当没有projectId时，清除当前项目状态
+    if (!projectId) {
+      setCurrentProject(null);
+      setCurrentView("projects");
+      resetXiaohongshuCards();
+      resetCanvas();
+    }
+  }, [projectId, setCurrentProject]);
 
   // 处理从首页传来的项目信息
   useEffect(() => {
@@ -50,21 +66,25 @@ const Creation = () => {
           } else {
             // 如果获取失败，回到项目列表
             setCurrentView("projects");
+            navigate('/creation', { replace: true });
           }
         })
         .catch(error => {
           console.error('Creation: Error fetching project:', error);
           setCurrentView("projects");
+          navigate('/creation', { replace: true });
         })
         .finally(() => {
           setIsLoading(false);
         });
     }
-  }, [projectId, location.state, fetchProject, setCurrentProject]);
+  }, [projectId, location.state, fetchProject, setCurrentProject, navigate]);
 
   const handleProjectSelect = (project: Project) => {
     setCurrentProject(project);
     setCurrentView("workbench");
+    // 更新URL添加项目ID参数
+    navigate(`/creation/workbench/${project.id}`, { replace: true });
   };
 
   const handleBackToProjects = () => {

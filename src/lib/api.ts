@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Database, Json } from '@/integrations/supabase/types';
+import { UserBackgroundData } from '@/types/userBackground';
 
 type Project = Database['public']['Tables']['projects']['Row'];
 type Card = Database['public']['Tables']['cards']['Row'];
@@ -51,6 +52,21 @@ const processBluechatBufferLines = (buffer: string, onEvent: (event: StreamEvent
   }
 };
 
+// 类型转换辅助函数
+const convertJsonToUserBackground = (json: Json | null): UserBackgroundData | undefined => {
+  if (!json || typeof json !== 'object' || Array.isArray(json)) {
+    return undefined;
+  }
+  return json as UserBackgroundData;
+};
+
+const convertUserBackgroundToJson = (userBackground: UserBackgroundData | undefined): Json | null => {
+  if (!userBackground) {
+    return null;
+  }
+  return userBackground as Json;
+};
+
 export const projectsApi = {
   async list(): Promise<Project[]> {
     console.log('API: Fetching projects...');
@@ -68,7 +84,7 @@ export const projectsApi = {
   },
 
   async get(id: string): Promise<Project> {
-    console.log('API: Fetching single project:', id);
+    console.log('API: Fetching project:', id);
     const { data, error } = await supabase
       .from('projects')
       .select('*')
@@ -83,7 +99,7 @@ export const projectsApi = {
     return data;
   },
 
-  async create(project: { title: string; user_background?: Json }): Promise<Project> {
+  async create(project: { title: string; user_background?: UserBackgroundData }): Promise<Project> {
     console.log('API: Creating project:', project);
     const user = await supabase.auth.getUser();
     if (!user.data.user) {
@@ -95,7 +111,7 @@ export const projectsApi = {
       .insert({
         title: project.title,
         user_id: user.data.user.id,
-        user_background: project.user_background || null,
+        user_background: convertUserBackgroundToJson(project.user_background),
       })
       .select()
       .single();
@@ -108,11 +124,21 @@ export const projectsApi = {
     return data;
   },
 
-  async update(id: string, updates: { title?: string; user_background?: Json }): Promise<Project> {
+  async update(id: string, updates: { title?: string; user_background?: UserBackgroundData }): Promise<Project> {
     console.log('API: Updating project:', id, updates);
+    const updateData: { title?: string; user_background?: Json | null } = {};
+    
+    if (updates.title !== undefined) {
+      updateData.title = updates.title;
+    }
+    
+    if (updates.user_background !== undefined) {
+      updateData.user_background = convertUserBackgroundToJson(updates.user_background);
+    }
+
     const { data, error } = await supabase
       .from('projects')
-      .update(updates)
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();
