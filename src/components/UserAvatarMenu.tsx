@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { User, LogOut, Settings } from 'lucide-react';
+import { User, LogOut, Home, Folder } from 'lucide-react';
 
 interface UserAvatarMenuProps {
   className?: string;
@@ -56,19 +56,19 @@ export const UserAvatarMenu: React.FC<UserAvatarMenuProps> = ({ className }) => 
         </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link to="/" className="flex items-center">
-            <User className="mr-2 h-4 w-4" />
+          <Link to="/" className="flex items-center cursor-pointer">
+            <Home className="mr-2 h-4 w-4" />
             <span>首页</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link to="/creation" className="flex items-center">
-            <User className="mr-2 h-4 w-4" />
+          <Link to="/creation" className="flex items-center cursor-pointer">
+            <Folder className="mr-2 h-4 w-4" />
             <span>我的项目</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link to="/profile" className="flex items-center">
+          <Link to="/profile" className="flex items-center cursor-pointer">
             <User className="mr-2 h-4 w-4" />
             <span>个人资料</span>
           </Link>
