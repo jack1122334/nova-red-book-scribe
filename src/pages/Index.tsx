@@ -44,7 +44,7 @@ const Index = () => {
         {/* 欢迎标题 */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-serif font-bold text-gray-900 mb-4 tracking-tight">
-            Good {getTimeOfDay()}, Creator ✋🏻
+            Good {getTimeOfDay()}, Creator.
           </h1>
           <p className="text-lg text-gray-600 font-serif">
             请输入您的创作主题，开始新的创作之旅

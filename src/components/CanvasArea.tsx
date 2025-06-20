@@ -1,5 +1,5 @@
 import React, { useState, useImperativeHandle, forwardRef, useEffect } from 'react';
-import { Grid3X3 } from 'lucide-react';
+import { Grid3X3, Lightbulb } from 'lucide-react';
 import { CanvasGrid } from './CanvasArea/CanvasGrid';
 import { InsightsList } from './CanvasArea/InsightsList';
 import { canvasApi } from '@/lib/canvasApi';
@@ -396,7 +396,10 @@ export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
 
         {/* Insights Section */}
         <div>
-          <h3 className="font-medium text-black font-serif mb-4">Insights</h3>
+          <div className="flex items-center gap-2 mb-4">
+            <Lightbulb className="w-5 h-5 text-black" />
+            <h3 className="font-medium text-black font-serif">Insights</h3>
+          </div>
 
           <InsightsList
             insights={insights}
