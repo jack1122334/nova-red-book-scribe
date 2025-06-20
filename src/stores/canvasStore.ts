@@ -5,6 +5,7 @@ import { Database } from '@/integrations/supabase/types';
 // 类型定义
 export interface CanvasItem {
   id: string;
+  external_id: string;
   type: 'canvas' | 'insight';
   title: string;
   content?: string;
@@ -275,6 +276,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
         // 转换为组件格式
         const transformedItems: CanvasItem[] = canvasData.map(item => ({
           id: item.id,
+          external_id: item.external_id,
           type: 'canvas' as const,
           title: item.title,
           content: item.content || '',
@@ -309,6 +311,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       if (insightsData.length > 0) {
         const transformedInsights: CanvasItem[] = insightsData.map(item => ({
           id: item.id,
+          external_id: item.external_id,
           type: 'insight' as const,
           title: item.title,
           content: item.content,
@@ -370,6 +373,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       console.log('Canvas Store: Adding insight:', data.text.substring(0, 100));
       const newInsight: CanvasItem = {
         id: data.id || `insight-${Date.now()}`,
+        external_id: data.external_id,
         type: 'insight',
         title: data.title || '洞察',
         content: data.text,
@@ -385,6 +389,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       console.log('Canvas Store: Adding keyword insight:', data.answerText.substring(0, 100));
       const newInsight: CanvasItem = {
         id: data.id || `insight-${Date.now()}`,
+        external_id: data.external_id,
         type: 'insight',
         title: data.keyword ? `关键词洞察: ${data.keyword}` : '关键词洞察',
         content: data.answerText,
@@ -403,6 +408,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
       for (let i = 0; i < 3; i++) {
         placeholders.push({
           id: `placeholder-${keywordIndex}-${i}`,
+          external_id: `placeholder-${keywordIndex}-${i}`,
           type: 'canvas',
           title: `${keyword} - 加载中...`,
           content: '',
@@ -454,6 +460,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
         if (gridPosition < newItems.length) {
           newItems[gridPosition] = {
             id: card.id,
+            external_id: card.external_id,
             type: 'canvas',
             title: card.title,
             content: card.content || '',

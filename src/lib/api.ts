@@ -407,6 +407,7 @@ export const bluechatApi = {
     stage: 'STAGE_1' | 'STAGE_2' | 'STAGE_3',
     selectedIds: string[] = [],
     userId: string,
+    userBackground: string,
     onEvent: (event: StreamEvent) => void
   ) => {
     console.log('API: Starting bluechat stream request');
@@ -425,7 +426,8 @@ export const bluechatApi = {
       session_id: projectId,
       limit: 3,
       ids: selectedIds,
-      count: 6
+      count: 6,
+      user_background: userBackground
     }
 
     const response = await fetch(apiUrl, {

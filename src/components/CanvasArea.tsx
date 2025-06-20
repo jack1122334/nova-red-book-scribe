@@ -162,11 +162,6 @@ export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
 
   return (
     <div className="h-full flex flex-col bg-white border-r border-black/10">
-      {/* Header */}
-      <div className="p-4 border-b border-black/10">
-        <h2 className="text-lg font-semibold text-black font-serif">Canvas</h2>
-      </div>
-
       <div className="flex-1 overflow-auto p-4 space-y-6">
         {/* Canvas Grid Section */}
         <div>

@@ -13,6 +13,7 @@ import ReactMarkdown from 'react-markdown';
 import { useAuthStore } from "@/stores/authStore";
 import { useCanvasStore } from "@/stores/canvasStore";
 import { CanvasReferenceDisplay } from "@/components/CanvasReferenceDisplay";
+import { useProjectStore } from "@/stores/projectStore";
 
 interface ChatAreaProps {
   projectId: string;
@@ -81,6 +82,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
   onCanvasDataReceived
 }, ref) => {
   const { user } = useAuthStore();
+  const { currentProject } = useProjectStore();
   const {
     canvasItems,
     insights,
@@ -264,7 +266,15 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
         stage = "STAGE_1";
       }
 
-      const selectedIds = canvasReferences.map((item) => item.id);
+      const selectedIds = canvasReferences.map((item) => item.external_id);
+
+      const userBackground = `
+        intentions:${currentProject.user_background.intentions.content} 
+        --
+        resources:${currentProject.user_background.resources.content} 
+        --
+        personalities:${currentProject.user_background.personalities.content}
+        `;
 
       await bluechatApi.sendMessageStream(
         projectId,
@@ -272,7 +282,8 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
         stage,
         selectedIds,
         user?.id || "anonymous",
-        (data: any) => {
+        userBackground,
+        async (data: BluechatStreamData) => {
           console.log("ChatArea: Received bluechat data:", data);
 
           // Handle agent_message events
