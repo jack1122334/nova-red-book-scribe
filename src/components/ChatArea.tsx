@@ -356,9 +356,9 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
           }
 
           // Collect keyword_insight data for database storage
-          if (
-            (typeof data.answerText === 'string' && data.type === "keyword_insight") ||
-            (typeof data.answerText === 'string' && data.type === "comprehensive_insight")
+          if (typeof data.answerText === "string" && data.type === "keyword_insight"
+            // (typeof data.answerText === 'string' && data.type === "keyword_insight") ||
+            // (typeof data.answerText === 'string' && data.type === "comprehensive_insight")
           ) {
             console.log(
               "ChatArea: Collecting keyword insight data for storage:",
