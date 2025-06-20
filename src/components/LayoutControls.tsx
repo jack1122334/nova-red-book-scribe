@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sidebar, FileText, MessageSquare, Grid3X3, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -20,18 +20,27 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
   onLayoutChange,
   xiaohongshuCardsCount = 0
 }) => {
-  // 监听 xiaohongshuCards 数量变化，自动展开 Draft
+  // 使用 ref 来跟踪之前的数量
+  const prevCountRef = useRef(0);
+  
+  // 监听 xiaohongshuCards 数量变化，只在从 0 变为大于 0 时自动展开 Draft
   useEffect(() => {
-    if (xiaohongshuCardsCount > 0 && !layoutState.showWriting) {
-      const newState = {
+    const prevCount = prevCountRef.current;
+    const currentCount = xiaohongshuCardsCount;
+    
+    // 只有当数量从 0 变为大于 0 时，且当前 Draft 未展开时，才自动展开
+    if (prevCount !== xiaohongshuCardsCount && !layoutState.showWriting) {
+      onLayoutChange({
         ...layoutState,
-        showWriting: true
-      };
-      onLayoutChange(newState);
+        showWriting: true,
+      });
     }
-  }, [xiaohongshuCardsCount, layoutState, onLayoutChange]);
+    
+    // 更新之前的数量
+    prevCountRef.current = currentCount;
+  }, [xiaohongshuCardsCount]); // 只依赖 xiaohongshuCardsCount，避免循环
 
-  const togglePanel = (panel: keyof LayoutState) => {
+  const togglePanel = useCallback((panel: keyof LayoutState) => {
     const newState = {
       ...layoutState,
       [panel]: !layoutState[panel]
@@ -44,7 +53,7 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
     }
     
     onLayoutChange(newState);
-  };
+  }, [layoutState, onLayoutChange]);
 
   const layouts = [
     {
