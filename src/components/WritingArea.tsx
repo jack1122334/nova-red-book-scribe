@@ -106,10 +106,18 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(({
     }
   }));
 
+  // 当项目ID变化时初始化数据
   useEffect(() => {
-    // loadCards();
+    console.log('WritingArea: Project ID changed, initializing data:', projectId);
     loadXiaohongshuCards();
   }, [projectId]);
+
+  // 监听小红书卡片数据变化，确保数据同步
+  useEffect(() => {
+    console.log('WritingArea: Xiaohongshu cards changed:', xiaohongshuCards.length);
+    // 当小红书卡片数据有变化时，确保UI能及时更新
+    // 这里不需要额外操作，因为组件已经通过 xiaohongshuCards 响应式更新
+  }, [xiaohongshuCards]);
 
   const loadCards = async () => {
     try {
@@ -130,11 +138,13 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(({
 
   const loadXiaohongshuCards = async () => {
     try {
+      console.log('WritingArea: Loading xiaohongshu cards for project:', projectId);
       setLoading(true);
       setCurrentProject(projectId);
       await loadProjectCards(projectId);
+      console.log('WritingArea: Xiaohongshu cards loaded successfully');
     } catch (error) {
-      console.error("Failed to load xiaohongshu cards:", error);
+      console.error("WritingArea: Failed to load xiaohongshu cards:", error);
       toast({
         title: "加载小红书内容失败",
         description: "无法加载小红书内容列表",
@@ -265,6 +275,8 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(({
       </div>
     );
   }
+
+  console.log('WritingArea: Rendering with xiaohongshu cards:', xiaohongshuCards.length);
 
   return (
     <div className="h-full flex flex-col">

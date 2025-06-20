@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sidebar, FileText, MessageSquare, Grid3X3, Settings } from 'lucide-react';
@@ -22,23 +23,35 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
 }) => {
   // 使用 ref 来跟踪之前的数量
   const prevCountRef = useRef(0);
+  const hasAutoExpandedRef = useRef(false);
   
   // 监听 xiaohongshuCards 数量变化，只在从 0 变为大于 0 时自动展开 Draft
   useEffect(() => {
     const prevCount = prevCountRef.current;
     const currentCount = xiaohongshuCardsCount;
     
-    // 只有当数量从 0 变为大于 0 时，且当前 Draft 未展开时，才自动展开
-    if (prevCount !== xiaohongshuCardsCount && !layoutState.showWriting) {
+    console.log('LayoutControls: Cards count change:', { prevCount, currentCount, showWriting: layoutState.showWriting, hasAutoExpanded: hasAutoExpandedRef.current });
+    
+    // 只有当数量从 0 变为大于 0 时，且当前 Draft 未展开时，且之前没有自动展开过时，才自动展开
+    if (prevCount === 0 && currentCount > 0 && !layoutState.showWriting && !hasAutoExpandedRef.current) {
+      console.log('LayoutControls: Auto-expanding Draft due to new xiaohongshu content');
       onLayoutChange({
         ...layoutState,
         showWriting: true,
       });
+      hasAutoExpandedRef.current = true;
     }
     
     // 更新之前的数量
     prevCountRef.current = currentCount;
-  }, [xiaohongshuCardsCount]); // 只依赖 xiaohongshuCardsCount，避免循环
+  }, [xiaohongshuCardsCount, layoutState, onLayoutChange]);
+
+  // 重置自动展开标记当用户手动关闭Draft时
+  useEffect(() => {
+    if (!layoutState.showWriting) {
+      hasAutoExpandedRef.current = false;
+    }
+  }, [layoutState.showWriting]);
 
   const togglePanel = useCallback((panel: keyof LayoutState) => {
     const newState = {
