@@ -593,9 +593,9 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
                 🤔 AI 思考过程
                 {message.isStreaming && (
                   <div className="flex gap-1 ml-2">
-                    <div className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse"></div>
-                    <div className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" style={{ animationDelay: '200ms' }}></div>
-                    <div className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" style={{ animationDelay: '400ms' }}></div>
+                    <div className="w-1.5 h-1.5 bg-[#f37021] rounded-full animate-pulse"></div>
+                    <div className="w-1.5 h-1.5 bg-[#f37021] rounded-full animate-pulse" style={{ animationDelay: '200ms' }}></div>
+                    <div className="w-1.5 h-1.5 bg-[#f37021] rounded-full animate-pulse" style={{ animationDelay: '400ms' }}></div>
                   </div>
                 )}
               </div>
@@ -664,7 +664,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
         
         {/* Main Content - 主要回复内容实时显示 */}
         {message.content && (
-          <Card className="bg-[#bbbbbb] border border-gray-200 shadow-sm">
+          <Card className="bg-[#f37021x] bg-white  border border-gray-200 shadow-sm">
             <CardContent className="p-5">
               <div className="prose prose-sm max-w-none text-gray-800 leading-relaxed">
                 <ReactMarkdown 
@@ -689,9 +689,9 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
   };
 
   return (
-    <div className="h-full flex flex-col bg-amber-500">
+    <div className="h-full flex flex-col bg-[#f37021]">
       {/* Header */}
-      <div className="p-4 py-[8px] border-b border-black/20 bg-amber-500">
+      <div className="p-4 py-[8px] border-b border-black/20 bg-[#f37021]">
         <h2 className="text-lg font-semibold text-black">Chat</h2>
       </div>
 
@@ -798,7 +798,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
       )}
 
       {/* Messages */}
-      <div ref={messagesContainerRef} className="flex-1 overflow-auto bg-amber-500 rounded-xl">
+      <div ref={messagesContainerRef} className="flex-1 overflow-auto bg-[#f37021] rounded-xl">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-black/50 p-8">
             <div className="w-16 h-16 rounded-full bg-black/10 flex items-center justify-center mb-4">

@@ -6,7 +6,7 @@ import { FloatingSidebar } from '@/components/FloatingSidebar';
 
 const Profile = () => {
   return (
-    <div className="min-h-screen bg-amber-500">
+    <div className="min-h-screen bg-[#f37021]">
       <FloatingSidebar currentPage="profile" />
       <Navbar />
       <div className="max-w-4xl mx-auto py-8 px-4">

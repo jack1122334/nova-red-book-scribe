@@ -162,7 +162,7 @@ ${card.content}`);
 
   return (
     <>
-      <div className="h-full overflow-y-auto p-6 bg-amber-500">
+      <div className="h-full overflow-y-auto p-6 bg-[#f37021]">
         <div className="space-y-4">
           {cards.map(card => (
             <Card key={card.id} className="border border-red-200 hover:border-red-300 transition-colors relative group">

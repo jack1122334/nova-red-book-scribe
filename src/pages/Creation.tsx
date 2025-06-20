@@ -96,14 +96,14 @@ const Creation = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-amber-500 rounded-none flex items-center justify-center">
+      <div className="min-h-screen bg-[#f37021] rounded-none flex items-center justify-center">
         <div className="text-black font-serif">加载中...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-amber-500 rounded-none">
+    <div className="min-h-screen bg-[#f37021] rounded-none">
       <FloatingSidebar currentPage="creation" />
       <div className={cn(currentView === "projects" ? "" : "")}>
         {currentView === "projects" ? (

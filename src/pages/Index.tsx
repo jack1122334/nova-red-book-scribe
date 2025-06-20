@@ -35,7 +35,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-amber-500">
+    <div className="min-h-screen bg-[#f37021]">
       <FloatingSidebar currentPage="home" />
       <Navbar />
       
