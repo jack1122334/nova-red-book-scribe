@@ -38,7 +38,7 @@ export const FloatingSidebar = ({ currentPage }: FloatingSidebarProps) => {
     <div className="fixed left-4 top-1/2 transform -translate-y-1/2 z-50 hidden md:block">
       <div
         className={cn(
-          "notion-floating transition-all duration-300 bg-white rounded-3xl",
+          "notion-floating transition-all duration-300 bg-white/45 rounded-3xl",
           isExpanded ? "w-48 p-4" : "w-14 p-3"
         )}
       >

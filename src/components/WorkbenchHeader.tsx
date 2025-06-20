@@ -28,7 +28,7 @@ export const WorkbenchHeader: React.FC<WorkbenchHeaderProps> = ({
   xiaohongshuCardsCount = 0
 }) => {
   return (
-    <header className="px-2 md:px-2 py-4 border-b border-black/10 bg-white">
+    <header className="px-2 md:px-2 py-4 border-b border-black/10 bg-amber-500">
       <div className="flex flex-col md:flex-row items-start md:items-center md:justify-between gap-4">
         <div className="w-full flex justify-between md:justify-start items-center space-x-6">
           <Button

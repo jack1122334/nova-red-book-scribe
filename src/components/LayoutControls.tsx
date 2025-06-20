@@ -99,7 +99,7 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
   ];
 
   return (
-    <div className="flex items-center bg-white/80 backdrop-blur-sm rounded-full p-1 shadow-sm border border-gray-200/50 self-end gap-1">
+    <div className="flex items-center bg-white/40 backdrop-blur-sm rounded-full p-1 shadow-sm border border-gray-200/50 self-end gap-1">
       {layouts.map(({ key, icon: Icon, label, active }) => (
         <Button
           key={key}

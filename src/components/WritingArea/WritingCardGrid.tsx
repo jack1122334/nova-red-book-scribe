@@ -49,7 +49,7 @@ export const WritingCardGrid: React.FC<WritingCardGridProps> = ({
   setEditContent
 }) => {
   return (
-    <div className="h-full overflow-y-auto p-6 bg-white">
+    <div className="h-full overflow-y-auto p-6 bg-amber-500">
       <div className={cards.length === 1 ? "space-y-4" : "columns-2 gap-4 space-y-4"}>
         {cards.map(card => (
           <WritingCard

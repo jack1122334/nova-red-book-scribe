@@ -19,7 +19,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
   return (
     <div 
       onClick={handleClick}
-      className="group bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden transform hover:-translate-y-1"
+      className="group bg-white/45 rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden transform hover:-translate-y-1"
     >
       {/* 卡片头部 */}
       <div className="p-6 pb-4">

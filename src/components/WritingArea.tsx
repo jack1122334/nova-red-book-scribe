@@ -279,8 +279,8 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(({
   console.log('WritingArea: Rendering with xiaohongshu cards:', xiaohongshuCards.length);
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="p-4 py-2 border-b border-black/10 bg-white">
+    <div className="h-full flex flex-col bg-amber-500">
+      <div className="p-4 py-2 border-b border-black/10 ">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-black">Draft</h2>
           {activeTab === 'drafts' && (

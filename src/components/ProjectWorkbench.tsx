@@ -73,7 +73,7 @@ export const ProjectWorkbench = ({
   if (!activeProject) return null;
 
   return (
-    <div className="h-screen flex flex-col bg-white">
+    <div className="h-screen flex flex-col bg-amber-500">
       <WorkbenchHeader 
         project={activeProject}
         layoutState={layoutState}

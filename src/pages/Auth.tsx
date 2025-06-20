@@ -89,7 +89,7 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-4 relative">
+    <div className="min-h-screen bg-amber-500 flex items-center justify-center p-4 relative">
       {/* 背景装饰 */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-gray-50"></div>
