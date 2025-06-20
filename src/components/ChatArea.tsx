@@ -11,6 +11,7 @@ import { MessageDetailsDialog } from "@/components/MessageDetailsDialog";
 import { ReferenceDisplay } from "@/components/ReferenceDisplay";
 import { CanvasItem } from "@/components/CanvasArea";
 import ReactMarkdown from 'react-markdown';
+import { useAuthStore } from "@/stores/authStore";
 
 interface ChatAreaProps {
   projectId: string;
@@ -82,6 +83,8 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
   onRemoveCanvasReference,
   onCanvasDataReceived
 }, ref) => {
+  const { user } = useAuthStore();
+
   const [messages, setMessages] = useState<StreamingMessage[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -235,18 +238,21 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
         userMessage,
         stage,
         selectedIds,
+        user?.id,
         (data: any) => {
-          console.log('ChatArea: Received bluechat data:', data);
-          
+          console.log("ChatArea: Received bluechat data:", data);
+
           // Handle agent_message events
-          if (data.event === 'agent_message' && data.answer) {
-            setMessages(prev => prev.map(msg => 
-              msg.id === tempAssistantMessage.id 
-                ? { ...msg, content: msg.content + data.answer }
-                : msg
-            ));
+          if (data.event === "agent_message" && data.answer) {
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === tempAssistantMessage.id
+                  ? { ...msg, content: msg.content + data.answer }
+                  : msg
+              )
+            );
           }
-          
+
           // Forward canvas data to CanvasArea
           if (onCanvasDataReceived) {
             onCanvasDataReceived(data);
@@ -599,7 +605,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
               onKeyDown={handleKeyPress} 
               placeholder="输入消息..." 
               disabled={isLoading} 
-              className="min-h-[44px] max-h-[200px] resize-none bg-gray-100 py-[36px] rounded-2xl my-0" 
+              className="min-h-[44px] max-h-[200px] resize-none bg-gray-100 py-4 rounded-2xl my-0" 
             />
             {(references.length > 0 || pendingSystemMessages.length > 0 || canvasReferences.length > 0) && (
               <p className="text-xs text-black/50 mt-2">

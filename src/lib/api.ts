@@ -350,41 +350,35 @@ export const bluechatApi = {
     query: string,
     stage: 'STAGE_1' | 'STAGE_2',
     selectedIds: string[] = [],
+    userId: string,
     onEvent: (event: StreamEvent) => void
   ) => {
     console.log('API: Starting bluechat stream request');
     
     // 在开发环境使用代理，生产环境使用Supabase Edge Function
     const isDevelopment = import.meta.env.DEV;
-    // const apiUrl = isDevelopment 
-    //   ? '/api/bluechat'
-    //   : 'https://evpczvwygelrvxzfdcgv.supabase.co/functions/v1/chat-bluechat';
-    
-    const apiUrl = "/api/bluechat"
-    // const apiUrl = "https://evpczvwygelrvxzfdcgv.supabase.co/functions/v1/chat-bluechat"
+    const apiUrl = isDevelopment 
+      ? '/api/bluechat'
+      : 'https://evpczvwygelrvxzfdcgv.supabase.co/functions/v1/chat-bluechat';
 
     
-      const response = await fetch(apiUrl, {
+    const data = {
+      stage,
+      query,
+      user_id: userId,
+      session_id: projectId,
+      limit: 3,
+      ids: selectedIds,
+      count: 6
+    }
+
+    const response = await fetch(apiUrl, {
       method: 'POST',
+      mode: 'cors',
       headers: {
-        'accept': 'application/json',
         'Content-Type': 'application/json',
-        'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2cGN6dnd5Z2VscnZ4emZkY2d2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk4OTU3ODUsImV4cCI6MjA2NTQ3MTc4NX0.y7uP6NVj48UAKnMWcB_5LltTVCVFuSeo7xmrCEHlp1I`,
       },
-      body: JSON.stringify(isDevelopment ? {
-        stage,
-        query,
-        user_id: "123",
-        session_id: projectId,
-        limit: 3,
-        ids: selectedIds,
-        count: 6
-      } : {
-        project_id: projectId,
-        query,
-        stage,
-        selected_ids: selectedIds
-      })
+      body: JSON.stringify(isDevelopment ? data : data)
     });
 
     if (!response.ok) {
