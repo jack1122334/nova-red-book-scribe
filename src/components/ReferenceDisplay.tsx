@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { X, Grid3X3, Lightbulb } from 'lucide-react';
-import { CanvasItem } from './CanvasArea';
+import { CanvasItem } from '@/stores/canvasStore';
 
 interface ReferenceDisplayProps {
   references: CanvasItem[];
@@ -50,9 +49,6 @@ export const ReferenceDisplay: React.FC<ReferenceDisplayProps> = ({
                         }
                       </p>
                     )}
-                    {/* <span className="inline-block mt-1 text-xs text-black/40 bg-black/10 px-1.5 py-0.5 rounded text-center">
-                      {ref.type === 'canvas' ? 'Canvas' : 'Insight'}
-                    </span> */}
                   </div>
                 </div>
                 

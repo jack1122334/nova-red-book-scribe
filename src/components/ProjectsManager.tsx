@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,11 +14,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Plus, Calendar, MessageSquare, Trash2 } from "lucide-react";
 import { Project } from "@/pages/Creation";
-import { projectsApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { CreateProjectDialog } from "./CreateProjectDialog";
 import { UserBackgroundIcon } from "./UserBackgroundIcon";
+import { useProjectStore } from "@/stores/projectStore";
 
 interface ProjectsManagerProps {
   onProjectSelect?: (project: Project) => void;
@@ -26,48 +27,25 @@ interface ProjectsManagerProps {
 export const ProjectsManager = ({
   onProjectSelect
 }: ProjectsManagerProps) => {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // Use projectStore instead of local state
+  const {
+    projects,
+    loading,
+    fetchProjects,
+    deleteProject: deleteProjectFromStore
+  } = useProjectStore();
+
   useEffect(() => {
-    loadProjects();
-  }, []);
-
-  const loadProjects = async () => {
-    try {
-      console.log('Loading projects...');
-      const data = await projectsApi.list();
-      console.log('Loaded projects:', data);
-
-      // Convert database projects to frontend Project format
-      const formattedProjects: Project[] = data.map(proj => ({
-        id: proj.id,
-        title: proj.title,
-        user_background: proj.user_background,
-        createdAt: proj.created_at.split('T')[0],
-        updatedAt: proj.updated_at.split('T')[0]
-      }));
-      setProjects(formattedProjects);
-    } catch (error) {
-      console.error('Failed to load projects:', error);
-      toast({
-        title: "加载项目失败",
-        description: "无法加载项目列表",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    fetchProjects();
+  }, [fetchProjects]);
 
   const handleProjectCreated = (newProject: Project) => {
-    setProjects(prev => [newProject, ...prev]);
-    
     if (onProjectSelect) {
       onProjectSelect(newProject);
     } else {
@@ -87,8 +65,7 @@ export const ProjectsManager = ({
     if (!projectToDelete) return;
     
     try {
-      await projectsApi.delete(projectToDelete.id);
-      setProjects(prev => prev.filter(p => p.id !== projectToDelete.id));
+      await deleteProjectFromStore(projectToDelete.id);
       toast({
         title: "项目删除成功",
         description: `项目"${projectToDelete.title}"已被删除`,
@@ -107,12 +84,12 @@ export const ProjectsManager = ({
   };
 
   const handleDeleteClick = (e: React.MouseEvent, project: Project) => {
-    e.stopPropagation(); // 阻止事件冒泡，避免触发项目点击
+    e.stopPropagation();
     setProjectToDelete(project);
     setDeleteDialogOpen(true);
   };
 
-  if (isLoading) {
+  if (loading) {
     return <div className="p-8 flex items-center justify-center">
         <div className="animate-spin w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full" />
       </div>;

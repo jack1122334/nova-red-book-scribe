@@ -4,7 +4,8 @@ import { ChevronLeft } from "lucide-react";
 import { Project } from "@/pages/Creation";
 import { WritingArea } from "@/components/WritingArea";
 import { ChatArea } from "@/components/ChatArea";
-import { CanvasArea, CanvasItem } from "@/components/CanvasArea";
+import { CanvasArea } from "@/components/CanvasArea";
+import { CanvasItem } from "@/stores/canvasStore";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -175,7 +176,7 @@ export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
-                                <ChatArea 
+                <ChatArea 
                   ref={chatAreaRef}
                   projectId={project.id}
                   initialMessage={initialMessage}
