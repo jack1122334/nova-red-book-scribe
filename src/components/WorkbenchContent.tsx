@@ -175,13 +175,14 @@ export const WorkbenchContent: React.FC<WorkbenchContentProps> = ({
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
-                <ChatArea 
-                  ref={chatAreaRef} 
-                  projectId={project.id} 
-                  initialMessage={initialMessage} 
-                  onCardCreated={onCardCreated} 
+                                <ChatArea 
+                  ref={chatAreaRef}
+                  projectId={project.id}
+                  initialMessage={initialMessage}
+                  onCardCreated={onCardCreated}
                   onCardUpdated={onCardUpdated}
                   onCanvasDataReceived={handleCanvasDataReceived}
+                  writingAreaRef={writingAreaRef}
                 />
               </motion.div>
             </ResizablePanel>

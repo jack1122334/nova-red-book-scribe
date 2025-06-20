@@ -4,13 +4,15 @@ import { useToast } from "@/hooks/use-toast";
 import { WritingAreaHeader } from "./WritingArea/WritingAreaHeader";
 import { WritingCardGrid } from "./WritingArea/WritingCardGrid";
 import { EmptyState } from "./WritingArea/EmptyState";
+import { XiaohongshuCardGrid } from "./WritingArea/XiaohongshuCardGrid";
+import { useCardsStore, type XiaohongshuCard } from "@/stores/cardsStore";
 
 interface WritingAreaProps {
   projectId: string;
   onCardUpdate: (cardId: string, content: string, title?: string) => void;
   onCardCreate: (cardId: string) => void;
   onTextSelect: (cardId: string, selectedText: string, instruction: string) => void;
-  onAddReference?: (reference: any) => void;
+  onAddReference?: (reference: Record<string, unknown>) => void;
 }
 
 interface Card {
@@ -25,6 +27,7 @@ interface Card {
 export interface WritingAreaRef {
   addCardFromAgent: (title: string, content: string) => Promise<void>;
   updateCardFromAgent: (cardTitle: string, content: string) => Promise<void>;
+  switchToXiaohongshuTab: () => void;
 }
 
 export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(({
@@ -42,7 +45,16 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(({
   const [selectedText, setSelectedText] = useState("");
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const [collapsedCards, setCollapsedCards] = useState<Set<string>>(new Set());
+  const [activeTab, setActiveTab] = useState<'drafts' | 'xiaohongshu'>('xiaohongshu');
   const { toast } = useToast();
+
+  // 使用 cardsStore 来管理小红书内容
+  const {
+    xiaohongshuCards,
+    loading: cardsLoading,
+    loadProjectCards,
+    setCurrentProject,
+  } = useCardsStore();
 
   useImperativeHandle(ref, () => ({
     addCardFromAgent: async (title: string, content: string) => {
@@ -88,11 +100,15 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(({
           variant: "destructive"
         });
       }
+    },
+    switchToXiaohongshuTab: () => {
+      setActiveTab('xiaohongshu');
     }
   }));
 
   useEffect(() => {
-    loadCards();
+    // loadCards();
+    loadXiaohongshuCards();
   }, [projectId]);
 
   const loadCards = async () => {
@@ -106,6 +122,23 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(({
         title: "加载失败",
         description: "无法加载卡片列表",
         variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadXiaohongshuCards = async () => {
+    try {
+      setLoading(true);
+      setCurrentProject(projectId);
+      await loadProjectCards(projectId);
+    } catch (error) {
+      console.error("Failed to load xiaohongshu cards:", error);
+      toast({
+        title: "加载小红书内容失败",
+        description: "无法加载小红书内容列表",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -235,29 +268,72 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(({
 
   return (
     <div className="h-full flex flex-col">
-      <WritingAreaHeader onCreateCard={handleCreateCard} />
+      <div className="p-4 border-b border-black/10 bg-white">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-black">Draft</h2>
+          {activeTab === 'drafts' && (
+            <button
+              onClick={handleCreateCard}
+              className="px-3 py-1.5 text-sm bg-black text-white rounded-lg hover:bg-black/80 transition-colors"
+            >
+              新建卡片
+            </button>
+          )}
+        </div>
+        
+        {/* 标签页 */}
+        <div className="hidden flex space-x-1 bg-gray-100 rounded-lg p-1">
+          <button
+            onClick={() => setActiveTab('drafts')}
+            className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+              activeTab === 'drafts'
+                ? 'bg-white text-black shadow-sm'
+                : 'text-gray-600 hover:text-black'
+            }`}
+          >
+            草稿内容 ({cards.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('xiaohongshu')}
+            className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+              activeTab === 'xiaohongshu'
+                ? 'bg-white text-black shadow-sm'
+                : 'text-gray-600 hover:text-black'
+            }`}
+          >
+            小红书内容 ({xiaohongshuCards.length})
+          </button>
+        </div>
+      </div>
 
       <div className="flex-1 overflow-hidden">
-        {cards.length === 0 ? (
-          <EmptyState onCreateCard={handleCreateCard} />
+        {activeTab === 'drafts' ? (
+          cards.length === 0 ? (
+            <EmptyState onCreateCard={handleCreateCard} />
+          ) : (
+            <WritingCardGrid
+              cards={cards}
+              editingCard={editingCard}
+              editTitle={editTitle}
+              editContent={editContent}
+              selectedText={selectedText}
+              selectedCardId={selectedCardId}
+              collapsedCards={collapsedCards}
+              onEditCard={handleEditCard}
+              onSaveEdit={handleSaveEdit}
+              onCancelEdit={() => setEditingCard(null)}
+              onDeleteCard={handleDeleteCard}
+              onTextSelection={handleTextSelection}
+              onAddReference={handleAddReference}
+              onToggleCollapse={toggleCardCollapse}
+              setEditTitle={setEditTitle}
+              setEditContent={setEditContent}
+            />
+          )
         ) : (
-          <WritingCardGrid
-            cards={cards}
-            editingCard={editingCard}
-            editTitle={editTitle}
-            editContent={editContent}
-            selectedText={selectedText}
-            selectedCardId={selectedCardId}
-            collapsedCards={collapsedCards}
-            onEditCard={handleEditCard}
-            onSaveEdit={handleSaveEdit}
-            onCancelEdit={() => setEditingCard(null)}
-            onDeleteCard={handleDeleteCard}
-            onTextSelection={handleTextSelection}
-            onAddReference={handleAddReference}
-            onToggleCollapse={toggleCardCollapse}
-            setEditTitle={setEditTitle}
-            setEditContent={setEditContent}
+          <XiaohongshuCardGrid
+            cards={xiaohongshuCards}
+            loading={cardsLoading}
           />
         )}
       </div>

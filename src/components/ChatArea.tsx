@@ -14,6 +14,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { useCanvasStore } from "@/stores/canvasStore";
 import { CanvasReferenceDisplay } from "@/components/CanvasReferenceDisplay";
 import { useProjectStore } from "@/stores/projectStore";
+import { useCardsStore } from "@/stores/cardsStore";
 
 interface ChatAreaProps {
   projectId: string;
@@ -21,13 +22,14 @@ interface ChatAreaProps {
   onCardCreated: (cardId: string, title: string, content: string) => Promise<void>;
   onCardUpdated: (cardTitle: string, content: string) => Promise<void>;
   onCanvasDataReceived?: (data: Record<string, unknown>) => void;
+  writingAreaRef?: React.RefObject<{ switchToXiaohongshuTab: () => void }>;
 }
 
 interface ChatMessage {
   id: string;
   role: 'user' | 'assistant' | 'system';
   content: string;
-  llm_raw_output?: any;
+  llm_raw_output?: Record<string, unknown> | null;
   created_at: string;
 }
 
@@ -53,7 +55,7 @@ interface StreamingEvent {
   answer?: string;
   tool?: string;
   tool_input?: string;
-  tool_labels?: any;
+  tool_labels?: Record<string, { zh_Hans: string; en_US: string }>;
   observation?: string;
   position?: number;
   conversation_id?: string;
@@ -79,7 +81,8 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
   initialMessage,
   onCardCreated,
   onCardUpdated,
-  onCanvasDataReceived
+  onCanvasDataReceived,
+  writingAreaRef
 }, ref) => {
   const { user } = useAuthStore();
   const { currentProject } = useProjectStore();
@@ -90,6 +93,12 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
     saveCanvasData,
     saveInsightsData,
   } = useCanvasStore();
+
+  const {
+    xiaohongshuCards,
+    saveXiaohongshuData,
+    processStreamData: processCardsStreamData,
+  } = useCardsStore();
 
   const [messages, setMessages] = useState<StreamingMessage[]>([]);
   const [inputValue, setInputValue] = useState("");
@@ -233,8 +242,9 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
     setMessages(prev => [...prev, tempAssistantMessage]);
 
     let finalAssistantContent = '';
-    const canvasDataToSave: any[] = [];
-    const insightsDataToSave: any[] = [];
+    const canvasDataToSave: Record<string, unknown>[] = [];
+    const insightsDataToSave: Record<string, unknown>[] = [];
+    const cardsDataToSave: Record<string, unknown>[] = [];
 
     try {
       console.log("ChatArea: Sending message to bluechat");
@@ -283,7 +293,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
         selectedIds,
         user?.id || "anonymous",
         userBackground,
-        async (data: BluechatStreamData) => {
+        async (data: Record<string, unknown>) => {
           console.log("ChatArea: Received bluechat data:", data);
 
           // Handle agent_message events
@@ -298,41 +308,54 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
             );
           }
 
+          // Collect xiaohongshu_content data for database storage
+          if (data.type === "xiaohongshu_content" && typeof data.content === "string") {
+            console.log(
+              "ChatArea: Collecting xiaohongshu content data for storage:",
+              data.content.substring(0, 100)
+            );
+            cardsDataToSave.push({
+              project_id: projectId,
+              title: data.title,
+              content: data.content,
+            });
+          }
+
           // Collect canvas data for database storage
-          if (data.keyword && data.cards) {
+          if (data.keyword && data.cards && Array.isArray(data.cards)) {
             console.log(
               "ChatArea: Collecting canvas data for storage:",
               data.keyword,
               data.cards.length
             );
-            data.cards.forEach((card: any) => {
+            data.cards.forEach((card: Record<string, unknown>) => {
               canvasDataToSave.push({
                 project_id: projectId,
-                external_id: card.id,
+                external_id: typeof card.id === 'string' ? card.id : '',
                 type: "canvas",
-                title: card.title,
-                content: card.content || "",
-                keyword: data.keyword,
-                author: card.author || "",
-                author_avatar: card.author_avatar || "",
-                like_count: card.like_count || 0,
-                collect_count: card.collect_count || 0,
-                comment_count: card.comment_count || 0,
-                share_count: card.share_count || 0,
-                cover_url: card.cover_url || "",
-                url: card.url || "",
-                platform: card.platform || "xiaohongshu",
-                ip_location: card.ip_location || "",
-                tags: card.tags || [],
-                create_time: card.create_time || "",
+                title: typeof card.title === 'string' ? card.title : '',
+                content: typeof card.content === 'string' ? card.content : "",
+                keyword: typeof data.keyword === 'string' ? data.keyword : '',
+                author: typeof card.author === 'string' ? card.author : "",
+                author_avatar: typeof card.author_avatar === 'string' ? card.author_avatar : "",
+                like_count: typeof card.like_count === 'number' ? card.like_count : 0,
+                collect_count: typeof card.collect_count === 'number' ? card.collect_count : 0,
+                comment_count: typeof card.comment_count === 'number' ? card.comment_count : 0,
+                share_count: typeof card.share_count === 'number' ? card.share_count : 0,
+                cover_url: typeof card.cover_url === 'string' ? card.cover_url : "",
+                url: typeof card.url === 'string' ? card.url : "",
+                platform: typeof card.platform === 'string' ? card.platform : "xiaohongshu",
+                ip_location: typeof card.ip_location === 'string' ? card.ip_location : "",
+                tags: Array.isArray(card.tags) ? card.tags : [],
+                create_time: typeof card.create_time === 'string' ? card.create_time : "",
               });
             });
           }
 
           // Collect keyword_insight data for database storage
           if (
-            (data.answerText && data.type === "keyword_insight") ||
-            (data.answerText && data.type === "comprehensive_insight")
+            (typeof data.answerText === 'string' && data.type === "keyword_insight") ||
+            (typeof data.answerText === 'string' && data.type === "comprehensive_insight")
           ) {
             console.log(
               "ChatArea: Collecting keyword insight data for storage:",
@@ -340,11 +363,19 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
             );
             insightsDataToSave.push({
               project_id: projectId,
-              external_id: data.id || `insight-${Date.now()}`,
+              external_id: typeof data.id === 'string' ? data.id : `insight-${Date.now()}`,
               type: "keyword_insight",
-              title: data.keyword ? `关键词洞察: ${data.keyword}` : "全面洞察",
+              title: typeof data.keyword === 'string' ? `关键词洞察: ${data.keyword}` : "全面洞察",
               content: data.answerText,
             });
+          }
+
+          // Process stream data for cards store
+          processCardsStreamData(data);
+
+          // 如果检测到小红书内容，自动切换到小红书标签页
+          if (data.type === "xiaohongshu_content" && writingAreaRef?.current?.switchToXiaohongshuTab) {
+            writingAreaRef.current.switchToXiaohongshuTab();
           }
 
           // Forward canvas data to CanvasArea
@@ -361,7 +392,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
             "ChatArea: Saving canvas data to database:",
             canvasDataToSave.length
           );
-          await saveCanvasData(projectId, canvasDataToSave);
+          await saveCanvasData(projectId, canvasDataToSave as any[]);
           console.log("ChatArea: Canvas data saved successfully");
         } catch (canvasError) {
           console.error("ChatArea: Failed to save canvas data:", canvasError);
@@ -380,7 +411,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
             "ChatArea: Saving insights data to database:",
             insightsDataToSave.length
           );
-          await saveInsightsData(projectId, insightsDataToSave);
+          await saveInsightsData(projectId, insightsDataToSave as any[]);
           console.log("ChatArea: Insights data saved successfully");
         } catch (insightsError) {
           console.error(
@@ -395,7 +426,30 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
         }
       }
 
-      // 4. 保存助手消息到数据库
+      // 4. 保存小红书内容数据到数据库
+      if (cardsDataToSave.length > 0) {
+        try {
+          console.log(
+            "ChatArea: Saving xiaohongshu content data to database:",
+            cardsDataToSave.length
+          );
+
+          await saveXiaohongshuData(projectId, cardsDataToSave as any[]);
+          console.log("ChatArea: Xiaohongshu content data saved successfully");
+        } catch (cardsError) {
+          console.error(
+            "ChatArea: Failed to save xiaohongshu content data:",
+            cardsError
+          );
+          toast({
+            title: "小红书内容保存失败",
+            description: "小红书内容数据未能保存到数据库",
+            variant: "destructive",
+          });
+        }
+      }
+
+      // 5. 保存助手消息到数据库
       if (finalAssistantContent.trim()) {
         const savedAssistantMessage = await chatApi.saveMessage(
           projectId,
@@ -433,11 +487,11 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
         title: "搜索完成",
         description: "Canvas 数据已更新",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('ChatArea: Failed to send message:', error);
       toast({
         title: "发送失败",
-        description: error.message || "无法发送消息，请重试",
+        description: (error instanceof Error ? error.message : String(error)) || "无法发送消息，请重试",
         variant: "destructive"
       });
       // Remove both user and assistant messages on error
