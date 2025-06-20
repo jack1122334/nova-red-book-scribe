@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sidebar, FileText, MessageSquare, Grid3X3, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useCardsStore } from '@/stores/cardsStore';
 
 interface LayoutState {
   showCanvas: boolean;
@@ -21,6 +22,11 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
   onLayoutChange,
   xiaohongshuCardsCount = 0
 }) => {
+  const {
+    loadProjectCards,
+    currentProjectId
+  } = useCardsStore();
+
   // 使用 ref 来跟踪之前的数量
   const prevCountRef = useRef(0);
   const hasAutoExpandedRef = useRef(false);
@@ -42,6 +48,9 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
       hasAutoExpandedRef.current = true;
     }
     
+    setTimeout(() => {
+      loadProjectCards(currentProjectId)
+    },200)
     // 更新之前的数量
     prevCountRef.current = currentCount;
   }, [xiaohongshuCardsCount, layoutState, onLayoutChange]);
