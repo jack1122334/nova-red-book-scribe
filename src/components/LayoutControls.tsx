@@ -48,7 +48,7 @@ export const LayoutControls: React.FC<LayoutControlsProps> = ({
       hasAutoExpandedRef.current = true;
       setTimeout(() => {
         loadProjectCards(currentProjectId)
-      },200)
+      },2000)
     }
     
     // 更新之前的数量
