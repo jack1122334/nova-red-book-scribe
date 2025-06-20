@@ -62,7 +62,7 @@ export const CanvasItemModal: React.FC<CanvasItemModalProps> = ({
           <div className="flex flex-row gap-4">
             {/* Cover Image */}
             {item.cover_url && (
-              <div className="relative w-1/3 min-w-[200px] max-h-[400px] aspect-[3/4] rounded-lg bg-gray-100">
+              <div className="relative w-1/3 min-w-[200px] max-h-[320px] aspect-[3/4] rounded-lg bg-gray-100">
                 <motion.img
                   layoutId={`canvas-image-${item.id}`}
                   referrerPolicy="no-referrer"

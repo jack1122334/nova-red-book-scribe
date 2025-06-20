@@ -486,10 +486,10 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
       setReferences([]);
       setPendingSystemMessages([]);
 
-      toast({
-        title: "搜索完成",
-        description: "Canvas 数据已更新",
-      });
+      // toast({
+      //   title: "搜索完成",
+      //   description: "Canvas 数据已更新",
+      // });
     } catch (error: unknown) {
       console.error('ChatArea: Failed to send message:', error);
       toast({
@@ -639,7 +639,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
               {/* 流式传输光标 - 更显眼的动画效果 */}
               {message.isStreaming && (
                 <div className="flex items-center mt-4 gap-2">
-                  <div className="w-3 h-5 b animate-pulse rounded-sm"></div>
+                  <div className="w-3 h-5 b animate-pulse rounded-sm bg-black"></div>
                   <span className="text-xs  font-medium animate-pulse">正在输入...</span>
                 </div>
               )}

@@ -357,7 +357,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   processStreamData: (data) => {
     console.log('Canvas Store: Processing stream data:', data);
 
-    if (data.keywords) {
+    if (data.keywords && !data.type) {
       console.log('Canvas Store: Setting keywords:', data.keywords);
       get().setKeywords(data.keywords);
       get().initializePlaceholders(data.keywords);
@@ -385,7 +385,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     }
 
     // 处理 keyword_insight 类型的数据
-    if (data.type === 'keyword_insight' && data.answerText) {
+    if ((data.type === 'keyword_insight' || data.type === 'comprehensive_insights') && data.answerText) {
       console.log('Canvas Store: Adding keyword insight:', data.answerText.substring(0, 100));
       const newInsight: CanvasItem = {
         id: data.id || `insight-${Date.now()}`,
