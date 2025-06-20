@@ -226,8 +226,23 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
     };
     setMessages(prev => [...prev, tempAssistantMessage]);
 
+    let finalAssistantContent = '';
+    const canvasDataToSave: any[] = [];
+    const insightsDataToSave: any[] = [];
+
     try {
       console.log('ChatArea: Sending message to bluechat');
+
+      // 1. 先保存用户消息到数据库
+      const savedUserMessage = await chatApi.saveMessage(projectId, 'user', userMessage);
+      console.log('ChatArea: User message saved:', savedUserMessage.id);
+
+      // Update temp user message with real ID
+      setMessages(prev => prev.map(msg => 
+        msg.id === tempUserMessage.id 
+          ? { ...msg, id: savedUserMessage.id }
+          : msg
+      ));
 
       // Determine stage based on references
       const stage = canvasReferences.length > 0 ? 'STAGE_2' : 'STAGE_1';
@@ -238,12 +253,13 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
         userMessage,
         stage,
         selectedIds,
-        user?.id,
+        user?.id || "anonymous",
         (data: any) => {
           console.log("ChatArea: Received bluechat data:", data);
 
           // Handle agent_message events
           if (data.event === "agent_message" && data.answer) {
+            finalAssistantContent += data.answer;
             setMessages((prev) =>
               prev.map((msg) =>
                 msg.id === tempAssistantMessage.id
@@ -253,6 +269,45 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
             );
           }
 
+          // Collect canvas data for database storage
+          if (data.keyword && data.cards) {
+            console.log('ChatArea: Collecting canvas data for storage:', data.keyword, data.cards.length);
+            data.cards.forEach((card: any) => {
+              canvasDataToSave.push({
+                project_id: projectId,
+                external_id: card.id,
+                type: 'canvas',
+                title: card.title,
+                content: card.content || '',
+                keyword: data.keyword,
+                author: card.author || '',
+                author_avatar: card.author_avatar || '',
+                like_count: card.like_count || 0,
+                collect_count: card.collect_count || 0,
+                comment_count: card.comment_count || 0,
+                share_count: card.share_count || 0,
+                cover_url: card.cover_url || '',
+                url: card.url || '',
+                platform: card.platform || 'xiaohongshu',
+                ip_location: card.ip_location || '',
+                tags: card.tags || [],
+                create_time: card.create_time || ''
+              });
+            });
+          }
+
+          // Collect insights data for database storage
+          if (data.type === 'insight' && data.text) {
+            console.log('ChatArea: Collecting insight data for storage:', data.text.substring(0, 100));
+            insightsDataToSave.push({
+              project_id: projectId,
+              external_id: data.id || `insight-${Date.now()}`,
+              type: 'insight',
+              title: data.title || '',
+              content: data.text
+            });
+          }
+
           // Forward canvas data to CanvasArea
           if (onCanvasDataReceived) {
             onCanvasDataReceived(data);
@@ -260,12 +315,57 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
         }
       );
 
-      // Mark streaming as complete
-      setMessages(prev => prev.map(msg => 
-        msg.id === tempAssistantMessage.id 
-          ? { ...msg, isStreaming: false }
-          : msg
-      ));
+      // 2. 保存canvas数据到数据库
+      if (canvasDataToSave.length > 0) {
+        try {
+          console.log('ChatArea: Saving canvas data to database:', canvasDataToSave.length);
+          await chatApi.batchSaveCanvasItems(canvasDataToSave);
+          console.log('ChatArea: Canvas data saved successfully');
+        } catch (canvasError) {
+          console.error('ChatArea: Failed to save canvas data:', canvasError);
+          toast({
+            title: "Canvas数据保存失败",
+            description: "Canvas数据未能保存到数据库",
+            variant: "destructive"
+          });
+        }
+      }
+
+      // 3. 保存insights数据到数据库
+      if (insightsDataToSave.length > 0) {
+        try {
+          console.log('ChatArea: Saving insights data to database:', insightsDataToSave.length);
+          await chatApi.batchSaveInsights(insightsDataToSave);
+          console.log('ChatArea: Insights data saved successfully');
+        } catch (insightsError) {
+          console.error('ChatArea: Failed to save insights data:', insightsError);
+          toast({
+            title: "Insights数据保存失败",
+            description: "Insights数据未能保存到数据库",
+            variant: "destructive"
+          });
+        }
+      }
+
+      // 4. 保存助手消息到数据库
+      if (finalAssistantContent.trim()) {
+        const savedAssistantMessage = await chatApi.saveMessage(projectId, 'assistant', finalAssistantContent);
+        console.log('ChatArea: Assistant message saved:', savedAssistantMessage.id);
+
+        // Update temp assistant message with real ID and mark as complete
+        setMessages(prev => prev.map(msg => 
+          msg.id === tempAssistantMessage.id 
+            ? { ...msg, id: savedAssistantMessage.id, isStreaming: false }
+            : msg
+        ));
+      } else {
+        // Mark streaming as complete even if no content
+        setMessages(prev => prev.map(msg => 
+          msg.id === tempAssistantMessage.id 
+            ? { ...msg, isStreaming: false }
+            : msg
+        ));
+      }
 
       setReferences([]);
       setPendingSystemMessages([]);

@@ -127,7 +127,7 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
                     <CardContent className="p-3 h-full flex flex-col relative z-10 backdrop-blur-[1px] hover:backdrop-blur-[0px]">
                       <div className="flex items-start justify-between mb-2">
                         <motion.span 
-                          layoutId={`canvas-title-${item.id}`}
+                          // layoutId={`canvas-title-${item.id}`}
                           className="text-sm text-black font-serif mb-1 line-clamp-2"
                         >
                           {item.isDisabled ? (

@@ -252,6 +252,62 @@ export const chatApi = {
     return data || [];
   },
 
+  saveMessage: async (projectId: string, role: 'user' | 'assistant', content: string, associatedCardId?: string) => {
+    console.log('API: Saving message to database:', { projectId, role, content: content.substring(0, 100) });
+    const { data, error } = await supabase
+      .from('chat_messages')
+      .insert({
+        project_id: projectId,
+        role,
+        content,
+        associated_card_id: associatedCardId || null,
+        created_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('API: Error saving message:', error);
+      throw new Error(`保存消息失败: ${error.message}`);
+    }
+    console.log('API: Message saved successfully:', data.id);
+    return data;
+  },
+
+  batchSaveCanvasItems: async (canvasItems: Database['public']['Tables']['canvas_items']['Insert'][]) => {
+    console.log('API: Batch saving canvas items:', canvasItems.length);
+    if (canvasItems.length === 0) return [];
+
+    const { data, error } = await supabase
+      .from('canvas_items')
+      .insert(canvasItems)
+      .select();
+
+    if (error) {
+      console.error('API: Error batch saving canvas items:', error);
+      throw new Error(`批量保存Canvas数据失败: ${error.message}`);
+    }
+    console.log('API: Canvas items batch saved successfully:', data?.length);
+    return data || [];
+  },
+
+  batchSaveInsights: async (insights: Database['public']['Tables']['insights']['Insert'][]) => {
+    console.log('API: Batch saving insights:', insights.length);
+    if (insights.length === 0) return [];
+
+    const { data, error } = await supabase
+      .from('insights')
+      .insert(insights)
+      .select();
+
+    if (error) {
+      console.error('API: Error batch saving insights:', error);
+      throw new Error(`批量保存Insights数据失败: ${error.message}`);
+    }
+    console.log('API: Insights batch saved successfully:', data?.length);
+    return data || [];
+  },
+
   sendMessageStream: async (
     projectId: string, 
     content: string, 
