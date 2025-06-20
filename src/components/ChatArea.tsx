@@ -21,6 +21,7 @@ interface ChatAreaProps {
   onCardCreated: (cardId: string, title: string, content: string) => Promise<void>;
   onCardUpdated: (cardTitle: string, content: string) => Promise<void>;
   onCanvasDataReceived?: (data: Record<string, unknown>) => void;
+  writingAreaRef?: React.RefObject<any>;
 }
 
 interface ChatMessage {
@@ -79,7 +80,8 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
   initialMessage,
   onCardCreated,
   onCardUpdated,
-  onCanvasDataReceived
+  onCanvasDataReceived,
+  writingAreaRef
 }, ref) => {
   const { user } = useAuthStore();
   const { currentProject } = useProjectStore();
@@ -296,6 +298,26 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
                   : msg
               )
             );
+          }
+
+          // Handle xiaohongshu_content type - create new card in WritingArea
+          if (data.type === "xiaohongshu_content" && data.title && data.content) {
+            console.log("ChatArea: Processing xiaohongshu_content:", data.title);
+            
+            // Create card in WritingArea through ref
+            if (writingAreaRef?.current?.addCardFromAgent) {
+              try {
+                await writingAreaRef.current.addCardFromAgent(data.title, data.content);
+                console.log("ChatArea: Card created in WritingArea successfully");
+              } catch (error) {
+                console.error("ChatArea: Failed to create card in WritingArea:", error);
+                toast({
+                  title: "创建卡片失败",
+                  description: "无法在写作区创建新卡片",
+                  variant: "destructive"
+                });
+              }
+            }
           }
 
           // Collect canvas data for database storage

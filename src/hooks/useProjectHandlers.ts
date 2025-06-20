@@ -1,3 +1,4 @@
+
 import { CanvasItem } from "@/stores/canvasStore";
 
 interface LayoutState {
@@ -79,6 +80,14 @@ export const useProjectHandlers = ({
     }
   };
 
+  // 新增处理流数据接收的方法
+  const handleCanvasDataReceived = (data: Record<string, unknown>) => {
+    console.log('Canvas data received:', data);
+    if (canvasAreaRef.current?.processCanvasData) {
+      canvasAreaRef.current.processCanvasData(data);
+    }
+  };
+
   return {
     handleCardCreated,
     handleCardUpdated,
@@ -87,6 +96,7 @@ export const useProjectHandlers = ({
     handleCardCreate,
     handleAddReference,
     handleCanvasItemSelect,
-    handleCanvasItemDisable
+    handleCanvasItemDisable,
+    handleCanvasDataReceived
   };
 };
