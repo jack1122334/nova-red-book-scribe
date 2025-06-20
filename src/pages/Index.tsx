@@ -13,6 +13,12 @@ const Index = () => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const { projects, fetchProjects } = useProjectStore();
 
+  // 获取上午/下午的方法
+  const getTimeOfDay = () => {
+    const hour = new Date().getHours();
+    return hour < 12 ? 'Morning' : 'Afternoon';
+  };
+
   useEffect(() => {
     fetchProjects();
   }, [fetchProjects]);
@@ -38,7 +44,7 @@ const Index = () => {
         {/* 欢迎标题 */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-serif font-bold text-gray-900 mb-4 tracking-tight">
-            Good Afternoon, 创作者
+            Good {getTimeOfDay()}, Creator ✋🏻
           </h1>
           <p className="text-lg text-gray-600 font-serif">
             请输入您的创作主题，开始新的创作之旅
