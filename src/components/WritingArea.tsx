@@ -268,7 +268,7 @@ export const WritingArea = forwardRef<WritingAreaRef, WritingAreaProps>(({
 
   return (
     <div className="h-full flex flex-col">
-      <div className="p-4 border-b border-black/10 bg-white">
+      <div className="p-4 py-2 border-b border-black/10 bg-white">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-black">Draft</h2>
           {activeTab === 'drafts' && (

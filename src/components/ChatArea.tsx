@@ -650,9 +650,8 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
   return (
     <div className="h-full flex flex-col bg-white">
       {/* Header */}
-      <div className="p-4 py-[6px] border-b border-black/20 bg-white">
-        <h2 className="text-lg font-semibold text-black">Nova</h2>
-        <p className="text-sm text-black/60">小红书内容创作助手</p>
+      <div className="p-4 py-[8px] border-b border-black/20 bg-white">
+        <h2 className="text-lg font-semibold text-black">Chat</h2>
       </div>
 
       {/* System Messages Indicator */}
