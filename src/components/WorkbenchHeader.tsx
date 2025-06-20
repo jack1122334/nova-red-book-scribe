@@ -18,13 +18,15 @@ interface WorkbenchHeaderProps {
   layoutState: LayoutState;
   onBack: () => void;
   onLayoutChange: (state: LayoutState) => void;
+  hasDraftData: boolean;
 }
 
 export const WorkbenchHeader: React.FC<WorkbenchHeaderProps> = ({
   project,
   layoutState,
   onBack,
-  onLayoutChange
+  onLayoutChange,
+  hasDraftData
 }) => {
   return (
     <header className="px-2 md:px-2 py-4 border-b border-black/10 bg-white">
@@ -59,6 +61,7 @@ export const WorkbenchHeader: React.FC<WorkbenchHeaderProps> = ({
         <LayoutControls
           layoutState={layoutState}
           onLayoutChange={onLayoutChange}
+          hasDraftData={hasDraftData}
         />
         <div className="hidden md:block ml-6">
           <UserAvatarMenu />

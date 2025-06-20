@@ -69,7 +69,7 @@ interface Reference {
 }
 
 // Define the stream data interface
-interface BluechatStreamData {
+interface BluechatStreamData extends Record<string, unknown> {
   event?: string;
   id?: string;
   title?: string;
@@ -284,11 +284,11 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
       const selectedIds = canvasReferences.map((item) => item.external_id);
 
       const userBackground = `
-        intentions:${currentProject.user_background.intentions.content} 
+        intentions:${currentProject?.user_background?.intentions?.content || ''} 
         --
-        resources:${currentProject.user_background.resources.content} 
+        resources:${currentProject?.user_background?.resources?.content || ''} 
         --
-        personalities:${currentProject.user_background.personalities.content}
+        personalities:${currentProject?.user_background?.personalities?.content || ''}
         `;
 
       await bluechatApi.sendMessageStream(

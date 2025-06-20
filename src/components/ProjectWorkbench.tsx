@@ -57,7 +57,18 @@ export const ProjectWorkbench: React.FC<ProjectWorkbenchProps> = ({
 
   return (
     <div className="h-screen flex flex-col bg-gray-50">
-      <WorkbenchHeader project={{ id: projectId }} />
+      <WorkbenchHeader 
+        project={{ 
+          id: projectId, 
+          title: "项目工作台", 
+          createdAt: new Date().toISOString(), 
+          updatedAt: new Date().toISOString() 
+        }} 
+        layoutState={layoutState}
+        onBack={() => {}}
+        onLayoutChange={setLayoutState}
+        hasDraftData={hasDraftData}
+      />
       
       <div className="flex-1 flex flex-col">
         <LayoutControls 
