@@ -376,11 +376,11 @@ export const CanvasArea = forwardRef<CanvasAreaRef, CanvasAreaProps>(({
           <div className="flex items-center gap-2 mb-4">
             <Grid3X3 className="w-5 h-5 text-black" />
             <h3 className="font-medium text-black font-serif">Canvas</h3>
-            {keywords.length > 0 && (
+            {/* {keywords.length > 0 && (
               <span className="text-xs text-black/50">
                 ({keywords.map((keyword) => keyword.slice(0, 24)).join(", ")})
               </span>
-            )}
+            )} */}
           </div>
 
           <CanvasGrid

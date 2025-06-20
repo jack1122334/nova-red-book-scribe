@@ -525,10 +525,10 @@ export const imageProxyApi = {
   getProxiedImageUrl: (originalUrl: string): string => {
     if (!originalUrl) return '';
     
-    // 如果是开发环境，使用本地代理
-    if (import.meta.env.DEV) {
-      return `/api/image-proxy?url=${encodeURIComponent(originalUrl)}`;
-    }
+    // // 如果是开发环境，使用本地代理
+    // if (import.meta.env.DEV) {
+    //   return `/api/image-proxy?url=${encodeURIComponent(originalUrl)}`;
+    // }
     
     // 生产环境可以使用Supabase Edge Function或其他代理服务
     // 这里先返回原始URL，后续可以配置生产环境的代理

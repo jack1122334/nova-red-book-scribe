@@ -97,6 +97,28 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
+  
+  .scale-responsive {
+    transform-origin: bottom right;
+  }
+  
+  @media (max-width: 768px) {
+    .scale-responsive {
+      transform: scale(0.8);
+    }
+  }
+  
+  @media (max-width: 640px) {
+    .scale-responsive {
+      transform: scale(0.7);
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .scale-responsive {
+      transform: scale(0.6);
+    }
+  }
 }
 
 @keyframes fadeIn {

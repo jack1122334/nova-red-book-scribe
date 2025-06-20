@@ -5,6 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Check, X, RotateCcw, Heart, Star, MessageCircle, Grid3X3, Sparkles } from "lucide-react";
 import { CanvasItem } from "../CanvasArea";
 import { CanvasItemModal } from "./CanvasItemModal";
+import { imageProxyApi } from "@/lib/api";
 
 interface CanvasGridProps {
   items: CanvasItem[];
@@ -72,63 +73,85 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
 
   return (
     <div className="relative">
-      <div className="space-y-4 mb-4">
+      <div className="space-y-1 mb-4">
         {groupedItems.map((group, groupIndex) => (
           <div key={groupIndex} className="flex gap-3">
             {/* Keyword Label */}
             {group.keyword && (
               <div className="flex-shrink-0 w-20 flex items-center">
-                <div className="text-sm font-medium text-black/70 font-serif px-2 py-1 rounded-md">
+                <div className="text-sm font-medium text-black/70 font-serif">
                   {group.keyword.slice(0, 24)}
                 </div>
               </div>
             )}
-            
+
             {/* 3x1 Grid for this keyword */}
-            <div className="flex-1 grid grid-cols-3 gap-3">
+            <div className="flex-1 grid grid-cols-3 gap-1">
               {group.items.map((item) => (
                 <div
                   key={item.id}
                   className={`relative aspect-square ${
-                    item.isDisabled ? 'opacity-30' : ''
+                    item.isDisabled ? "opacity-30" : ""
                   }`}
                 >
-                  <Card 
-                    className={`h-full transition-all duration-500 overflow-hidden cursor-pointer ${
-                      item.isSelected 
-                        ? 'ring-2 ring-black bg-black/5' 
-                        : 'hover:shadow-md hover:-translate-y-0.5'
-                    } ${
-                      item.isLoading ? 'animate-pulse' : 'animate-fadeIn'
-                    }`}
+                  <Card
+                    className={`h-full !rounded-sm transition-all duration-500 overflow-hidden cursor-pointer relative ${
+                      item.isSelected
+                        ? "ring-2 ring-black bg-black/5"
+                        : "hover:shadow-md hover:-translate-y-0.5"
+                    } ${item.isLoading ? "animate-pulse" : "animate-fadeIn"}`}
                     onClick={() => handleCardClick(item)}
                   >
-                    <CardContent className="p-3 h-full flex flex-col">
-                      <div className="flex items-start justify-between mb-2">
-                        <Checkbox
-                          checked={selectedItems.has(item.id)}
-                          onCheckedChange={(checked) => 
-                            onCheckboxChange(item.id, checked as boolean)
-                          }
-                          disabled={item.isDisabled || item.isLoading}
-                          className="flex-shrink-0"
-                          onClick={(e) => e.stopPropagation()}
+                    {/* Background Image */}
+                    {item.cover_url && (
+                      <div className="absolute inset-0 opacity-20 hover:opacity-40 transition-opacity duration-300">
+                        <img
+                          referrerPolicy="no-referrer"
+                          src={imageProxyApi.getProxiedImageUrl(item.cover_url)}
+                          alt={item.title}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            // 如果代理失败，尝试使用原始URL
+                            const currentSrc = e.currentTarget.src;
+                            if (currentSrc !== item.cover_url) {
+                              e.currentTarget.src = item.cover_url;
+                            } else {
+                              e.currentTarget.style.display = "none";
+                            }
+                          }}
                         />
-                        {item.isDisabled && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-5 w-5 p-0 rounded-full hover:bg-green-50 hover:border-green-300"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onRestore(item.id);
-                            }}
-                          >
-                            <RotateCcw className="w-3 h-3" />
-                          </Button>
-                        )}
                       </div>
-                      
+                    )}
+                    <CardContent className="p-3 h-full flex flex-col relative z-10 backdrop-blur-[1px] hover:backdrop-blur-[0px]">
+                      <div className="flex items-start justify-between mb-2">
+                        <span className="text-sm text-black font-serif mb-1 line-clamp-2">
+                          {item.isDisabled ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-5 w-5 p-0 mr-1 rounded-full hover:bg-green-50 hover:border-green-300"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onRestore(item.id);
+                              }}
+                            >
+                              <RotateCcw className="w-3 h-3" />
+                            </Button>
+                          ) : (
+                            <Checkbox
+                              checked={selectedItems.has(item.id)}
+                              onCheckedChange={(checked) =>
+                                onCheckboxChange(item.id, checked as boolean)
+                              }
+                              disabled={item.isDisabled || item.isLoading}
+                              className="flex-shrink-0 mr-1"
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          )}
+                          {item.title}
+                        </span>
+                      </div>
+
                       <div className="flex-1 flex flex-col">
                         {item.isLoading ? (
                           <>
@@ -137,9 +160,6 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
                           </>
                         ) : (
                           <>
-                            <span className="text-sm text-black font-serif mb-1 line-clamp-2">
-                              {item.title}
-                            </span>
                             {item.author && (
                               <span className="text-xs text-black/50 font-serif mb-1">
                                 作者: {item.author}
@@ -147,25 +167,30 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
                             )}
                             <div className="flex-1"></div>
                             {/* 互动数据 - 固定在右下角 */}
-                            <div className="flex items-center justify-end gap-2 text-xs text-black/60 mt-auto">
-                              {item.like_count && item.like_count > 0 && (
-                                <div className="flex items-center gap-1">
+                            <div className="w-full absolute bg-white/60 backdrop-blur-sm rounded-sm bottom-0 right-0 flex items-center justify-end gap-1 text-xs text-black/60 mt-auto">
+                              {item.like_count && item.like_count > 0 ? (
+                                <div className="flex items-center gap-[1px]">
                                   <Heart className="w-3 h-3 fill-red-400 text-red-400" />
                                   <span>{formatNumber(item.like_count)}</span>
                                 </div>
-                              )}
-                              {item.collect_count && item.collect_count > 0 && (
+                              ) : null}
+
+                              {item.collect_count && item.collect_count > 0 ? (
                                 <div className="flex items-center gap-1">
                                   <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                                  <span>{formatNumber(item.collect_count)}</span>
+                                  <span>
+                                    {formatNumber(item.collect_count)}
+                                  </span>
                                 </div>
-                              )}
-                              {item.comment_count && item.comment_count > 0 && (
+                              ) : null}
+                              {item.comment_count && item.comment_count > 0 ? (
                                 <div className="flex items-center gap-1">
                                   <MessageCircle className="w-3 h-3 text-blue-400" />
-                                  <span>{formatNumber(item.comment_count)}</span>
+                                  <span>
+                                    {formatNumber(item.comment_count)}
+                                  </span>
                                 </div>
-                              )}
+                              ) : null}
                             </div>
                           </>
                         )}

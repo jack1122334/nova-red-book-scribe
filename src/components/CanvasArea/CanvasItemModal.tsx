@@ -57,36 +57,48 @@ export const CanvasItemModal: React.FC<CanvasItemModalProps> = ({
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Cover Image */}
-          {item.cover_url && (
-            <div className="relative w-full h-64 rounded-lg overflow-hidden bg-gray-100">
-              <img
-                referrerPolicy="no-referrer"
-                src={imageProxyApi.getProxiedImageUrl(item.cover_url)}
-                alt={item.title}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  // 如果代理失败，尝试使用原始URL
-                  const currentSrc = e.currentTarget.src;
-                  if (currentSrc !== item.cover_url) {
-                    e.currentTarget.src = item.cover_url;
-                  } else {
-                    e.currentTarget.style.display = 'none';
-                  }
-                }}
-              />
+          <div className="flex flex-row gap-4">
+            {/* Cover Image */}
+            {item.cover_url && (
+              <div className="relative w-1/3 min-w-[200px] aspect-[3/4] rounded-lg overflow-hidden bg-gray-100">
+                <img
+                  referrerPolicy="no-referrer"
+                  src={imageProxyApi.getProxiedImageUrl(item.cover_url)}
+                  alt={item.title}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    // 如果代理失败，尝试使用原始URL
+                    const currentSrc = e.currentTarget.src;
+                    if (currentSrc !== item.cover_url) {
+                      e.currentTarget.src = item.cover_url;
+                    } else {
+                      e.currentTarget.style.display = "none";
+                    }
+                  }}
+                />
+              </div>
+            )}
+            {/* Content */}
+            <div className="flex-1 bg-gray-50 rounded-lg p-4">
+              <p className="text-black font-serif whitespace-pre-line">
+                {item.content||'无内容'}
+              </p>
             </div>
-          )}
+          </div>
 
           {/* Author Info */}
           <div className="flex items-center gap-3">
             <Avatar className="w-12 h-12">
-              <AvatarImage 
-                src={item.author_avatar ? imageProxyApi.getProxiedImageUrl(item.author_avatar) : undefined} 
+              <AvatarImage
+                src={
+                  item.author_avatar
+                    ? imageProxyApi.getProxiedImageUrl(item.author_avatar)
+                    : undefined
+                }
                 alt={item.author}
               />
               <AvatarFallback className="font-serif">
-                {item.author?.charAt(0) || 'U'}
+                {item.author?.charAt(0) || "U"}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">
@@ -101,18 +113,9 @@ export const CanvasItemModal: React.FC<CanvasItemModalProps> = ({
               )}
             </div>
             <Badge variant="secondary" className="font-serif">
-              {item.platform === 'xiaohongshu' ? '小红书' : item.platform}
+              {item.platform === "xiaohongshu" ? "小红书" : item.platform}
             </Badge>
           </div>
-
-          {/* Content */}
-          {item.content && (
-            <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-black font-serif whitespace-pre-line">
-                {item.content}
-              </p>
-            </div>
-          )}
 
           {/* Tags */}
           {item.tags && item.tags.length > 0 && (
@@ -131,28 +134,36 @@ export const CanvasItemModal: React.FC<CanvasItemModalProps> = ({
               {item.like_count && item.like_count > 0 && (
                 <div className="flex items-center gap-2 text-sm">
                   <Heart className="w-4 h-4 fill-red-400 text-red-400" />
-                  <span className="font-medium">{formatNumber(item.like_count)}</span>
+                  <span className="font-medium">
+                    {formatNumber(item.like_count)}
+                  </span>
                   <span className="text-black/60">点赞</span>
                 </div>
               )}
               {item.collect_count && item.collect_count > 0 && (
                 <div className="flex items-center gap-2 text-sm">
                   <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                  <span className="font-medium">{formatNumber(item.collect_count)}</span>
+                  <span className="font-medium">
+                    {formatNumber(item.collect_count)}
+                  </span>
                   <span className="text-black/60">收藏</span>
                 </div>
               )}
               {item.comment_count && item.comment_count > 0 && (
                 <div className="flex items-center gap-2 text-sm">
                   <MessageCircle className="w-4 h-4 text-blue-400" />
-                  <span className="font-medium">{formatNumber(item.comment_count)}</span>
+                  <span className="font-medium">
+                    {formatNumber(item.comment_count)}
+                  </span>
                   <span className="text-black/60">评论</span>
                 </div>
               )}
               {item.share_count && item.share_count > 0 && (
                 <div className="flex items-center gap-2 text-sm">
                   <Share className="w-4 h-4 text-green-400" />
-                  <span className="font-medium">{formatNumber(item.share_count)}</span>
+                  <span className="font-medium">
+                    {formatNumber(item.share_count)}
+                  </span>
                   <span className="text-black/60">分享</span>
                 </div>
               )}
@@ -179,11 +190,7 @@ export const CanvasItemModal: React.FC<CanvasItemModalProps> = ({
                 查看原文
               </Button>
             )}
-            <Button
-              onClick={onClose}
-              variant="outline"
-              className="flex-1"
-            >
+            <Button onClick={onClose} variant="outline" className="flex-1">
               关闭
             </Button>
           </div>
