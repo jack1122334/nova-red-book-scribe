@@ -445,10 +445,11 @@ export const bluechatApi = {
     //   ? '/api/bluechat'
     //   : 'https://evpczvwygelrvxzfdcgv.supabase.co/functions/v1/chat-bluechat';
 
-    // const apiUrl = 'https://evpczvwygelrvxzfdcgv.supabase.co/functions/v1/chat-bluechat' 
-    const apiUrl = '/api/bluechat' 
+    const apiUrl = 'https://evpczvwygelrvxzfdcgv.supabase.co/functions/v1/chat-bluechat' 
+    // const apiUrl = '/api/bluechat' 
   
     const data = {
+      project_id: projectId,
       stage,
       query,
       user_id: userId,

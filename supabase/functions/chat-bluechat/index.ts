@@ -95,11 +95,6 @@ serve(async (req) => {
         }
 
         const decoder = new TextDecoder();
-        let fullAiContent = '';
-        let associatedCardId = null;
-        let allEvents = []; // Store all events for debugging
-        let canvasData = []; // Store canvas items
-        let insightsData = []; // Store insights
 
         try {
           while (true) {
@@ -119,27 +114,7 @@ serve(async (req) => {
                   console.log('Total content length:', fullAiContent.length);
                   console.log('Total canvas items:', canvasData.length);
                   console.log('Total insights:', insightsData.length);
-                  
-                  // Process final content and handle database operations
-                  await processFinalContent(
-                    fullAiContent, 
-                    project_id, 
-                    supabase, 
-                    userMessage,
-                    canvasData,
-                    insightsData,
-                    {
-                      allEvents,
-                      fullResponse: {
-                        content: fullAiContent,
-                        metadata: {
-                          total_events: allEvents.length,
-                          canvas_items_count: canvasData.length,
-                          insights_count: insightsData.length
-                        }
-                      }
-                    }
-                  );
+
                   break;
                 }
                 
@@ -150,11 +125,6 @@ serve(async (req) => {
                 try {
                   const data = JSON.parse(dataContent);
                   
-                  // Store all events for complete logging
-                  allEvents.push({
-                    timestamp: new Date().toISOString(),
-                    event: data
-                  });
                   
                   console.log('=== BLUECHAT EVENT ===');
                   console.log('Event type:', data.type || 'unknown');
@@ -164,44 +134,6 @@ serve(async (req) => {
                   const eventData = `data: ${JSON.stringify(data)}\n\n`;
                   controller.enqueue(new TextEncoder().encode(eventData));
                   
-                  // Process different event types and collect detailed info
-                  if (data.type === 'text' && data.text) {
-                    fullAiContent += data.text;
-                  } else if (data.type === 'canvas_data' && data.cards) {
-                    console.log('Found canvas cards:', data.cards.length);
-                    // Transform and store canvas data
-                    const transformedCards = data.cards.map((card: any) => ({
-                      project_id,
-                      external_id: card.id,
-                      type: 'canvas',
-                      title: card.title,
-                      content: card.content || '',
-                      keyword: data.keyword || '',
-                      author: card.author,
-                      author_avatar: card.author_avatar,
-                      like_count: card.like_count || 0,
-                      collect_count: card.collect_count || 0,
-                      comment_count: card.comment_count || 0,
-                      share_count: card.share_count || 0,
-                      cover_url: card.cover_url,
-                      url: card.url,
-                      platform: card.platform || 'xiaohongshu',
-                      ip_location: card.ip_location,
-                      tags: card.tags || [],
-                      create_time: card.create_time
-                    }));
-                    canvasData.push(...transformedCards);
-                  } else if (data.type === 'insights' && data.insights) {
-                    console.log('Found insights:', data.insights.length);
-                    const transformedInsights = data.insights.map((insight: any) => ({
-                      project_id,
-                      external_id: insight.id || `insight_${Date.now()}_${Math.random()}`,
-                      type: 'insight',
-                      title: insight.title,
-                      content: insight.text || insight.content || ''
-                    }));
-                    insightsData.push(...transformedInsights);
-                  }
                 } catch (parseError) {
                   console.warn('Failed to parse SSE data:', line);
                   console.warn('Parse error:', parseError);
@@ -214,7 +146,6 @@ serve(async (req) => {
           throw error;
         } finally {
           console.log('=== STREAM COMPLETED ===');
-          console.log('Total events processed:', allEvents.length);
           controller.close();
         }
       }
@@ -243,160 +174,3 @@ serve(async (req) => {
     );
   }
 });
-
-async function processFinalContent(
-  fullAiContent: string, 
-  projectId: string, 
-  supabase: any, 
-  userMessage: any,
-  canvasData: any[],
-  insightsData: any[],
-  debugInfo: any
-) {
-  let associatedCardId = null;
-
-  console.log('=== PROCESSING FINAL CONTENT ===');
-  console.log('Content length:', fullAiContent.length);
-  console.log('Canvas items to save:', canvasData.length);
-  console.log('Insights to save:', insightsData.length);
-  console.log('Debug info:', JSON.stringify(debugInfo.metadata, null, 2));
-
-  // Save canvas items to database
-  if (canvasData.length > 0) {
-    try {
-      console.log('Saving canvas items to database:', canvasData.length);
-      const { data: savedCanvasItems, error: canvasError } = await supabase
-        .from('canvas_items')
-        .insert(canvasData)
-        .select();
-      
-      if (canvasError) {
-        console.error('Error saving canvas items:', canvasError);
-      } else {
-        console.log('Canvas items saved successfully:', savedCanvasItems?.length);
-      }
-    } catch (error) {
-      console.error('Failed to save canvas items:', error);
-    }
-  }
-
-  // Save insights to database
-  if (insightsData.length > 0) {
-    try {
-      console.log('Saving insights to database:', insightsData.length);
-      const { data: savedInsights, error: insightsError } = await supabase
-        .from('insights')
-        .insert(insightsData)
-        .select();
-      
-      if (insightsError) {
-        console.error('Error saving insights:', insightsError);
-      } else {
-        console.log('Insights saved successfully:', savedInsights?.length);
-      }
-    } catch (error) {
-      console.error('Failed to save insights:', error);
-    }
-  }
-
-  // Parse XML tags and execute database operations
-  const newCardRegex = /<new_xhs_card(?:\s+title="([^"]*)")?>([^]*?)<\/new_xhs_card>/g;
-  const updateCardRegex = /<update_xhs_card\s+card_ref_id="([^"]*)"([^]*?)<\/update_xhs_card>/g;
-  
-  let match;
-
-  // Handle new card creation
-  while ((match = newCardRegex.exec(fullAiContent)) !== null) {
-    const title = match[1] || `AI生成卡片 ${new Date().toISOString().slice(0, 10)}`;
-    const content = match[2].trim();
-    
-    console.log('Creating new card:', { title, content: content.substring(0, 100) });
-    
-    const { data: newCard, error: createError } = await supabase
-      .from('cards')
-      .insert({
-        project_id: projectId,
-        title,
-        content,
-        card_order: 999,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })
-      .select()
-      .single();
-
-    if (createError) {
-      console.error('Error creating card:', createError);
-    } else {
-      associatedCardId = newCard.id;
-      console.log('Card created successfully:', newCard.id);
-    }
-  }
-
-  // Handle card updates
-  while ((match = updateCardRegex.exec(fullAiContent)) !== null) {
-    const cardRefId = match[1];
-    const content = match[2].trim();
-    
-    console.log('Updating card:', { cardRefId, content: content.substring(0, 100) });
-    
-    const { data: existingCard, error: findError } = await supabase
-      .from('cards')
-      .select('*')
-      .eq('project_id', projectId)
-      .eq('title', cardRefId)
-      .single();
-
-    if (findError || !existingCard) {
-      console.error('Card not found for update:', cardRefId);
-      continue;
-    }
-
-    const { error: updateError } = await supabase
-      .from('cards')
-      .update({
-        content,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', existingCard.id);
-
-    if (updateError) {
-      console.error('Error updating card:', updateError);
-    } else {
-      associatedCardId = existingCard.id;
-      console.log('Card updated successfully:', existingCard.id);
-    }
-  }
-
-  // Store AI response with complete debugging information
-  const cleanedContent = fullAiContent
-    .replace(/<new_xhs_card[^>]*>[\s\S]*?<\/new_xhs_card>/g, '[新卡片已创建]')
-    .replace(/<update_xhs_card[^>]*>[\s\S]*?<\/update_xhs_card>/g, '[卡片已更新]');
-
-  const { error: aiMessageError } = await supabase
-    .from('chat_messages')
-    .insert({
-      project_id: projectId,
-      role: 'assistant',
-      content: cleanedContent,
-      llm_raw_output: {
-        original_content: fullAiContent,
-        debug_info: debugInfo,
-        processing_summary: {
-          total_events: debugInfo.allEvents.length,
-          cards_created: associatedCardId ? 1 : 0,
-          canvas_items_saved: canvasData.length,
-          insights_saved: insightsData.length
-        },
-        complete_event_log: debugInfo.allEvents
-      },
-      associated_card_id: associatedCardId,
-      created_at: new Date().toISOString()
-    });
-
-  if (aiMessageError) {
-    console.error('Error storing AI message:', aiMessageError);
-  } else {
-    console.log('AI message stored successfully with complete debug info');
-  }
-}
