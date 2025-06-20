@@ -15,6 +15,7 @@ import { useCanvasStore } from "@/stores/canvasStore";
 import { CanvasReferenceDisplay } from "@/components/CanvasReferenceDisplay";
 import { useProjectStore } from "@/stores/projectStore";
 import { useCardsStore } from "@/stores/cardsStore";
+import { Database } from "@/integrations/supabase/types";
 
 interface ChatAreaProps {
   projectId: string;
@@ -156,7 +157,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
         id: msg.id,
         role: msg.role as 'user' | 'assistant' | 'system' || 'user',
         content: msg.content,
-        llm_raw_output: msg.llm_raw_output,
+        llm_raw_output: msg.llm_raw_output as Record<string, unknown> | null,
         created_at: msg.created_at
       }));
       setMessages(formattedMessages);
@@ -392,7 +393,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
             "ChatArea: Saving canvas data to database:",
             canvasDataToSave.length
           );
-          await saveCanvasData(projectId, canvasDataToSave as any[]);
+          await saveCanvasData(projectId, canvasDataToSave as Database['public']['Tables']['canvas_items']['Insert'][]);
           console.log("ChatArea: Canvas data saved successfully");
         } catch (canvasError) {
           console.error("ChatArea: Failed to save canvas data:", canvasError);
@@ -411,7 +412,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
             "ChatArea: Saving insights data to database:",
             insightsDataToSave.length
           );
-          await saveInsightsData(projectId, insightsDataToSave as any[]);
+          await saveInsightsData(projectId, insightsDataToSave as Database['public']['Tables']['insights']['Insert'][]);
           console.log("ChatArea: Insights data saved successfully");
         } catch (insightsError) {
           console.error(
@@ -434,7 +435,7 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
             cardsDataToSave.length
           );
 
-          await saveXiaohongshuData(projectId, cardsDataToSave as any[]);
+          await saveXiaohongshuData(projectId, cardsDataToSave as Database['public']['Tables']['cards']['Insert'][]);
           console.log("ChatArea: Xiaohongshu content data saved successfully");
         } catch (cardsError) {
           console.error(

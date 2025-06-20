@@ -134,8 +134,6 @@ export const useCardsStore = create<CardsState>((set, get) => ({
         isLoading: false
       }));
 
-      get().addXiaohongshuCards(newXiaohongshuCards);
-
     } catch (error) {
       console.error('Cards Store: Failed to save xiaohongshu data:', error);
       throw error;
@@ -166,35 +164,8 @@ export const useCardsStore = create<CardsState>((set, get) => ({
         isSelected: false,
         isLoading: false
       };
-
       get().addXiaohongshuCards([newCard]);
-    }
-
-    // 处理包含小红书内容的其他数据类型
-    if (data.xiaohongshu_content || data.content_type === 'xiaohongshu') {
-      console.log('Cards Store: Processing xiaohongshu content from stream');
-
-      const content = (typeof data.xiaohongshu_content === 'string' ? data.xiaohongshu_content : null) ||
-        (typeof data.content === 'string' ? data.content : null) ||
-        '';
-      const newCard: XiaohongshuCard = {
-        id: (typeof data.id === 'string' ? data.id : null) || `xiaohongshu-${Date.now()}`,
-        external_id: (typeof data.external_id === 'string' ? data.external_id : null) ||
-          (typeof data.id === 'string' ? data.id : null) ||
-          `xiaohongshu-${Date.now()}`,
-        type: 'xiaohongshu_content',
-        title: (typeof data.title === 'string' ? data.title : null) || `小红书内容 ${Date.now()}`,
-        content: content,
-        project_id: get().currentProjectId || '',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        keyword: typeof data.keyword === 'string' ? data.keyword : undefined,
-        platform: 'xiaohongshu',
-        isSelected: false,
-        isLoading: false
-      };
-
-      get().addXiaohongshuCards([newCard]);
+      return; // 提前返回，避免重复处理
     }
   },
 
