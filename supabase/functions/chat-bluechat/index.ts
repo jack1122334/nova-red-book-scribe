@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
     console.log('Calling external API with:', requestBody);
 
     // Call external API
-    const response = await fetch('http://172.22.45.74:8000/api/v1/bluechat', {
+    const response = await fetch('http://47.84.70.98:8088/api/v1/bluechat', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
