@@ -1,3 +1,4 @@
+
 import React, { useRef, useState, useEffect } from "react";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { CanvasArea } from "./CanvasArea";
@@ -56,12 +57,12 @@ export const ProjectWorkbench: React.FC<ProjectWorkbenchProps> = ({
 
   return (
     <div className="h-screen flex flex-col bg-gray-50">
-      <WorkbenchHeader projectId={projectId} />
+      <WorkbenchHeader project={{ id: projectId }} />
       
       <div className="flex-1 flex flex-col">
         <LayoutControls 
           layoutState={layoutState}
-          setLayoutState={setLayoutState}
+          onLayoutChange={setLayoutState}
           hasDraftData={hasDraftData}
         />
 

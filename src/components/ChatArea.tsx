@@ -68,6 +68,19 @@ interface Reference {
   snippet_content?: string;
 }
 
+// Define the stream data interface
+interface BluechatStreamData {
+  event?: string;
+  id?: string;
+  title?: string;
+  content?: string;
+  type?: string;
+  keyword?: string;
+  answer?: string;
+  answerText?: string;
+  cards?: any[];
+}
+
 export interface ChatAreaRef {
   addReference: (reference: Reference) => void;
   clearReferences: () => void;
@@ -309,6 +322,19 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
               try {
                 await writingAreaRef.current.addCardFromAgent(data.title, data.content);
                 console.log("ChatArea: Card created in WritingArea successfully");
+                
+                // Show layout if not visible
+                if (onCanvasDataReceived) {
+                  onCanvasDataReceived({
+                    type: 'show_writing_area',
+                    message: '已创建新卡片到写作区'
+                  });
+                }
+                
+                toast({
+                  title: "新卡片已创建",
+                  description: `AI 创建了新卡片"${data.title}"`,
+                });
               } catch (error) {
                 console.error("ChatArea: Failed to create card in WritingArea:", error);
                 toast({
@@ -317,6 +343,8 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
                   variant: "destructive"
                 });
               }
+            } else {
+              console.warn("ChatArea: WritingArea ref not available");
             }
           }
 

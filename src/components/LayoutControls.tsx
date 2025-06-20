@@ -13,11 +13,13 @@ interface LayoutState {
 interface LayoutControlsProps {
   layoutState: LayoutState;
   onLayoutChange: (state: LayoutState) => void;
+  hasDraftData: boolean;
 }
 
 export const LayoutControls: React.FC<LayoutControlsProps> = ({ 
   layoutState, 
-  onLayoutChange 
+  onLayoutChange,
+  hasDraftData
 }) => {
   const togglePanel = (panel: keyof LayoutState) => {
     const newState = {
