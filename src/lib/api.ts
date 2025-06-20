@@ -440,11 +440,14 @@ export const bluechatApi = {
     
     // 在开发环境使用代理，生产环境使用Supabase Edge Function
     const isDevelopment = import.meta.env.DEV;
-    const apiUrl = isDevelopment 
-      ? '/api/bluechat'
-      : 'https://evpczvwygelrvxzfdcgv.supabase.co/functions/v1/chat-bluechat';
-
     
+    // const apiUrl = isDevelopment 
+    //   ? '/api/bluechat'
+    //   : 'https://evpczvwygelrvxzfdcgv.supabase.co/functions/v1/chat-bluechat';
+
+    // const apiUrl = 'https://evpczvwygelrvxzfdcgv.supabase.co/functions/v1/chat-bluechat' 
+    const apiUrl = '/api/bluechat' 
+  
     const data = {
       stage,
       query,
@@ -461,6 +464,7 @@ export const bluechatApi = {
       mode: 'cors',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2cGN6dnd5Z2VscnZ4emZkY2d2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk4OTU3ODUsImV4cCI6MjA2NTQ3MTc4NX0.y7uP6NVj48UAKnMWcB_5LltTVCVFuSeo7xmrCEHlp1I`,
       },
       body: JSON.stringify(isDevelopment ? data : data)
     });

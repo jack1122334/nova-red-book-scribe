@@ -38,11 +38,13 @@ Deno.serve(async (req) => {
     console.log('Calling external API with:', requestBody);
 
     // Call external API
-    const response = await fetch('http://47.84.70.98:8088/api/v1/bluechat', {
+    // const response = await fetch('http://47.84.70.98:8088/api/v1/bluechat', {
+    const response = await fetch('http://loomi.live:8088/api/v1/bluechat', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2cGN6dnd5Z2VscnZ4emZkY2d2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk4OTU3ODUsImV4cCI6MjA2NTQ3MTc4NX0.y7uP6NVj48UAKnMWcB_5LltTVCVFuSeo7xmrCEHlp1I`,
       },
       body: JSON.stringify(requestBody),
     });

@@ -11,7 +11,8 @@ export default defineConfig(({ mode }) => ({
     proxy: {
       '/api/bluechat': {
         // target: 'http://172.22.45.74:8000', // 局域网服务器
-        target: 'http://47.84.70.98:8088', // 公网服务器
+        // target: 'http://47.84.70.98:8088', // 公网服务器
+        target: 'http://loomi.live:8088', // 公网服务器
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/bluechat/, '/api/v1/bluechat'),
       }
