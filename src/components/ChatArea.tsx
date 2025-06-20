@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, forwardRef, useImperativeHandle, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -321,6 +322,20 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
         userBackground,
         async (data: Record<string, unknown>) => {
           console.log("ChatArea: Received bluechat data:", data);
+
+          // Check for [DONE] signal to end conversation
+          if (data.event === "agent_message" && data.answer === "[DONE]") {
+            console.log("ChatArea: Received [DONE] signal, ending conversation");
+            // Mark streaming as complete
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === tempAssistantMessage.id
+                  ? { ...msg, isStreaming: false }
+                  : msg
+              )
+            );
+            return;
+          }
 
           // Handle agent_message events
           if (data.event === "agent_message" && data.answer) {
