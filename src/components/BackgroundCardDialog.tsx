@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { userBackgroundCardsApi } from '@/lib/api';
@@ -16,10 +15,9 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 
 const CARD_TYPES = {
-  personalities: '个性特质',
-  intentions: '写作意图',
-  resources: '资源偏好',
-  accountStyles: '账号风格'
+  personalities: "人设定位",
+  intentions: "写作目的",
+  resources: "账号资源",
 } as const;
 
 interface BackgroundCardDialogProps {

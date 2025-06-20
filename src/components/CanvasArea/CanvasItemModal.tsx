@@ -60,7 +60,7 @@ export const CanvasItemModal: React.FC<CanvasItemModalProps> = ({
           <div className="flex flex-row gap-4">
             {/* Cover Image */}
             {item.cover_url && (
-              <div className="relative w-1/3 min-w-[200px] aspect-[3/4] rounded-lg overflow-hidden bg-gray-100">
+              <div className="relative w-1/3 min-w-[200px] max-h-[400px] aspect-[3/4] rounded-lg overflow-hidden bg-gray-100">
                 <img
                   referrerPolicy="no-referrer"
                   src={imageProxyApi.getProxiedImageUrl(item.cover_url)}
@@ -81,7 +81,7 @@ export const CanvasItemModal: React.FC<CanvasItemModalProps> = ({
             {/* Content */}
             <div className="flex-1 bg-gray-50 rounded-lg p-4">
               <p className="text-black font-serif whitespace-pre-line">
-                {item.content||'无内容'}
+                {item.content || "无内容"}
               </p>
             </div>
           </div>

@@ -32,10 +32,12 @@ export const CreateProjectDialog: React.FC<CreateProjectDialogProps> = ({
   defaultTitle = '',
 }) => {
   const [projectTitle, setProjectTitle] = useState('');
+  const [selectedPersonality, setSelectedPersonality] = useState('');
+  const [customPersonality, setCustomPersonality] = useState('');
+  const [selectedResources, setSelectedResources] = useState('');
+  const [customResources, setCustomResources] = useState('');
   const [selectedIntention, setSelectedIntention] = useState('');
   const [customIntention, setCustomIntention] = useState('');
-  const [selectedAccountStyle, setSelectedAccountStyle] = useState('');
-  const [customAccountStyle, setCustomAccountStyle] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
   const queryClient = useQueryClient();
@@ -48,17 +50,20 @@ export const CreateProjectDialog: React.FC<CreateProjectDialogProps> = ({
     queryFn: userBackgroundCardsApi.list,
   });
 
+  const personalities = backgroundCards?.filter(card => card.type === 'personalities') || [];
+  const resources = backgroundCards?.filter(card => card.type === 'resources') || [];
   const intentions = backgroundCards?.filter(card => card.type === 'intentions') || [];
-  const accountStyles = backgroundCards?.filter(card => card.type === 'accountStyles') || [];
 
   useEffect(() => {
     if (open) {
       // 重置表单，使用默认标题
       setProjectTitle(defaultTitle);
+      setSelectedPersonality('');
+      setCustomPersonality('');
+      setSelectedResources('');
+      setCustomResources('');
       setSelectedIntention('');
       setCustomIntention('');
-      setSelectedAccountStyle('');
-      setCustomAccountStyle('');
     }
   }, [open, defaultTitle]);
 
@@ -71,20 +76,29 @@ export const CreateProjectDialog: React.FC<CreateProjectDialogProps> = ({
       return;
     }
 
+    const finalPersonality = selectedPersonality === 'custom' ? customPersonality : selectedPersonality;
+    const finalResources = selectedResources === 'custom' ? customResources : selectedResources;
     const finalIntention = selectedIntention === 'custom' ? customIntention : selectedIntention;
-    const finalAccountStyle = selectedAccountStyle === 'custom' ? customAccountStyle : selectedAccountStyle;
 
-    if (!finalIntention.trim()) {
+    if (!finalPersonality.trim()) {
       toast({
-        title: '请选择或输入写作意图',
+        title: '请选择或输入人设定位',
         variant: 'destructive',
       });
       return;
     }
 
-    if (!finalAccountStyle.trim()) {
+    if (!finalResources.trim()) {
       toast({
-        title: '请选择或输入账号风格',
+        title: '请选择或输入账号资源',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!finalIntention.trim()) {
+      toast({
+        title: '请选择或输入写作目的',
         variant: 'destructive',
       });
       return;
@@ -92,26 +106,33 @@ export const CreateProjectDialog: React.FC<CreateProjectDialogProps> = ({
 
     setIsCreating(true);
     try {
-      console.log('Creating project with intention and style:', {
+      console.log('Creating project with personality, resources and intention:', {
         title: projectTitle,
+        personality: finalPersonality,
+        resources: finalResources,
         intention: finalIntention,
-        accountStyle: finalAccountStyle,
       });
 
       // 准备背景信息数据
+      const selectedPersonalityCard = personalities.find(p => p.content === finalPersonality);
+      const selectedResourcesCard = resources.find(r => r.content === finalResources);
       const selectedIntentionCard = intentions.find(i => i.content === finalIntention);
-      const selectedAccountStyleCard = accountStyles.find(s => s.content === finalAccountStyle);
 
       const userBackground = {
         personalities: {
+          type: 'personalities',
+          content: finalPersonality,
+          id: selectedPersonalityCard?.id || null
+        },
+        resources: {
+          type: 'resources', 
+          content: finalResources,
+          id: selectedResourcesCard?.id || null
+        },
+        intentions: {
           type: 'intentions',
           content: finalIntention,
           id: selectedIntentionCard?.id || null
-        },
-        accountStyles: {
-          type: 'accountStyles', 
-          content: finalAccountStyle,
-          id: selectedAccountStyleCard?.id || null
         }
       };
 
@@ -127,18 +148,25 @@ export const CreateProjectDialog: React.FC<CreateProjectDialogProps> = ({
         updatedAt: dbProject.updated_at.split('T')[0],
       };
 
-      // 如果用户输入了自定义的意图或风格，保存到背景卡片中
+      // 如果用户输入了自定义的内容，保存到背景卡片中
+      if (selectedPersonality === 'custom' && customPersonality.trim()) {
+        await userBackgroundCardsApi.create({
+          type: 'personalities',
+          content: customPersonality.trim(),
+        });
+      }
+
+      if (selectedResources === 'custom' && customResources.trim()) {
+        await userBackgroundCardsApi.create({
+          type: 'resources',
+          content: customResources.trim(),
+        });
+      }
+
       if (selectedIntention === 'custom' && customIntention.trim()) {
         await userBackgroundCardsApi.create({
           type: 'intentions',
           content: customIntention.trim(),
-        });
-      }
-
-      if (selectedAccountStyle === 'custom' && customAccountStyle.trim()) {
-        await userBackgroundCardsApi.create({
-          type: 'accountStyles',
-          content: customAccountStyle.trim(),
         });
       }
 
@@ -158,11 +186,11 @@ export const CreateProjectDialog: React.FC<CreateProjectDialogProps> = ({
       } else {
         navigate(`/creation/workbench/${newProject.id}`);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to create project:', error);
       toast({
         title: '创建项目失败',
-        description: error.message || '无法创建项目，请重试',
+        description: error instanceof Error ? error.message : '无法创建项目，请重试',
         variant: 'destructive',
       });
     } finally {
@@ -176,7 +204,7 @@ export const CreateProjectDialog: React.FC<CreateProjectDialogProps> = ({
         <DialogHeader>
           <DialogTitle>创建新项目</DialogTitle>
           <DialogDescription>
-            请填写项目信息，包括必需的写作意图和账号风格
+            请填写项目信息，包括人设定位、账号资源和写作目的
           </DialogDescription>
         </DialogHeader>
         
@@ -192,10 +220,60 @@ export const CreateProjectDialog: React.FC<CreateProjectDialogProps> = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="intention">写作意图 *</Label>
+            <Label htmlFor="personality">人设定位 *</Label>
+            <Select value={selectedPersonality} onValueChange={setSelectedPersonality}>
+              <SelectTrigger>
+                <SelectValue placeholder="选择人设定位..." />
+              </SelectTrigger>
+              <SelectContent>
+                {personalities.map((personality) => (
+                  <SelectItem key={personality.id} value={personality.content}>
+                    {personality.content}
+                  </SelectItem>
+                ))}
+                <SelectItem value="custom">自定义人设...</SelectItem>
+              </SelectContent>
+            </Select>
+            {selectedPersonality === 'custom' && (
+              <Textarea
+                value={customPersonality}
+                onChange={(e) => setCustomPersonality(e.target.value)}
+                placeholder="输入自定义的人设定位..."
+                rows={3}
+              />
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="resources">账号资源 *</Label>
+            <Select value={selectedResources} onValueChange={setSelectedResources}>
+              <SelectTrigger>
+                <SelectValue placeholder="选择账号资源..." />
+              </SelectTrigger>
+              <SelectContent>
+                {resources.map((resource) => (
+                  <SelectItem key={resource.id} value={resource.content}>
+                    {resource.content}
+                  </SelectItem>
+                ))}
+                <SelectItem value="custom">自定义资源...</SelectItem>
+              </SelectContent>
+            </Select>
+            {selectedResources === 'custom' && (
+              <Textarea
+                value={customResources}
+                onChange={(e) => setCustomResources(e.target.value)}
+                placeholder="输入自定义的账号资源..."
+                rows={3}
+              />
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="intention">写作目的 *</Label>
             <Select value={selectedIntention} onValueChange={setSelectedIntention}>
               <SelectTrigger>
-                <SelectValue placeholder="选择写作意图..." />
+                <SelectValue placeholder="选择写作目的..." />
               </SelectTrigger>
               <SelectContent>
                 {intentions.map((intention) => (
@@ -203,39 +281,14 @@ export const CreateProjectDialog: React.FC<CreateProjectDialogProps> = ({
                     {intention.content}
                   </SelectItem>
                 ))}
-                <SelectItem value="custom">自定义意图...</SelectItem>
+                <SelectItem value="custom">自定义目的...</SelectItem>
               </SelectContent>
             </Select>
             {selectedIntention === 'custom' && (
               <Textarea
                 value={customIntention}
                 onChange={(e) => setCustomIntention(e.target.value)}
-                placeholder="输入自定义的写作意图..."
-                rows={3}
-              />
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="account-style">账号风格 *</Label>
-            <Select value={selectedAccountStyle} onValueChange={setSelectedAccountStyle}>
-              <SelectTrigger>
-                <SelectValue placeholder="选择账号风格..." />
-              </SelectTrigger>
-              <SelectContent>
-                {accountStyles.map((style) => (
-                  <SelectItem key={style.id} value={style.content}>
-                    {style.content}
-                  </SelectItem>
-                ))}
-                <SelectItem value="custom">自定义风格...</SelectItem>
-              </SelectContent>
-            </Select>
-            {selectedAccountStyle === 'custom' && (
-              <Textarea
-                value={customAccountStyle}
-                onChange={(e) => setCustomAccountStyle(e.target.value)}
-                placeholder="输入自定义的账号风格..."
+                placeholder="输入自定义的写作目的..."
                 rows={3}
               />
             )}

@@ -1,4 +1,3 @@
-
 -- Create table for canvas items
 CREATE TABLE public.canvas_items (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -144,3 +143,15 @@ CREATE TRIGGER handle_updated_at_canvas_items
 CREATE TRIGGER handle_updated_at_insights 
   BEFORE UPDATE ON public.insights 
   FOR EACH ROW EXECUTE PROCEDURE public.handle_updated_at();
+
+-- Update user_background_cards table type constraint
+-- Remove 'accountStyles' type and keep only the new three types
+
+-- First drop the existing constraint
+ALTER TABLE public.user_background_cards 
+DROP CONSTRAINT IF EXISTS user_background_cards_type_check;
+
+-- Add the new constraint with updated types
+ALTER TABLE public.user_background_cards 
+ADD CONSTRAINT user_background_cards_type_check 
+CHECK (type IN ('personalities', 'intentions', 'resources'));

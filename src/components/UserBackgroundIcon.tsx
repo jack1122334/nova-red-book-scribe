@@ -1,6 +1,5 @@
-
 import React from "react";
-import { User, BookOpen, Palette } from "lucide-react";
+import { User, BookOpen, Package } from "lucide-react";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 
 interface UserBackgroundIconProps {
@@ -22,25 +21,25 @@ export const UserBackgroundIcon = ({ userBackground, size = 'md' }: UserBackgrou
     
     if (userBackground.personalities) {
       items.push({
-        type: "个性特质",
+        type: "人设定位",
         icon: User,
         content: userBackground.personalities.content
       });
     }
     
-    if (userBackground.intentions) {
+    if (userBackground.resources) {
       items.push({
-        type: "写作意图",
-        icon: BookOpen,
-        content: userBackground.intentions.content
+        type: "账号资源",
+        icon: Package,
+        content: userBackground.resources.content
       });
     }
 
-    if (userBackground.accountStyles) {
+    if (userBackground.intentions) {
       items.push({
-        type: "账号风格",
-        icon: Palette,
-        content: userBackground.accountStyles.content
+        type: "写作目的",
+        icon: BookOpen,
+        content: userBackground.intentions.content
       });
     }
 
