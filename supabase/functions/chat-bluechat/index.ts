@@ -111,9 +111,6 @@ serve(async (req) => {
                 // Check for stream completion
                 if (dataContent === '[DONE]') {
                   console.log('=== BLUECHAT RESPONSE COMPLETED ===');
-                  console.log('Total content length:', fullAiContent.length);
-                  console.log('Total canvas items:', canvasData.length);
-                  console.log('Total insights:', insightsData.length);
 
                   break;
                 }
