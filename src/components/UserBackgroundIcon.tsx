@@ -75,9 +75,9 @@ export const UserBackgroundIcon = ({ userBackground, size = 'md', noHover = fals
     <HoverCard>
       <HoverCardTrigger asChild>
         <div
-          className={`bg-black/10 rounded-xl cursor-pointer hover:bg-black/20 transition-colors ${sizeClasses[size]}`}
+          className={`flex justify-center items-center !p-0 bg-black/10  rounded-xl cursor-pointer hover:bg-black/20 transition-colors ${sizeClasses[size]}`}
         >
-          <User className={`text-black ${iconSizeClasses[size]}`} />
+          <User className={`text-black text-[12px]`} />
         </div>
       </HoverCardTrigger>
       {!noHover && (

@@ -173,10 +173,10 @@ export const CreateProjectDialog: React.FC<CreateProjectDialogProps> = ({
       // 刷新背景卡片缓存
       queryClient.invalidateQueries({ queryKey: ['userBackgroundCards'] });
 
-      toast({
-        title: '项目创建成功',
-        description: `项目"${newProject.title}"已创建`,
-      });
+      // toast({
+      //   title: '项目创建成功',
+      //   description: `项目"${newProject.title}"已创建`,
+      // });
 
       onOpenChange(false);
 

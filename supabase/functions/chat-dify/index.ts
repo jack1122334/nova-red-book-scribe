@@ -231,7 +231,7 @@ serve(async (req) => {
                                 project_id,
                                 external_id: insight.id || `insight_${Date.now()}_${Math.random()}`,
                                 type: 'insight',
-                                title: insight.title || '洞察',
+                                title: insight.title,
                                 content: insight.text || insight.content || ''
                               }));
                               insightsData.push(...transformedInsights);
@@ -244,7 +244,7 @@ serve(async (req) => {
                                 project_id,
                                 external_id: output.id || `keyword_insight_${Date.now()}_${Math.random()}`,
                                 type: 'keyword_insight',
-                                title: output.keyword ? `关键词洞察: ${output.keyword}` : '关键词洞察',
+                                title: output.keyword,
                                 content: output.answerText
                               };
                               insightsData.push(transformedInsight);
@@ -269,7 +269,7 @@ serve(async (req) => {
                       project_id,
                       external_id: data.id || `keyword_insight_${Date.now()}_${Math.random()}`,
                       type: 'keyword_insight',
-                      title: data.keyword ? `关键词洞察: ${data.keyword}` : '关键词洞察',
+                      title: data.keyword,
                       content: data.answerText
                     };
                     insightsData.push(transformedInsight);

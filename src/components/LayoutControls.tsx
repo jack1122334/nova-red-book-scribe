@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sidebar, FileText, MessageSquare, Grid3X3, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -13,12 +12,25 @@ interface LayoutState {
 interface LayoutControlsProps {
   layoutState: LayoutState;
   onLayoutChange: (state: LayoutState) => void;
+  xiaohongshuCardsCount?: number;
 }
 
 export const LayoutControls: React.FC<LayoutControlsProps> = ({ 
   layoutState, 
-  onLayoutChange 
+  onLayoutChange,
+  xiaohongshuCardsCount = 0
 }) => {
+  // 监听 xiaohongshuCards 数量变化，自动展开 Draft
+  useEffect(() => {
+    if (xiaohongshuCardsCount > 0 && !layoutState.showWriting) {
+      const newState = {
+        ...layoutState,
+        showWriting: true
+      };
+      onLayoutChange(newState);
+    }
+  }, [xiaohongshuCardsCount, layoutState, onLayoutChange]);
+
   const togglePanel = (panel: keyof LayoutState) => {
     const newState = {
       ...layoutState,

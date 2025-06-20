@@ -42,7 +42,7 @@ return (
                 variant={item.type === "canvas" ? "secondary" : "outline"}
                 className="text-xs"
               >
-                {item.type === "canvas" ? "Canvas" : "洞察"}
+                {item.type === "canvas" ? "Canvas" : "Insights"}
               </Badge>
               <span className="text-sm font-medium text-gray-900 truncate">
                 {item.title}

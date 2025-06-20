@@ -1,11 +1,14 @@
-
 import { useState, useEffect } from "react";
 import { cardsApi } from "@/lib/api";
 import { canvasApi } from "@/lib/canvasApi";
+import { useCardsStore } from "@/stores/cardsStore";
 
 export const useProjectData = (projectId?: string) => {
   const [hasCanvasData, setHasCanvasData] = useState(false);
   const [hasDraftData, setHasDraftData] = useState(false);
+  
+  // 监听 xiaohongshuCards 的变化
+  const { xiaohongshuCards } = useCardsStore();
 
   useEffect(() => {
     const checkData = async () => {
@@ -30,6 +33,13 @@ export const useProjectData = (projectId?: string) => {
 
     checkData();
   }, [projectId]);
+
+  // 监听 xiaohongshuCards 变化，当有数据时自动设置 hasDraftData 为 true
+  useEffect(() => {
+    if (xiaohongshuCards.length > 0) {
+      setHasDraftData(true);
+    }
+  }, [xiaohongshuCards.length]);
 
   return {
     hasCanvasData,

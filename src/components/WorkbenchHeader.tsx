@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Feather } from "lucide-react";
@@ -18,13 +17,15 @@ interface WorkbenchHeaderProps {
   layoutState: LayoutState;
   onBack: () => void;
   onLayoutChange: (state: LayoutState) => void;
+  xiaohongshuCardsCount?: number;
 }
 
 export const WorkbenchHeader: React.FC<WorkbenchHeaderProps> = ({
   project,
   layoutState,
   onBack,
-  onLayoutChange
+  onLayoutChange,
+  xiaohongshuCardsCount = 0
 }) => {
   return (
     <header className="px-2 md:px-2 py-4 border-b border-black/10 bg-white">
@@ -59,6 +60,7 @@ export const WorkbenchHeader: React.FC<WorkbenchHeaderProps> = ({
         <LayoutControls
           layoutState={layoutState}
           onLayoutChange={onLayoutChange}
+          xiaohongshuCardsCount={xiaohongshuCardsCount}
         />
         <div className="hidden md:block ml-6">
           <UserAvatarMenu />

@@ -366,9 +366,9 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
             );
             insightsDataToSave.push({
               project_id: projectId,
-              external_id: typeof data.id === 'string' ? data.id : `insight-${Date.now()}`,
+              external_id: data.id,
               type: "keyword_insight",
-              title: typeof data.keyword === 'string' ? `关键词洞察: ${data.keyword}` : "全面洞察",
+              title: data.keyword,
               content: data.answerText,
             });
           }
@@ -533,13 +533,13 @@ export const ChatArea = forwardRef<ChatAreaRef, ChatAreaProps>(({
       <div className="space-y-4">
         {/* 初始连接指示器 - 只在没有任何内容时显示 */}
         {message.isStreaming && !message.thoughts?.length && !message.toolCalls?.length && !message.content && (
-          <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm">
+          <Card className="border border-gray-200 shadow-sm">
             <CardContent className="p-4">
-              <div className="flex items-center gap-3 text-blue-600">
+              <div className="flex items-center gap-3 text-gray-900">
                 <div className="flex gap-1">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <div className="w-2 h-2 bg-gray-900 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <div className="w-2 h-2 bg-gray-900 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <div className="w-2 h-2 bg-gray-900 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                 </div>
                 <span className="text-sm font-medium">Nova 正在思考中...</span>
               </div>

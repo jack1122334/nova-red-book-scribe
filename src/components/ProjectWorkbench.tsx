@@ -5,6 +5,7 @@ import { WorkbenchContent } from "@/components/WorkbenchContent";
 import { useProjectData } from "@/hooks/useProjectData";
 import { useProjectHandlers } from "@/hooks/useProjectHandlers";
 import { useProjectStore } from "@/stores/projectStore";
+import { useCardsStore } from "@/stores/cardsStore";
 
 interface ProjectWorkbenchProps {
   project: Project | null;
@@ -27,6 +28,9 @@ export const ProjectWorkbench = ({
   const chatAreaRef = useRef<any>(null);
   const canvasAreaRef = useRef<any>(null);
   const { currentProject } = useProjectStore();
+  
+  // 获取小红书内容数量
+  const { xiaohongshuCards } = useCardsStore();
   
   // 使用传入的 project 或者从状态管理获取的 currentProject
   const activeProject = project || currentProject;
@@ -75,6 +79,7 @@ export const ProjectWorkbench = ({
         layoutState={layoutState}
         onBack={onBack}
         onLayoutChange={setLayoutState}
+        xiaohongshuCardsCount={xiaohongshuCards.length}
       />
 
       <WorkbenchContent 
